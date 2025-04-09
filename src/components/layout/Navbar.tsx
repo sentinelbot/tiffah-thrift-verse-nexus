@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Search, ShoppingBag, Heart, User, Menu } from "lucide-react";
+import { Search, ShoppingBag, Heart, User, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,47 +15,36 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
   return (
-    <nav className="sticky top-0 z-50 bg-background border-b border-border py-3 px-4 md:px-6">
+    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 md:px-6">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center gap-6">
           {isMobile && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem asChild>
-                  <Link to="/category/clothing">Clothing</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/category/accessories">Accessories</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/category/home">Home</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/category/vintage">Vintage</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/category/new-arrivals">New Arrivals</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="touch-target" 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
           )}
           
           <Link to="/" className="flex items-center">
-            <h1 className="text-xl md:text-2xl font-bold text-thrift-700">
-              Tiffah<span className="text-sage-500">Thrift</span>
+            <h1 className="text-xl md:text-2xl font-bold">
+              <span className="text-gradient">Tiffah</span>
+              <span className="text-foreground">Thrift</span>
             </h1>
           </Link>
           
           {!isMobile && (
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-6">
+              <Link to="/shop" className="text-sm hover:text-primary transition-colors">
+                Shop All
+              </Link>
               <Link to="/category/clothing" className="text-sm hover:text-primary transition-colors">
                 Clothing
               </Link>
@@ -68,7 +57,7 @@ const Navbar = () => {
               <Link to="/category/vintage" className="text-sm hover:text-primary transition-colors">
                 Vintage
               </Link>
-              <Link to="/category/new-arrivals" className="text-sm hover:text-primary transition-colors">
+              <Link to="/new-arrivals" className="text-sm hover:text-primary transition-colors">
                 New Arrivals
               </Link>
             </div>
@@ -94,30 +83,84 @@ const Navbar = () => {
           <Button
             variant="ghost"
             size="icon"
+            className="touch-target"
             onClick={() => setIsSearchOpen(!isSearchOpen)}
           >
             <Search className="h-5 w-5" />
           </Button>
           
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" className="touch-target" asChild>
             <Link to="/wishlist">
               <Heart className="h-5 w-5" />
             </Link>
           </Button>
           
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" className="touch-target relative" asChild>
             <Link to="/cart">
               <ShoppingBag className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 bg-primary text-xs text-white rounded-full w-4 h-4 flex items-center justify-center">
+                0
+              </span>
             </Link>
           </Button>
           
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" className="touch-target" asChild>
             <Link to="/account">
               <User className="h-5 w-5" />
             </Link>
           </Button>
         </div>
       </div>
+      
+      {/* Mobile Menu */}
+      {isMobile && isMobileMenuOpen && (
+        <div className="absolute top-full left-0 right-0 bg-background border-b border-border py-4 px-6 animate-fade-in">
+          <div className="flex flex-col space-y-4">
+            <Link 
+              to="/shop" 
+              className="text-sm hover:text-primary transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Shop All
+            </Link>
+            <Link 
+              to="/category/clothing" 
+              className="text-sm hover:text-primary transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Clothing
+            </Link>
+            <Link 
+              to="/category/accessories" 
+              className="text-sm hover:text-primary transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Accessories
+            </Link>
+            <Link 
+              to="/category/home" 
+              className="text-sm hover:text-primary transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link 
+              to="/category/vintage" 
+              className="text-sm hover:text-primary transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Vintage
+            </Link>
+            <Link 
+              to="/new-arrivals" 
+              className="text-sm hover:text-primary transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              New Arrivals
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

@@ -24,9 +24,9 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, className }: ProductCardProps) => {
   return (
-    <Card className={cn("overflow-hidden product-card-hover border-0 rounded-md bg-transparent", className)}>
+    <Card className={cn("overflow-hidden product-card-hover border-border rounded-md bg-card/50", className)}>
       <Link to={`/product/${product.id}`}>
-        <div className="relative aspect-[3/4] overflow-hidden rounded-md">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-t-md">
           <img
             src={product.imageUrl}
             alt={product.title}
@@ -35,7 +35,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm"
+            className="absolute top-2 right-2 h-9 w-9 rounded-full bg-background/80 backdrop-blur-sm touch-target"
             onClick={(e) => {
               e.preventDefault();
               console.log("Add to wishlist", product.id);
@@ -45,12 +45,12 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
           </Button>
           <div className="absolute bottom-2 left-2 flex flex-wrap gap-1">
             {product.condition && (
-              <Badge variant="secondary" className="text-xs bg-background/80 backdrop-blur-sm">
+              <Badge variant="secondary" className="text-xs bg-background/70 backdrop-blur-sm">
                 {product.condition}
               </Badge>
             )}
             {product.size && (
-              <Badge variant="outline" className="text-xs bg-background/80 backdrop-blur-sm">
+              <Badge variant="outline" className="text-xs bg-background/70 backdrop-blur-sm text-white">
                 Size {product.size}
               </Badge>
             )}

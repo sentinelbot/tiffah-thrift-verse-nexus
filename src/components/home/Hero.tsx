@@ -11,7 +11,7 @@ const Hero = () => {
           alt="Thrift store collection" 
           className="h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       </div>
       
       <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
@@ -23,11 +23,11 @@ const Hero = () => {
             Sustainable fashion at affordable prices. Each piece tells a story and waits for a new chapter.
           </p>
           <div className="space-x-4 animate-fade-in" style={{animationDelay: "0.4s"}}>
-            <Button asChild size="lg" className="bg-thrift-600 hover:bg-thrift-700">
-              <Link to="/category/new-arrivals">Shop New Arrivals</Link>
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white">
+              <Link to="/shop">Shop Now</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="text-white border-white hover:bg-white/20">
-              <Link to="/about">Our Story</Link>
+              <Link to="/new-arrivals">New Arrivals</Link>
             </Button>
           </div>
         </div>
