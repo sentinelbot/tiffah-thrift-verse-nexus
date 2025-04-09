@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { 
   Card, 
@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -119,7 +120,7 @@ const mockFeedback: Feedback[] = [
     productName: 'Men\'s Casual Shirt',
     createdAt: '2023-04-07T09:15:00Z',
     response: {
-      text: 'We're very sorry about this experience. We've issued a full refund and would like to offer you a 15% discount on your next purchase. Please check your email for details.',
+      text: 'We\'re very sorry about this experience. We\'ve issued a full refund and would like to offer you a 15% discount on your next purchase. Please check your email for details.',
       respondedBy: 'Admin',
       respondedAt: '2023-04-07T11:30:00Z'
     },
@@ -154,7 +155,7 @@ const mockFeedback: Feedback[] = [
     productName: 'Leather Jacket',
     createdAt: '2023-04-05T12:20:00Z',
     response: {
-      text: 'Thank you for your feedback. We're working on improving our delivery times and will take your comments into consideration.',
+      text: 'Thank you for your feedback. We\'re working on improving our delivery times and will take your comments into consideration.',
       respondedBy: 'Admin',
       respondedAt: '2023-04-05T15:10:00Z'
     },
