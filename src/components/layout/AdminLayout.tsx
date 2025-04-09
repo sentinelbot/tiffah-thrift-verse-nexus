@@ -1,218 +1,214 @@
-
-import { ReactNode, useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import {
-  Package,
-  ShoppingBag,
-  Users,
   LayoutDashboard,
-  LogOut,
-  Menu,
-  X,
-  Tag,
-  Truck,
-  Settings,
-  User,
+  Package,
+  Users,
+  ShoppingCart,
   Printer,
-  ScanBarcode
+  QrCode,
+  BrainCircuit,
+  Mail,
+  FolderClosed,
 } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Menu, LogOut, UserCircle2 } from "lucide-react"
+import { useMobile } from '@/hooks/use-mobile';
+import { useEffect, useState } from 'react';
+import { Navbar } from './Navbar';
 
-interface AdminLayoutProps {
-  children: ReactNode;
-}
-
-const AdminLayout = ({ children }: AdminLayoutProps) => {
+const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [idleTime, setIdleTime] = useState(0);
-  
-  // Admin sidebar navigation items
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin', roles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff'] },
-    { icon: Package, label: 'Products', path: '/admin/products', roles: ['admin', 'productManager'] },
-    { icon: Tag, label: 'Categories', path: '/admin/categories', roles: ['admin'] },
-    { icon: ShoppingBag, label: 'Orders', path: '/admin/orders', roles: ['admin', 'orderPreparer'] },
-    { icon: Truck, label: 'Deliveries', path: '/admin/deliveries', roles: ['admin', 'deliveryStaff'] },
-    { icon: ScanBarcode, label: 'Scanning', path: '/admin/scanning', roles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff'] },
-    { icon: Printer, label: 'Printing', path: '/admin/printing', roles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff'] },
-    { icon: Users, label: 'Users', path: '/admin/users', roles: ['admin'] },
-    { icon: Settings, label: 'Settings', path: '/admin/settings', roles: ['admin'] },
-  ];
-  
-  // Filter nav items based on user role
-  const filteredNavItems = navItems.filter(item => 
-    user && item.roles.includes(user.role)
-  );
+  const isMobile = useMobile();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Auto logout after 15 minutes of inactivity for staff
   useEffect(() => {
-    if (!user || user.role === 'customer') return;
-    
-    const resetIdleTime = () => setIdleTime(0);
-    const incrementIdleTime = () => setIdleTime(prev => prev + 1);
-    
-    // Reset idle time on user activity
-    window.addEventListener('mousemove', resetIdleTime);
-    window.addEventListener('keypress', resetIdleTime);
-    window.addEventListener('click', resetIdleTime);
-    window.addEventListener('scroll', resetIdleTime);
-    
-    // Increment idle time every minute
-    const idleInterval = setInterval(incrementIdleTime, 60000);
-    
-    // Check if idle time exceeds 15 minutes (staff only)
-    const checkIdleInterval = setInterval(() => {
-      if (idleTime >= 15) {
-        signOut().then(() => {
-          navigate('/auth');
-        });
-      }
-    }, 60000);
-    
-    return () => {
-      window.removeEventListener('mousemove', resetIdleTime);
-      window.removeEventListener('keypress', resetIdleTime);
-      window.removeEventListener('click', resetIdleTime);
-      window.removeEventListener('scroll', resetIdleTime);
-      clearInterval(idleInterval);
-      clearInterval(checkIdleInterval);
-    };
-  }, [user, idleTime, signOut, navigate]);
+    setIsMenuOpen(false);
+  }, [location.pathname]);
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/auth');
+    navigate('/');
   };
+  
+  const menuItems = [
+    {
+      title: 'Dashboard',
+      href: '/admin',
+      icon: <LayoutDashboard className="h-5 w-5" />,
+    },
+    {
+      title: 'Products',
+      href: '/admin/products',
+      icon: <Package className="h-5 w-5" />,
+    },
+    {
+      title: 'Categories',
+      href: '/admin/categories',
+      icon: <FolderClosed className="h-5 w-5" />,
+    },
+    {
+      title: 'Orders',
+      href: '/admin/orders',
+      icon: <ShoppingCart className="h-5 w-5" />,
+    },
+    {
+      title: 'Users',
+      href: '/admin/users',
+      icon: <Users className="h-5 w-5" />,
+    },
+    {
+      title: 'Printing',
+      href: '/admin/printing',
+      icon: <Printer className="h-5 w-5" />,
+    },
+    {
+      title: 'Scanning',
+      href: '/admin/scanning',
+      icon: <QrCode className="h-5 w-5" />,
+    },
+    {
+      title: 'AI Tools',
+      href: '/admin/ai',
+      icon: <BrainCircuit className="h-5 w-5" />,
+    },
+    {
+      title: 'Marketing',
+      href: '/admin/marketing',
+      icon: <Mail className="h-5 w-5" />,
+    },
+  ];
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex md:w-64 flex-col bg-sidebar-background border-r border-sidebar-border fixed h-full">
-        <div className="p-4 border-b border-sidebar-border">
-          <Link to="/" className="flex items-center">
-            <h1 className="text-xl font-bold">
-              <span className="text-gradient">Tiffah</span>
-              <span className="text-foreground">Admin</span>
-            </h1>
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar (visible on larger screens) */}
+      <div className="hidden md:flex flex-col w-64 bg-white border-r">
+        <div className="flex items-center justify-center h-16 border-b">
+          <Link to="/" className="flex items-center space-x-2">
+            <span className="inline-block font-bold text-2xl text-primary">Tiffah</span>
           </Link>
         </div>
-        
-        <nav className="flex-1 p-4 space-y-1">
-          {filteredNavItems.map((item) => {
-            const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
-            return (
-              <Link 
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-3 rounded-md transition-colors ${
-                  isActive 
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                    : 'hover:bg-sidebar-accent/50 text-sidebar-foreground'
-                }`}
-              >
-                <item.icon className="h-5 w-5 mr-3" />
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 p-4 space-y-2">
+          {menuItems.map((item) => (
+            <Link
+              key={item.title}
+              to={item.href}
+              className={`flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 ${
+                location.pathname === item.href ? 'bg-gray-100 font-medium' : ''
+              }`}
+            >
+              {item.icon}
+              <span>{item.title}</span>
+            </Link>
+          ))}
         </nav>
-        
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="flex items-center mb-4">
-            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground mr-3">
-              <User className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-sidebar-foreground">{user?.email}</p>
-              <p className="text-xs text-sidebar-foreground/70 capitalize">{user?.role}</p>
-            </div>
-          </div>
-          <Button 
-            variant="ghost" 
-            className="w-full flex items-center justify-start"
-            onClick={handleSignOut}
-          >
-            <LogOut className="h-5 w-5 mr-2" />
-            Sign Out
-          </Button>
+        <div className="p-4 border-t">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full justify-start gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{user.name?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col text-left">
+                    <span className="text-sm font-medium leading-none">{user.name || 'User'}</span>
+                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/auth">Sign In</Link>
+          )}
         </div>
-      </aside>
-      
-      {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 w-full fixed top-0 left-0 z-30 bg-background border-b border-border">
-        <Link to="/" className="flex items-center">
-          <h1 className="text-xl font-bold">
-            <span className="text-gradient">Tiffah</span>
-            <span className="text-foreground">Admin</span>
-          </h1>
-        </Link>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
       </div>
-      
-      {/* Mobile Sidebar */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-20 bg-background/90 backdrop-blur-sm">
-          <div className="flex flex-col pt-16 pb-6 h-full">
-            <nav className="flex-1 px-4 py-4 space-y-1">
-              {filteredNavItems.map((item) => {
-                const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
-                return (
-                  <Link 
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center px-4 py-3 rounded-md transition-colors ${
-                      isActive 
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                        : 'hover:bg-sidebar-accent/50 text-sidebar-foreground'
-                    }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <item.icon className="h-5 w-5 mr-3" />
-                    {item.label}
-                  </Link>
-                );
-              })}
+
+      {/* Mobile sidebar */}
+      {isMobile ? (
+        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64">
+            <Link to="/" className="flex items-center justify-center h-16 border-b">
+              <span className="inline-block font-bold text-2xl text-primary">Tiffah</span>
+            </Link>
+            <nav className="flex-1 p-4 space-y-2">
+              {menuItems.map((item) => (
+                <Link
+                  key={item.title}
+                  to={item.href}
+                  className={`flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 ${
+                    location.pathname === item.href ? 'bg-gray-100 font-medium' : ''
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.icon}
+                  <span>{item.title}</span>
+                </Link>
+              ))}
             </nav>
-            
-            <div className="px-4 border-t border-sidebar-border pt-4">
-              <div className="flex items-center mb-4">
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground mr-3">
-                  <User className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-sidebar-foreground">{user?.email}</p>
-                  <p className="text-xs text-sidebar-foreground/70 capitalize">{user?.role}</p>
-                </div>
-              </div>
-              <Button 
-                variant="ghost" 
-                className="w-full flex items-center justify-start"
-                onClick={handleSignOut}
-              >
-                <LogOut className="h-5 w-5 mr-2" />
-                Sign Out
-              </Button>
+            <div className="p-4 border-t">
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>{user.name?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col text-left">
+                        <span className="text-sm font-medium leading-none">{user.name || 'User'}</span>
+                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/auth">Sign In</Link>
+              )}
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Main Content */}
-      <main className="flex-1 md:ml-64 pt-6 md:pt-0 mt-14 md:mt-0">
-        <div className="px-4 py-4 md:py-6 md:px-8">
+          </SheetContent>
+        </Sheet>
+      ) : null}
+
+      {/* Main content */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <Navbar />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

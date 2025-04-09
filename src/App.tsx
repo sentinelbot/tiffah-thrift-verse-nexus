@@ -22,6 +22,7 @@ import Unauthorized from "./pages/Unauthorized";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderDetail from "./pages/OrderDetail";
+import CustomerServiceChat from "./components/customer-service/CustomerServiceChat";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -33,6 +34,7 @@ import Orders from "./pages/admin/Orders";
 import Printing from "./pages/admin/Printing";
 import Scanning from "./pages/admin/Scanning";
 import AiDashboard from "./pages/admin/AiDashboard";
+import Marketing from "./pages/admin/Marketing";
 
 function App() {
   const [queryClient] = useState(() => new QueryClient());
@@ -80,12 +82,16 @@ function App() {
                   <Route path="/admin/printing" element={<Printing />} />
                   <Route path="/admin/scanning" element={<Scanning />} />
                   <Route path="/admin/ai" element={<AiDashboard />} />
+                  <Route path="/admin/marketing" element={<Marketing />} />
                 </Route>
                 
                 {/* Error Routes */}
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+
+              {/* Global customer service chat widget */}
+              <CustomerServiceChat />
             </TooltipProvider>
           </BrowserRouter>
         </CartProvider>

@@ -9,9 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, Settings, ShoppingBag, Heart } from 'lucide-react';
+import { User as UserIcon, LogOut, Settings, ShoppingBag, Heart, Bell } from 'lucide-react';
 import { formatDate } from '@/utils/dateUtils';
 import { OrderHistory } from '@/components/account/OrderHistory';
+import NotificationPreferences from '@/components/notifications/NotificationPreferences';
+import LoyaltyPointsCard from '@/components/marketing/LoyaltyPointsCard';
 
 const Account = () => {
   const { user, signOut, updateProfile } = useAuth();
@@ -74,7 +76,7 @@ const Account = () => {
         </div>
 
         <Tabs defaultValue="orders">
-          <TabsList className="grid grid-cols-4 w-full max-w-md">
+          <TabsList className="grid grid-cols-5 w-full max-w-md">
             <TabsTrigger value="orders">
               <ShoppingBag className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Orders</span>
@@ -82,6 +84,10 @@ const Account = () => {
             <TabsTrigger value="wishlist">
               <Heart className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Wishlist</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications">
+              <Bell className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Notifications</span>
             </TabsTrigger>
             <TabsTrigger value="profile">
               <UserIcon className="h-4 w-4 mr-2" />
@@ -105,6 +111,14 @@ const Account = () => {
               <Button className="mt-4" onClick={() => navigate('/shop')}>
                 Continue Shopping
               </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="notifications" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Notification Preferences</h2>
+            <div className="grid gap-6 md:grid-cols-2">
+              <NotificationPreferences />
+              <LoyaltyPointsCard />
             </div>
           </TabsContent>
           

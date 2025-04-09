@@ -1,203 +1,198 @@
-
-import { Link } from "react-router-dom";
-import { Search, ShoppingBag, Heart, User, Menu, X, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/context/CartContext";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu, Heart, ShoppingBag, UserCircle2, LogOut, LayoutDashboard, FolderClosed } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import EnhancedSearch from "../shop/EnhancedSearch";
+import NotificationCenter from '../notifications/NotificationCenter';
 
 const Navbar = () => {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const isMobile = useIsMobile();
   const { user, signOut } = useAuth();
-  const { getCartItemCount } = useCart();
-  const cartCount = getCartItemCount();
+  const { cart } = useCart();
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const cartCount = cart?.items?.length || 0;
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 md:px-6">
-      <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          {isMobile && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="touch-target" 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          )}
-          
-          <Link to="/" className="flex items-center">
-            <h1 className="text-xl md:text-2xl font-bold">
-              <span className="text-gradient">Tiffah</span>
-              <span className="text-foreground">Thrift</span>
-            </h1>
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center">
+        <div className="flex gap-6 md:gap-10">
+          <Link to="/" className="flex items-center space-x-2">
+            <span className="inline-block font-bold text-2xl text-primary">Tiffah</span>
           </Link>
-          
-          {!isMobile && (
-            <div className="hidden md:flex items-center space-x-6">
-              <Link to="/shop" className="text-sm hover:text-primary transition-colors">
-                Shop All
-              </Link>
-              <Link to="/category/clothing" className="text-sm hover:text-primary transition-colors">
-                Clothing
-              </Link>
-              <Link to="/category/accessories" className="text-sm hover:text-primary transition-colors">
-                Accessories
-              </Link>
-              <Link to="/category/home" className="text-sm hover:text-primary transition-colors">
-                Home
-              </Link>
-              <Link to="/category/vintage" className="text-sm hover:text-primary transition-colors">
-                Vintage
-              </Link>
-              <Link to="/new-arrivals" className="text-sm hover:text-primary transition-colors">
-                New Arrivals
-              </Link>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div
-            className={cn(
-              "transition-all duration-300 overflow-hidden",
-              isSearchOpen 
-                ? "w-full md:w-64 opacity-100" 
-                : "w-0 opacity-0"
-            )}
-          >
-            <Input
-              type="search"
-              placeholder="Search products..."
-              className="h-9 w-full"
-            />
-          </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            className="touch-target"
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-          >
-            <Search className="h-5 w-5" />
-          </Button>
-          
-          <Button variant="ghost" size="icon" className="touch-target" asChild>
-            <Link to="/wishlist">
-              <Heart className="h-5 w-5" />
+          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+            <Link to="/shop" className="hover:text-primary">
+              Shop
             </Link>
-          </Button>
-          
-          <Button variant="ghost" size="icon" className="touch-target relative" asChild>
-            <Link to="/cart">
-              <ShoppingBag className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-xs text-white rounded-full w-5 h-5 flex items-center justify-center">
-                  {cartCount > 9 ? '9+' : cartCount}
-                </span>
-              )}
-            </Link>
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="touch-target">
-                <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              {user ? (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link to="/account" className="w-full">My Account</Link>
-                  </DropdownMenuItem>
-                  
-                  {/* Show admin link for staff roles */}
-                  {user.role !== 'customer' && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="w-full">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Admin Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    Sign Out
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem asChild>
-                  <Link to="/auth" className="w-full">Sign In / Register</Link>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      
-      {/* Mobile Menu */}
-      {isMobile && isMobileMenuOpen && (
-        <div className="absolute top-full left-0 right-0 bg-background border-b border-border py-4 px-6 animate-fade-in">
-          <div className="flex flex-col space-y-4">
-            <Link 
-              to="/shop" 
-              className="text-sm hover:text-primary transition-colors py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Shop All
-            </Link>
-            <Link 
-              to="/category/clothing" 
-              className="text-sm hover:text-primary transition-colors py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Clothing
-            </Link>
-            <Link 
-              to="/category/accessories" 
-              className="text-sm hover:text-primary transition-colors py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Accessories
-            </Link>
-            <Link 
-              to="/category/home" 
-              className="text-sm hover:text-primary transition-colors py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Home
-            </Link>
-            <Link 
-              to="/category/vintage" 
-              className="text-sm hover:text-primary transition-colors py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Vintage
-            </Link>
-            <Link 
-              to="/new-arrivals" 
-              className="text-sm hover:text-primary transition-colors py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
+            <Link to="/new-arrivals" className="hover:text-primary">
               New Arrivals
             </Link>
-          </div>
+            <Link to="/category/dresses" className="hover:text-primary">
+              Dresses
+            </Link>
+            <Link to="/category/shirts" className="hover:text-primary">
+              Shirts
+            </Link>
+            <Link to="/category/jeans" className="hover:text-primary">
+              Jeans
+            </Link>
+            <Link to="/category/shoes" className="hover:text-primary">
+              Shoes
+            </Link>
+          </nav>
         </div>
-      )}
-    </nav>
+
+        <div className="flex flex-1 items-center justify-end space-x-4">
+          <nav className="flex items-center space-x-2">
+            <EnhancedSearch 
+              onSearch={(query, enhancedResults) => {
+                if (!query) return;
+                navigate(`/shop?q=${encodeURIComponent(query)}`);
+              }}
+            />
+            <Link to="/wishlist">
+              <Button variant="ghost" size="icon">
+                <Heart className="h-5 w-5" />
+                <span className="sr-only">Wishlist</span>
+              </Button>
+            </Link>
+            <Link to="/cart">
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingBag className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center translate-x-1/4 -translate-y-1/4">
+                    {cartCount}
+                  </span>
+                )}
+                <span className="sr-only">Cart</span>
+              </Button>
+            </Link>
+            
+            {user && <NotificationCenter />}
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <UserCircle2 className="h-5 w-5" />
+                    <span className="sr-only">User menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col">
+                      <span>{user.name || 'User'}</span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {user.email}
+                      </span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/account">
+                      <UserCircle2 className="mr-2 h-4 w-4" />
+                      <span>Account</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/account?tab=orders">
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      <span>Orders</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  {/* Admin links for admin users */}
+                  {user.role === 'admin' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin">
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          <span>Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/auth">Sign in</Link>
+              </Button>
+            )}
+            
+            {isMobile ? (
+              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left">
+                  <Link to="/" className="flex items-center" onClick={() => setIsMenuOpen(false)}>
+                    <span className="font-bold text-2xl text-primary">Tiffah</span>
+                  </Link>
+                  <div className="mt-8 space-y-4">
+                    <Link to="/shop" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                      Shop
+                    </Link>
+                    <Link to="/new-arrivals" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                      New Arrivals
+                    </Link>
+                    <Link to="/category/dresses" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                      Dresses
+                    </Link>
+                    <Link to="/category/shirts" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                      Shirts
+                    </Link>
+                    <Link to="/category/jeans" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                      Jeans
+                    </Link>
+                    <Link to="/category/shoes" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                      Shoes
+                    </Link>
+                    {user ? (
+                      <>
+                        <Link to="/account" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                          Account
+                        </Link>
+                        {user.role === 'admin' && (
+                          <Link to="/admin" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                            Admin
+                          </Link>
+                        )}
+                        <Button variant="link" size="sm" className="block p-0" onClick={handleSignOut}>
+                          Sign out
+                        </Button>
+                      </>
+                    ) : (
+                      <Link to="/auth" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                        Sign in
+                      </Link>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            ) : null}
+          </nav>
+        </div>
+      </div>
+    </header>
   );
 };
 

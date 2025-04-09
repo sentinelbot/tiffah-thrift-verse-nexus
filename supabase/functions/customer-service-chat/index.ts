@@ -40,6 +40,8 @@ serve(async (req) => {
       - Store policies (returns within 30 days, items must be in original condition)
       - Shipping (same-day in Nairobi, 2-3 days elsewhere in Kenya)
       - Payment methods (Mpesa, cards, PayPal)
+      - Loyalty program (earn 1 point per KSh 10 spent, redeem for discounts)
+      - Notification preferences (customers can opt-in/out of email, SMS and WhatsApp)
       
       If you don't know the answer, politely suggest contacting customer service.
     `;
@@ -68,8 +70,9 @@ serve(async (req) => {
     const data = await response.json();
     const answer = data.choices[0].message.content;
     
-    // This could be expanded to include recommendations based on the question
-    const relatedProducts = [];
+    // Find related products based on question keywords
+    // This is a mock implementation - in production, this would query the database
+    const relatedProducts = getRelatedProducts(question);
 
     return new Response(
       JSON.stringify({ answer, relatedProducts }),
@@ -87,3 +90,42 @@ serve(async (req) => {
     );
   }
 });
+
+// Mock function to get related products based on question keywords
+function getRelatedProducts(question: string) {
+  const questionLower = question.toLowerCase();
+  
+  // Check for clothing type keywords
+  const clothingTypes = [
+    { keyword: 'dress', category: 'Dresses' },
+    { keyword: 'shirt', category: 'Shirts' },
+    { keyword: 'jean', category: 'Jeans' },
+    { keyword: 'jacket', category: 'Outerwear' },
+    { keyword: 'shoe', category: 'Shoes' },
+    { keyword: 'accessory', category: 'Accessories' },
+  ];
+  
+  // Look for matches in the question
+  for (const item of clothingTypes) {
+    if (questionLower.includes(item.keyword)) {
+      // In production, you would query the database for real products in this category
+      return [
+        {
+          id: `mock-${item.keyword}-1`,
+          name: `Vintage ${item.category} Item 1`,
+          price: Math.floor(Math.random() * 2000) + 500,
+          imageUrl: '/placeholder.svg',
+        },
+        {
+          id: `mock-${item.keyword}-2`,
+          name: `Pre-loved ${item.category} Item 2`,
+          price: Math.floor(Math.random() * 2000) + 500,
+          imageUrl: '/placeholder.svg',
+        },
+      ];
+    }
+  }
+  
+  // If no specific category mentioned, return empty array
+  return [];
+}
