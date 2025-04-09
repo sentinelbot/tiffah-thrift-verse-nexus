@@ -1,58 +1,60 @@
 
-import { ShoppingBag, Heart } from "lucide-react";
+import { Plus, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
+import { ProductType as ContextProductType } from "@/context/CartContext";
 import { ProductType } from "./ProductCard";
-import { useState } from "react";
+import { toast } from "sonner";
 
 interface ProductCardActionsProps {
   product: ProductType;
 }
 
-export default function ProductCardActions({ product }: ProductCardActionsProps) {
-  const { addToCart, addToWishlist, isInCart, isInWishlist } = useCart();
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
+const ProductCardActions = ({ product }: ProductCardActionsProps) => {
+  const { addToCart, addToWishlist } = useCart();
   
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleAddToCart = () => {
+    // Convert from ProductCard.ProductType to CartContext.ProductType
+    const contextProduct: ContextProductType = {
+      ...product,
+      condition: product.condition || 'good', // Provide default if missing
+    };
     
-    setIsAddingToCart(true);
-    
-    // Simulate a small delay for visual feedback
-    setTimeout(() => {
-      addToCart(product, 1);
-      setIsAddingToCart(false);
-    }, 300);
+    addToCart(contextProduct);
+    toast.success(`${product.title} added to cart`);
   };
   
-  const handleAddToWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToWishlist(product);
+  const handleAddToWishlist = () => {
+    // Convert from ProductCard.ProductType to CartContext.ProductType
+    const contextProduct: ContextProductType = {
+      ...product,
+      condition: product.condition || 'good', // Provide default if missing
+    };
+    
+    addToWishlist(contextProduct);
+    toast.success(`${product.title} added to wishlist`);
   };
   
   return (
     <div className="flex gap-2">
-      <Button
+      <Button 
         onClick={handleAddToCart}
-        disabled={isInCart(product.id) || isAddingToCart}
-        className="w-full text-xs"
+        className="flex-1"
         size="sm"
       >
-        <ShoppingBag className="h-3.5 w-3.5 mr-1" />
-        {isInCart(product.id) ? "In cart" : "Add to cart"}
+        <Plus className="mr-1 h-4 w-4" />
+        Add to Cart
       </Button>
-      
-      <Button
+      <Button 
+        variant="outline" 
+        size="icon" 
+        className="h-8 w-8"
         onClick={handleAddToWishlist}
-        disabled={isInWishlist(product.id)}
-        variant={isInWishlist(product.id) ? "default" : "outline"}
-        size="icon"
-        className="w-9 h-9 flex-shrink-0"
       >
-        <Heart className="h-3.5 w-3.5" />
+        <Heart className="h-4 w-4" />
       </Button>
     </div>
   );
-}
+};
+
+export default ProductCardActions;

@@ -42,6 +42,7 @@ const Wishlist = () => {
                       alt={product.title} 
                       className="w-full aspect-square object-cover group-hover:scale-105 transition-transform"
                     />
+                    {/* Only show discount badge if originalPrice exists */}
                     {product.originalPrice && (
                       <span className="absolute top-2 left-2 bg-primary text-white text-xs font-medium px-2 py-1 rounded">
                         {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
@@ -58,6 +59,7 @@ const Wishlist = () => {
                     <div className="flex justify-between items-baseline mb-3">
                       <div>
                         <span className="font-semibold text-primary">${product.price.toFixed(2)}</span>
+                        {/* Only show original price if it exists */}
                         {product.originalPrice && (
                           <span className="text-xs text-muted-foreground line-through ml-2">
                             ${product.originalPrice.toFixed(2)}

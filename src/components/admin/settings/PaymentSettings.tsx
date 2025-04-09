@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { 
   Card, 
@@ -49,6 +48,8 @@ import {
   ChevronsUpDown
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 
 const PaymentSettings = () => {
   const [activeTab, setActiveTab] = useState('methods');
@@ -397,7 +398,7 @@ const PaymentSettings = () => {
                         </div>
                       </div>
                       
-                      <Alert variant="info" className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                      <Alert variant="default" className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
                         <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         <AlertTitle>Webhook URL</AlertTitle>
                         <AlertDescription className="mt-1">
