@@ -4,22 +4,7 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/products/ProductCard';
-
-// Define the Product type to match what ProductCard expects
-export interface ProductType {
-  id: string;
-  title: string;  // Ensure this matches what ProductCard expects
-  name?: string;
-  description: string;
-  price: number;
-  imageUrl: string;  // Ensure this matches what ProductCard expects
-  images?: Array<{ url: string; alt: string; isMain: boolean }>;
-  category: string;
-  condition: string;
-  size?: string;
-  color?: string;
-  brand?: string;
-}
+import { ProductType } from '@/components/products/ProductCard';
 
 interface AIProductRecommendationsProps {
   productId: string;
@@ -54,11 +39,8 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
             {
               id: 'rec1',
               title: 'Vintage Denim Jacket',
-              name: 'Vintage Denim Jacket',
-              description: 'Classic vintage denim jacket in excellent condition',
               price: 45.99,
               imageUrl: '/placeholder.svg',
-              images: [{ url: '/placeholder.svg', alt: 'Vintage Denim Jacket', isMain: true }],
               category: 'jackets',
               condition: 'excellent',
               size: 'M',
@@ -68,11 +50,8 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
             {
               id: 'rec2',
               title: 'Floral Summer Dress',
-              name: 'Floral Summer Dress',
-              description: 'Beautiful floral pattern summer dress',
               price: 28.50,
               imageUrl: '/placeholder.svg',
-              images: [{ url: '/placeholder.svg', alt: 'Floral Summer Dress', isMain: true }],
               category: 'dresses',
               condition: 'like-new',
               size: 'S',
@@ -82,11 +61,8 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
             {
               id: 'rec3',
               title: 'Leather Crossbody Bag',
-              name: 'Leather Crossbody Bag',
-              description: 'Genuine leather crossbody bag with adjustable strap',
               price: 35.00,
               imageUrl: '/placeholder.svg',
-              images: [{ url: '/placeholder.svg', alt: 'Leather Crossbody Bag', isMain: true }],
               category: 'accessories',
               condition: 'good',
               size: 'One Size',
@@ -96,11 +72,8 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
             {
               id: 'rec4',
               title: 'Wool Winter Coat',
-              name: 'Wool Winter Coat',
-              description: 'Premium wool winter coat, perfect for cold weather',
               price: 89.99,
               imageUrl: '/placeholder.svg',
-              images: [{ url: '/placeholder.svg', alt: 'Wool Winter Coat', isMain: true }],
               category: 'outerwear',
               condition: 'excellent',
               size: 'L',
@@ -160,15 +133,7 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
           {recommendations.map((product) => (
             <ProductCard 
               key={product.id} 
-              product={{
-                id: product.id,
-                title: product.title || product.name || "",
-                description: product.description,
-                price: product.price,
-                imageUrl: product.imageUrl || (product.images && product.images[0]?.url) || "/placeholder.svg",
-                category: product.category,
-                condition: product.condition
-              }} 
+              product={product} 
             />
           ))}
         </div>
