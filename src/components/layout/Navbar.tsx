@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,11 +13,13 @@ import { useMobile } from "@/hooks/use-mobile";
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
-  const { cart } = useCart();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const cartCount = cart?.items?.length || 0;
   const isMobile = useMobile();
+  
+  // Fix the cart reference error by getting items length safely
+  const { cart } = useCart();
+  const cartCount = cart && cart.items ? cart.items.length : 0;
 
   const handleSignOut = async () => {
     await signOut();

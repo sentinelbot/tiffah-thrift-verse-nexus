@@ -25,7 +25,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, LogOut, UserCircle2 } from "lucide-react"
 import { useMobile } from '@/hooks/use-mobile';
 import { useEffect, useState } from 'react';
-import { Navbar } from './Navbar';
+import Navbar from './Navbar';
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, signOut } = useAuth();

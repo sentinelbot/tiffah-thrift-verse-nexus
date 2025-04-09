@@ -10,7 +10,7 @@ import { SendHorizonal, MessagesSquare, MinusCircle, Bot, User } from 'lucide-re
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMobile } from '@/hooks/use-mobile';
+import useMobile from '@/hooks/use-mobile';
 
 interface Message {
   id: string;

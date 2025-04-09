@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export type NotificationType = 
@@ -50,7 +49,6 @@ export const sendNotification = async (
   }
 };
 
-// Helper function for order confirmation notifications
 export const sendOrderConfirmation = async (
   userId: string,
   email: string,
@@ -76,7 +74,6 @@ export const sendOrderConfirmation = async (
   });
 };
 
-// Helper function for shipping update notifications
 export const sendShippingUpdate = async (
   userId: string,
   email: string,
@@ -102,7 +99,6 @@ export const sendShippingUpdate = async (
   });
 };
 
-// Helper function for abandoned cart notifications
 export const sendAbandonedCartReminder = async (
   userId: string,
   email: string,
@@ -123,20 +119,24 @@ export const sendAbandonedCartReminder = async (
   });
 };
 
-// Function to schedule abandoned cart notifications (to be called by a cron job in production)
 export const processAbandonedCarts = async () => {
-  // In production, this would be a cron job that checks for abandoned carts
-  // and sends notifications to users who haven't completed their purchase
   console.log('Processing abandoned carts...');
   
-  // Mock implementation
   const hours = 4; // Hours since cart was abandoned
   const currentTime = new Date();
   const cutoffTime = new Date(currentTime.getTime() - hours * 60 * 60 * 1000);
   
   try {
-    // Get abandoned carts (in production, you'd have a database table for this)
-    // This is just a mockup of what the query would look like
+    interface CartItem {
+      id: string;
+      user_id: string;
+      user_email: string;
+      items: any[];
+      total_amount: number;
+      status: string;
+      updated_at: string;
+    }
+    
     const { data: abandonedCarts, error } = await supabase
       .from('carts')
       .select('*')
@@ -146,9 +146,8 @@ export const processAbandonedCarts = async () => {
     
     if (error) throw error;
     
-    // Send notification for each abandoned cart
     if (abandonedCarts) {
-      for (const cart of abandonedCarts) {
+      for (const cart of abandonedCarts as CartItem[]) {
         await sendAbandonedCartReminder(
           cart.user_id,
           cart.user_email,
@@ -168,7 +167,6 @@ export const processAbandonedCarts = async () => {
   }
 };
 
-// Helper function for loyalty point notifications
 export const sendLoyaltyPointsUpdate = async (
   userId: string,
   email: string,
@@ -189,7 +187,6 @@ export const sendLoyaltyPointsUpdate = async (
   });
 };
 
-// Helper function for marketing promotions
 export const sendPromotionalNotification = async (
   userIds: string[],
   userEmails: string[],
