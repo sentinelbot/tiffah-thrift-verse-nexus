@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Search, ShoppingBag, Heart, User, Menu, X } from "lucide-react";
+import { Search, ShoppingBag, Heart, User, Menu, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,11 +12,13 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 md:px-6">
@@ -104,11 +106,40 @@ const Navbar = () => {
             </Link>
           </Button>
           
-          <Button variant="ghost" size="icon" className="touch-target" asChild>
-            <Link to="/account">
-              <User className="h-5 w-5" />
-            </Link>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="touch-target">
+                <User className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {user ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/account" className="w-full">My Account</Link>
+                  </DropdownMenuItem>
+                  
+                  {/* Show admin link for staff roles */}
+                  {user.role !== 'customer' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="w-full">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    Sign Out
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem asChild>
+                  <Link to="/auth" className="w-full">Sign In / Register</Link>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       

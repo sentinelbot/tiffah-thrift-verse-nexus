@@ -9,7 +9,145 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      product_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_images: {
+        Row: {
+          alt: string | null
+          created_at: string
+          display_order: number
+          id: string
+          is_main: boolean
+          product_id: string
+          url: string
+        }
+        Insert: {
+          alt?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_main?: boolean
+          product_id: string
+          url: string
+        }
+        Update: {
+          alt?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_main?: boolean
+          product_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          added_by: string | null
+          barcode: string
+          brand: string | null
+          category: string
+          color: string | null
+          condition: Database["public"]["Enums"]["product_condition"]
+          date_added: string
+          description: string | null
+          featured: boolean
+          id: string
+          inventory_tracking: Json | null
+          last_updated: string
+          measurements: Json | null
+          name: string
+          original_price: number | null
+          price: number
+          size: string | null
+          status: string
+          sub_category: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          added_by?: string | null
+          barcode: string
+          brand?: string | null
+          category: string
+          color?: string | null
+          condition: Database["public"]["Enums"]["product_condition"]
+          date_added?: string
+          description?: string | null
+          featured?: boolean
+          id?: string
+          inventory_tracking?: Json | null
+          last_updated?: string
+          measurements?: Json | null
+          name: string
+          original_price?: number | null
+          price: number
+          size?: string | null
+          status?: string
+          sub_category?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          added_by?: string | null
+          barcode?: string
+          brand?: string | null
+          category?: string
+          color?: string | null
+          condition?: Database["public"]["Enums"]["product_condition"]
+          date_added?: string
+          description?: string | null
+          featured?: boolean
+          id?: string
+          inventory_tracking?: Json | null
+          last_updated?: string
+          measurements?: Json | null
+          name?: string
+          original_price?: number | null
+          price?: number
+          size?: string | null
+          status?: string
+          sub_category?: string | null
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +156,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      product_condition: "new" | "likeNew" | "good" | "fair"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +271,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      product_condition: ["new", "likeNew", "good", "fair"],
+    },
   },
 } as const
