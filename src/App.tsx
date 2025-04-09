@@ -24,6 +24,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import Products from "./pages/admin/Products";
 import ProductForm from "./pages/admin/ProductForm";
 import Categories from "./pages/admin/Categories";
+import Users from "./pages/admin/Users";
 
 const App = () => {
   // Create a new QueryClient instance inside the component
@@ -87,6 +88,14 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <Categories />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <Users />
                   </ProtectedRoute>
                 } 
               />
