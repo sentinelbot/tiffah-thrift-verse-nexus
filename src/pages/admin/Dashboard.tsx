@@ -8,6 +8,7 @@ import { StatsCard } from '@/components/admin/dashboard/StatsCard';
 import { InventoryOverview } from '@/components/admin/inventory/InventoryOverview';
 import { OrdersTable } from '@/components/admin/orders/OrdersTable';
 import { StaffPerformance } from '@/components/admin/staff/StaffPerformance';
+import { Card } from '@/components/ui/card';
 import { 
   ShoppingBag, Package, Users, TrendingUp, CreditCard, Clock, BarChart3, Calendar 
 } from 'lucide-react';

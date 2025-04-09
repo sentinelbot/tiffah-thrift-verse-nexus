@@ -18,7 +18,11 @@ import { useCart } from "@/context/CartContext";
 import { ShippingForm } from "@/components/checkout/ShippingForm";
 import { PaymentMethod } from "@/components/checkout/PaymentMethod";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { createOrder } from "@/services/orderService";
+import { processPayment } from "@/services/paymentService";
+import { useAuth } from "@/contexts/AuthContext";
+import { PaymentMethod as PaymentMethodType, PaymentStatus, ShippingInfo } from "@/types/order";
 
 const steps = [
   { id: "shipping", title: "Shipping" },
@@ -27,19 +31,9 @@ const steps = [
 ];
 
 interface CheckoutData {
-  shipping: {
-    fullName: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    shippingMethod: string;
-  };
+  shipping: ShippingInfo;
   payment: {
-    method: string;
+    method: PaymentMethodType;
     cardName?: string;
     cardNumber?: string;
     expiryDate?: string;
@@ -69,14 +63,20 @@ const defaultData: CheckoutData = {
 const Checkout = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<CheckoutData>(defaultData);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { cartItems, calculateCartTotal, clearCart } = useCart();
   
   // Calculate costs
   const subtotal = calculateCartTotal();
-  const shippingCost = formData.shipping.shippingMethod === "express" ? 9.99 : 5.99;
-  const total = subtotal + shippingCost;
+  const shippingCost = formData.shipping.shippingMethod === "express" ? 500 : 200;
+  // VAT (16% in Kenya)
+  const vatRate = 0.16;
+  const vatAmount = subtotal * vatRate;
+  const total = subtotal + shippingCost + vatAmount;
   
   // Ensure cart is not empty
   if (cartItems.length === 0) {
@@ -95,6 +95,103 @@ const Checkout = () => {
   };
   
   const handleNext = () => {
+    // Validate shipping info
+    if (currentStep === 0) {
+      const { fullName, email, phone, address, city, state, postalCode } = formData.shipping;
+      if (!fullName || !email || !phone || !address || !city || !state || !postalCode) {
+        toast({
+          title: "Please fill in all required fields",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        toast({
+          title: "Invalid email address",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Validate phone number (Kenyan format)
+      const phoneRegex = /^(?:\+254|0)[1-9][0-9]{8}$/;
+      if (!phoneRegex.test(phone)) {
+        toast({
+          title: "Invalid phone number",
+          description: "Please enter a valid Kenyan phone number",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
+    // Validate payment info
+    if (currentStep === 1) {
+      const { method, cardName, cardNumber, expiryDate, cvv, mpesaPhone } = formData.payment;
+      
+      if (method === "card") {
+        if (!cardName || !cardNumber || !expiryDate || !cvv) {
+          toast({
+            title: "Please fill in all card details",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Validate card number
+        if (!/^[0-9]{16}$/.test(cardNumber.replace(/\s/g, ""))) {
+          toast({
+            title: "Invalid card number",
+            description: "Please enter a valid 16-digit card number",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Validate expiry date
+        if (!/^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(expiryDate)) {
+          toast({
+            title: "Invalid expiry date",
+            description: "Please enter a valid expiry date (MM/YY)",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Validate CVV
+        if (!/^[0-9]{3,4}$/.test(cvv)) {
+          toast({
+            title: "Invalid CVV",
+            description: "Please enter a valid CVV (3 or 4 digits)",
+            variant: "destructive"
+          });
+          return;
+        }
+      } else if (method === "mpesa") {
+        if (!mpesaPhone) {
+          toast({
+            title: "Please enter your M-Pesa phone number",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Validate Mpesa phone number (Kenyan format)
+        const phoneRegex = /^(?:\+254|0)[1-9][0-9]{8}$/;
+        if (!phoneRegex.test(mpesaPhone)) {
+          toast({
+            title: "Invalid M-Pesa phone number",
+            description: "Please enter a valid Kenyan phone number",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+    }
+    
     setCurrentStep((prev) => prev + 1);
     window.scrollTo(0, 0);
   };
@@ -104,20 +201,71 @@ const Checkout = () => {
     window.scrollTo(0, 0);
   };
   
-  const handleComplete = () => {
-    // In a real application, we would submit the order to the backend here
-    toast({
-      title: "Order placed successfully!",
-      description: "Your order has been placed and will be processed shortly.",
-    });
+  const handleComplete = async () => {
+    setIsProcessing(true);
     
-    // Clear the cart after successful order
-    clearCart();
-    
-    // Navigate to confirmation page or home
-    setTimeout(() => {
-      navigate("/");
-    }, 3000);
+    try {
+      // Process payment first
+      const paymentResult = await processPayment(
+        formData.payment.method,
+        total,
+        "TMP-" + Date.now(), // Temporary order number
+        formData.payment
+      );
+      
+      if (!paymentResult.success && formData.payment.method !== 'cash') {
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Prepare order items
+      const orderItems = cartItems.map(item => ({
+        productId: item.product.id,
+        product: {
+          id: item.product.id,
+          title: item.product.title,
+          price: item.product.price,
+          imageUrl: item.product.imageUrl
+        },
+        quantity: item.quantity,
+        price: item.product.price
+      }));
+      
+      // Create order
+      const order = await createOrder({
+        customer: {
+          id: user?.id || 'guest',
+          name: formData.shipping.fullName,
+          email: formData.shipping.email
+        },
+        items: orderItems,
+        totalAmount: total,
+        paymentInfo: {
+          method: formData.payment.method,
+          status: paymentResult.status || 'pending',
+          transactionId: paymentResult.transactionId,
+          amount: total
+        },
+        shippingInfo: formData.shipping,
+        deliveryInfo: {
+          estimatedDelivery: new Date(Date.now() + (formData.shipping.shippingMethod === 'express' ? 2 : 5) * 24 * 60 * 60 * 1000)
+        }
+      });
+      
+      // Clear the cart after successful order
+      clearCart();
+      
+      // Navigate to order confirmation page
+      navigate("/order-confirmation", { state: { orderId: order.id } });
+    } catch (error) {
+      console.error("Error processing order:", error);
+      toast({
+        title: "Error processing your order",
+        description: "Please try again or contact customer support.",
+        variant: "destructive"
+      });
+      setIsProcessing(false);
+    }
   };
   
   return (
@@ -243,15 +391,35 @@ const Checkout = () => {
                               <div>
                                 <p className="text-sm font-medium">{item.product.title}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  Qty: {item.quantity} × ${item.product.price.toFixed(2)}
+                                  Qty: {item.quantity} × KSh {item.product.price.toFixed(2)}
                                 </p>
                               </div>
                             </div>
                             <span className="text-sm">
-                              ${(item.product.price * item.quantity).toFixed(2)}
+                              KSh {(item.product.price * item.quantity).toFixed(2)}
                             </span>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 ml-auto w-full max-w-[240px]">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Subtotal:</span>
+                        <span>KSh {subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>VAT (16%):</span>
+                        <span>KSh {vatAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Shipping:</span>
+                        <span>KSh {shippingCost.toFixed(2)}</span>
+                      </div>
+                      <Separator className="my-2" />
+                      <div className="flex justify-between font-bold">
+                        <span>Total:</span>
+                        <span>KSh {total.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -259,7 +427,7 @@ const Checkout = () => {
               </CardContent>
               <CardFooter className="flex justify-between">
                 {currentStep > 0 ? (
-                  <Button variant="outline" onClick={handleBack}>
+                  <Button variant="outline" onClick={handleBack} disabled={isProcessing}>
                     Back
                   </Button>
                 ) : (
@@ -271,8 +439,15 @@ const Checkout = () => {
                     Continue
                   </Button>
                 ) : (
-                  <Button onClick={handleComplete}>
-                    Place Order
+                  <Button onClick={handleComplete} disabled={isProcessing}>
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Place Order"
+                    )}
                   </Button>
                 )}
               </CardFooter>
@@ -282,7 +457,8 @@ const Checkout = () => {
           <div>
             <OrderSummary 
               subtotal={subtotal} 
-              shippingCost={shippingCost} 
+              shippingCost={shippingCost}
+              vatAmount={vatAmount} 
               total={total} 
             />
           </div>

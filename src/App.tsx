@@ -20,6 +20,8 @@ import Account from "./pages/Account";
 import Auth from "./pages/Auth";
 import Unauthorized from "./pages/Unauthorized";
 import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import OrderDetail from "./pages/OrderDetail";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -50,7 +52,29 @@ const App = () => {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/account" element={<Account />} />
+                
+                {/* Protected Customer Routes */}
+                <Route 
+                  path="/account" 
+                  element={
+                    <ProtectedRoute allowedRoles={['customer', 'admin', 'productManager', 'orderPreparer', 'deliveryStaff']}>
+                      <Account />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route
+                  path="/order-confirmation"
+                  element={<OrderConfirmation />}
+                />
+                <Route
+                  path="/order/:id"
+                  element={
+                    <ProtectedRoute allowedRoles={['customer', 'admin', 'productManager', 'orderPreparer', 'deliveryStaff']}>
+                      <OrderDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 

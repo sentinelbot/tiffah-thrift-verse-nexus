@@ -1,12 +1,12 @@
 
 import { Card, CardContent } from '@/components/ui/card';
-import { IconProps } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface StatsCardProps {
   title: string;
   value: string | number;
   description: string;
-  icon: React.ComponentType<IconProps>;
+  icon: LucideIcon;
   trend?: {
     value: string;
     positive: boolean;
