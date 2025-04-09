@@ -18,6 +18,7 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
     const contextProduct: ContextProductType = {
       ...product,
       condition: product.condition || 'good', // Provide default if missing
+      originalPrice: product.originalPrice || undefined, // Handle originalPrice properly
     };
     
     // Pass the product and quantity 1 as arguments
@@ -30,6 +31,7 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
     const contextProduct: ContextProductType = {
       ...product,
       condition: product.condition || 'good', // Provide default if missing
+      originalPrice: product.originalPrice || undefined, // Handle originalPrice properly
     };
     
     addToWishlist(contextProduct);

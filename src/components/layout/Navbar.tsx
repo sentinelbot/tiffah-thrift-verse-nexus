@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Heart, ShoppingBag, UserCircle2, LogOut, LayoutDashboard, FolderClosed } from "lucide-react";
+import { Menu, Heart, ShoppingBag, UserCircle2, LogOut, LayoutDashboard, FolderClosed, HelpCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import EnhancedSearch from "../shop/EnhancedSearch";
 import NotificationCenter from '../notifications/NotificationCenter';
@@ -24,6 +24,11 @@ const Navbar = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+  
+  // Function to convert price to Kenyan Shillings format
+  const formatKES = (amount: number) => {
+    return `KSh ${amount.toLocaleString()}`;
   };
 
   return (
@@ -57,18 +62,29 @@ const Navbar = () => {
 
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
-            <EnhancedSearch 
-              onSearch={(query, enhancedResults) => {
-                if (!query) return;
-                navigate(`/shop?q=${encodeURIComponent(query)}`);
-              }}
-            />
-            <Link to="/wishlist">
+            <div className="hidden md:block">
+              <EnhancedSearch 
+                onSearch={(query, enhancedResults) => {
+                  if (!query) return;
+                  navigate(`/shop?q=${encodeURIComponent(query)}`);
+                }}
+              />
+            </div>
+            
+            <Link to="/help" className="hidden md:flex">
+              <Button variant="ghost" size="icon" className="relative">
+                <HelpCircle className="h-5 w-5" />
+                <span className="sr-only">Help</span>
+              </Button>
+            </Link>
+            
+            <Link to="/wishlist" className="hidden sm:flex">
               <Button variant="ghost" size="icon">
                 <Heart className="h-5 w-5" />
                 <span className="sr-only">Wishlist</span>
               </Button>
             </Link>
+            
             <Link to="/cart">
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingBag className="h-5 w-5" />
@@ -113,6 +129,12 @@ const Navbar = () => {
                       <span>Orders</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/help">
+                      <HelpCircle className="mr-2 h-4 w-4" />
+                      <span>Help Center</span>
+                    </Link>
+                  </DropdownMenuItem>
                   
                   {/* Admin links for admin users */}
                   {user.role === 'admin' && (
@@ -121,7 +143,7 @@ const Navbar = () => {
                       <DropdownMenuItem asChild>
                         <Link to="/admin">
                           <LayoutDashboard className="mr-2 h-4 w-4" />
-                          <span>Dashboard</span>
+                          <span>Admin Dashboard</span>
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -165,6 +187,15 @@ const Navbar = () => {
                   <Link to="/" className="flex items-center" onClick={() => setIsMenuOpen(false)}>
                     <span className="font-bold text-2xl text-primary">Tiffah</span>
                   </Link>
+                  <div className="mt-4">
+                    <EnhancedSearch 
+                      onSearch={(query, enhancedResults) => {
+                        if (!query) return;
+                        navigate(`/shop?q=${encodeURIComponent(query)}`);
+                        setIsMenuOpen(false);
+                      }}
+                    />
+                  </div>
                   <div className="mt-8 space-y-4">
                     <Link to="/shop" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
                       Shop
@@ -184,6 +215,12 @@ const Navbar = () => {
                     <Link to="/category/shoes" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
                       Shoes
                     </Link>
+                    <Link to="/help" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                      Help Center
+                    </Link>
+                    <Link to="/wishlist" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                      Wishlist
+                    </Link>
                     {user ? (
                       <>
                         <Link to="/account" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
@@ -191,7 +228,12 @@ const Navbar = () => {
                         </Link>
                         {user.role === 'admin' && (
                           <Link to="/admin" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                            Admin
+                            Admin Dashboard
+                          </Link>
+                        )}
+                        {['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role) && (
+                          <Link to="/staff" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
+                            Staff Dashboard
                           </Link>
                         )}
                         <Button variant="link" size="sm" className="block p-0" onClick={handleSignOut}>

@@ -1,19 +1,20 @@
 
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Define which routes each staff role can access
 const roleAccessMap: Record<string, string[]> = {
   'admin': ['*'], // Admin can access all routes
-  'productManager': ['/admin/products', '/admin/categories', '/admin/ai', '/admin/printing', '/admin/scanning', '/admin/communications'],
-  'orderPreparer': ['/admin/orders', '/admin/printing', '/admin/scanning', '/admin/communications'],
-  'deliveryStaff': ['/admin/orders', '/admin/printing', '/admin/scanning', '/admin/communications'],
+  'productManager': ['/staff/products', '/staff/categories', '/staff/ai', '/staff/printing', '/staff/scanning', '/staff/communications'],
+  'orderPreparer': ['/staff/orders', '/staff/printing', '/staff/scanning', '/staff/communications'],
+  'deliveryStaff': ['/staff/orders', '/staff/printing', '/staff/scanning', '/staff/communications'],
 };
 
 const StaffRoutes = () => {
   const { user, isLoading } = useAuth();
-  const currentPath = window.location.pathname;
+  const location = useLocation();
+  const currentPath = location.pathname;
   
   // Show loading indicator while authentication status is being determined
   if (isLoading) {
@@ -29,7 +30,8 @@ const StaffRoutes = () => {
   
   // If user is not logged in or not a staff member, redirect to login
   if (!user || !['admin', 'productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role)) {
-    return <Navigate to="/auth" replace />;
+    // Save the attempted URL for redirecting after login
+    return <Navigate to={`/auth?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
   
   // If admin, allow access to all routes
@@ -49,11 +51,11 @@ const StaffRoutes = () => {
     // Redirect to their role-specific dashboard or main admin page
     switch (user.role) {
       case 'productManager':
-        return <Navigate to="/admin/products" replace />;
+        return <Navigate to="/staff/products" replace />;
       case 'orderPreparer':
-        return <Navigate to="/admin/orders" replace />;
+        return <Navigate to="/staff/orders" replace />;
       case 'deliveryStaff':
-        return <Navigate to="/admin/orders" replace />;
+        return <Navigate to="/staff/orders" replace />;
       default:
         return <Navigate to="/unauthorized" replace />;
     }

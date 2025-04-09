@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminRoutes = () => {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
   
   // Show loading indicator while authentication status is being determined
   if (isLoading) {
@@ -20,7 +21,8 @@ const AdminRoutes = () => {
   
   // If user is not admin, redirect to unauthorized
   if (!user || user.role !== 'admin') {
-    return <Navigate to="/unauthorized" replace />;
+    // Save the attempted URL for redirecting after login
+    return <Navigate to={`/auth?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
   
   // Return an outlet for nested routes

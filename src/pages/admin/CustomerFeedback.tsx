@@ -1,365 +1,549 @@
 
 import { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
-  CardTitle 
+  CardTitle,
+  CardFooter
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger 
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { 
+  MessageSquare, 
+  Star, 
   Search, 
   Filter, 
-  Star, 
-  MessageSquare, 
   Send, 
-  ChevronLeft, 
-  ChevronRight,
-  User,
-  Calendar,
-  ThumbsUp,
-  ThumbsDown,
-  BarChart2,
-  CheckCircle,
-  Clock,
+  CheckCircle2, 
+  Clock, 
+  AlertCircle,
   XCircle,
-  FileText,
-  MessageCircle
+  BarChart,
+  Users,
+  Calendar,
+  ShoppingBag,
+  Tag,
+  MoreHorizontal,
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-type FeedbackStatus = 'new' | 'reviewed' | 'responded' | 'resolved';
-
-interface CustomerFeedback {
+interface Feedback {
   id: string;
-  customer_id: string;
-  customer_name: string;
-  customer_email: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  customerAvatar: string;
   rating: number;
-  message: string;
-  category: string;
-  status: FeedbackStatus;
-  created_at: string;
-  product_id?: string;
-  product_name?: string;
-  order_id?: string;
-  responded_at?: string;
-  staff_notes?: string;
+  comment: string;
+  status: 'new' | 'under_review' | 'responded' | 'closed';
+  category: 'product' | 'service' | 'delivery' | 'website' | 'general';
+  productId?: string;
+  productName?: string;
+  createdAt: string;
+  response?: {
+    text: string;
+    respondedBy: string;
+    respondedAt: string;
+  };
+  orderNumber?: string;
 }
 
-const mockFeedback: CustomerFeedback[] = [
+// Mock feedback data
+const mockFeedback: Feedback[] = [
   {
     id: '1',
-    customer_id: 'cust1',
-    customer_name: 'Jane Smith',
-    customer_email: 'jane.smith@example.com',
-    rating: 5,
-    message: 'I love the vintage dress I purchased! The quality exceeded my expectations and it fits perfectly.',
-    category: 'product_quality',
+    customerId: 'cust_001',
+    customerName: 'Jane Smith',
+    customerEmail: 'jane.smith@example.com',
+    customerAvatar: '/placeholder.svg',
+    rating: 4,
+    comment: 'The dress I ordered arrived quickly and was exactly as described. Very happy with my purchase!',
     status: 'new',
-    created_at: '2023-04-05T10:20:30Z',
-    product_id: 'prod123',
-    product_name: 'Vintage Floral Dress',
-    order_id: 'order456'
+    category: 'product',
+    productId: 'prod_123',
+    productName: 'Vintage Summer Dress',
+    createdAt: '2023-04-08T14:30:00Z',
+    orderNumber: 'TTS-20230405-1234'
   },
   {
     id: '2',
-    customer_id: 'cust2',
-    customer_name: 'Michael Johnson',
-    customer_email: 'michael.j@example.com',
+    customerId: 'cust_002',
+    customerName: 'Michael Johnson',
+    customerEmail: 'michael.j@example.com',
+    customerAvatar: '/placeholder.svg',
     rating: 2,
-    message: 'The delivery took much longer than expected. I waited almost two weeks for my order to arrive.',
-    category: 'delivery',
-    status: 'reviewed',
-    created_at: '2023-04-03T14:15:10Z',
-    order_id: 'order457'
+    comment: 'The shirt I received had a small stain that wasn\'t mentioned in the description. Disappointed with the quality control.',
+    status: 'responded',
+    category: 'product',
+    productId: 'prod_456',
+    productName: 'Men\'s Casual Shirt',
+    createdAt: '2023-04-07T09:15:00Z',
+    response: {
+      text: 'We're very sorry about this experience. We've issued a full refund and would like to offer you a 15% discount on your next purchase. Please check your email for details.',
+      respondedBy: 'Admin',
+      respondedAt: '2023-04-07T11:30:00Z'
+    },
+    orderNumber: 'TTS-20230403-0987'
   },
   {
     id: '3',
-    customer_id: 'cust3',
-    customer_name: 'Sarah Williams',
-    customer_email: 'sarah.w@example.com',
-    rating: 4,
-    message: 'The leather jacket is amazing, but one button was loose when it arrived. Easy fix though!',
-    category: 'product_quality',
-    status: 'responded',
-    created_at: '2023-04-02T09:45:20Z',
-    product_id: 'prod124',
-    product_name: 'Vintage Leather Jacket',
-    order_id: 'order458',
-    responded_at: '2023-04-02T11:30:00Z',
-    staff_notes: 'Offered partial refund or replacement. Customer chose refund.'
+    customerId: 'cust_003',
+    customerName: 'Sarah Williams',
+    customerEmail: 'sarah.w@example.com',
+    customerAvatar: '/placeholder.svg',
+    rating: 5,
+    comment: 'Amazing customer service! I had a question about sizing and got a response within minutes. The jeans fit perfectly.',
+    status: 'under_review',
+    category: 'service',
+    productId: 'prod_789',
+    productName: 'Vintage Denim Jeans',
+    createdAt: '2023-04-06T16:45:00Z',
+    orderNumber: 'TTS-20230402-5678'
   },
   {
     id: '4',
-    customer_id: 'cust4',
-    customer_name: 'David Brown',
-    customer_email: 'david.b@example.com',
-    rating: 5,
-    message: 'Your customer service team was extremely helpful when I needed to change my shipping address. Thank you!',
-    category: 'customer_service',
-    status: 'resolved',
-    created_at: '2023-04-01T16:50:00Z',
-    order_id: 'order459',
-    responded_at: '2023-04-01T17:30:00Z',
-    staff_notes: 'Address was updated successfully. Customer was very appreciative.'
+    customerId: 'cust_004',
+    customerName: 'Daniel Brown',
+    customerEmail: 'daniel.b@example.com',
+    customerAvatar: '/placeholder.svg',
+    rating: 3,
+    comment: 'Delivery took longer than expected, but the product quality was good. Would appreciate faster shipping next time.',
+    status: 'closed',
+    category: 'delivery',
+    productId: 'prod_321',
+    productName: 'Leather Jacket',
+    createdAt: '2023-04-05T12:20:00Z',
+    response: {
+      text: 'Thank you for your feedback. We're working on improving our delivery times and will take your comments into consideration.',
+      respondedBy: 'Admin',
+      respondedAt: '2023-04-05T15:10:00Z'
+    },
+    orderNumber: 'TTS-20230330-4321'
   },
   {
     id: '5',
-    customer_id: 'cust5',
-    customer_name: 'Emily Davis',
-    customer_email: 'emily.d@example.com',
-    rating: 3,
-    message: 'The website is a bit confusing to navigate, especially the filtering options in the shop section.',
-    category: 'website',
+    customerId: 'cust_005',
+    customerName: 'Emily Wilson',
+    customerEmail: 'emily.w@example.com',
+    customerAvatar: '/placeholder.svg',
+    rating: 5,
+    comment: 'The website is so easy to navigate and I love the filter options. Found exactly what I was looking for in minutes!',
     status: 'new',
-    created_at: '2023-03-30T11:20:40Z'
+    category: 'website',
+    createdAt: '2023-04-04T10:05:00Z'
+  },
+  {
+    id: '6',
+    customerId: 'cust_006',
+    customerName: 'Robert Taylor',
+    customerEmail: 'robert.t@example.com',
+    customerAvatar: '/placeholder.svg',
+    rating: 4,
+    comment: 'Great selection of vintage items. I particularly like the sustainable fashion section. Would recommend to friends.',
+    status: 'new',
+    category: 'general',
+    createdAt: '2023-04-03T18:30:00Z'
   }
 ];
 
-const CustomerFeedbackPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+const CustomerFeedback = () => {
+  const [feedback, setFeedback] = useState<Feedback[]>(mockFeedback);
+  const [activeTab, setActiveTab] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [ratingFilter, setRatingFilter] = useState<string>('all');
-  const [selectedFeedback, setSelectedFeedback] = useState<CustomerFeedback | null>(null);
-  const [responseText, setResponseText] = useState('');
-  const [feedback, setFeedback] = useState<CustomerFeedback[]>(mockFeedback);
-  const [isResponding, setIsResponding] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
+  const [responseText, setResponseText] = useState<string>('');
+  const [isResponseDialogOpen, setIsResponseDialogOpen] = useState<boolean>(false);
   
+  // Filter feedback based on active tab, search query, and filters
   const filteredFeedback = feedback.filter(item => {
-    // Search filter
-    const searchMatch = 
-      item.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.product_name && item.product_name.toLowerCase().includes(searchQuery.toLowerCase()));
+    // Tab filter
+    if (activeTab !== 'all' && item.status !== activeTab) {
+      return false;
+    }
+    
+    // Search query
+    if (searchQuery && !(
+      item.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.comment.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.productName && item.productName.toLowerCase().includes(searchQuery.toLowerCase()))
+    )) {
+      return false;
+    }
     
     // Status filter
-    const statusMatch = statusFilter === 'all' || item.status === statusFilter;
+    if (statusFilter !== 'all' && item.status !== statusFilter) {
+      return false;
+    }
     
     // Category filter
-    const categoryMatch = categoryFilter === 'all' || item.category === categoryFilter;
+    if (categoryFilter !== 'all' && item.category !== categoryFilter) {
+      return false;
+    }
     
     // Rating filter
-    const ratingMatch = ratingFilter === 'all' || item.rating === parseInt(ratingFilter);
+    if (ratingFilter !== 'all') {
+      const ratingNumber = parseInt(ratingFilter, 10);
+      if (item.rating !== ratingNumber) {
+        return false;
+      }
+    }
     
-    return searchMatch && statusMatch && categoryMatch && ratingMatch;
+    return true;
   });
   
-  // Get counts for status tabs
-  const getCounts = () => {
-    const all = feedback.length;
-    const newCount = feedback.filter(item => item.status === 'new').length;
-    const reviewedCount = feedback.filter(item => item.status === 'reviewed').length;
-    const respondedCount = feedback.filter(item => item.status === 'responded').length;
-    const resolvedCount = feedback.filter(item => item.status === 'resolved').length;
-    
-    return { all, newCount, reviewedCount, respondedCount, resolvedCount };
+  // Calculate statistics
+  const stats = {
+    totalFeedback: feedback.length,
+    averageRating: feedback.reduce((sum, item) => sum + item.rating, 0) / feedback.length,
+    newFeedback: feedback.filter(item => item.status === 'new').length,
+    respondedFeedback: feedback.filter(item => item.status === 'responded').length,
+    categoryBreakdown: {
+      product: feedback.filter(item => item.category === 'product').length,
+      service: feedback.filter(item => item.category === 'service').length,
+      delivery: feedback.filter(item => item.category === 'delivery').length,
+      website: feedback.filter(item => item.category === 'website').length,
+      general: feedback.filter(item => item.category === 'general').length
+    }
   };
   
-  const counts = getCounts();
-  
+  // Handle sending a response
   const handleSendResponse = () => {
-    if (!selectedFeedback) return;
-    if (!responseText.trim()) {
-      toast.error('Please enter a response message');
-      return;
-    }
+    if (!selectedFeedback || !responseText.trim()) return;
     
-    setIsResponding(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      // Update the feedback item
-      const updatedFeedback = feedback.map(item => {
-        if (item.id === selectedFeedback.id) {
-          return {
-            ...item,
-            status: 'responded',
-            responded_at: new Date().toISOString(),
-            staff_notes: (item.staff_notes ? item.staff_notes + '\n\n' : '') + 
-              `Response sent (${new Date().toLocaleString()}):\n${responseText}`
-          };
-        }
-        return item;
-      });
-      
-      setFeedback(updatedFeedback);
-      setResponseText('');
-      setIsResponding(false);
-      toast.success('Response sent successfully');
-      
-      // Update the selected feedback
-      const updated = updatedFeedback.find(item => item.id === selectedFeedback.id);
-      if (updated) setSelectedFeedback(updated);
-    }, 1500);
-  };
-  
-  const markAsReviewed = (id: string) => {
     const updatedFeedback = feedback.map(item => {
-      if (item.id === id && item.status === 'new') {
-        return { ...item, status: 'reviewed' };
+      if (item.id === selectedFeedback.id) {
+        return {
+          ...item,
+          status: 'responded' as const,
+          response: {
+            text: responseText,
+            respondedBy: 'Admin',
+            respondedAt: new Date().toISOString()
+          }
+        };
       }
       return item;
     });
     
     setFeedback(updatedFeedback);
-    
-    // Update selected feedback if it's the one being marked
-    if (selectedFeedback && selectedFeedback.id === id) {
-      const updated = updatedFeedback.find(item => item.id === id);
-      if (updated) setSelectedFeedback(updated);
-    }
-    
-    toast.success('Feedback marked as reviewed');
+    setResponseText('');
+    setIsResponseDialogOpen(false);
+    toast.success('Response sent successfully');
   };
   
-  const markAsResolved = (id: string) => {
+  // Handle changing feedback status
+  const handleChangeStatus = (id: string, newStatus: 'new' | 'under_review' | 'responded' | 'closed') => {
     const updatedFeedback = feedback.map(item => {
-      if (item.id === id && (item.status === 'responded' || item.status === 'reviewed')) {
-        return { ...item, status: 'resolved' };
+      if (item.id === id) {
+        return {
+          ...item,
+          status: newStatus
+        };
       }
       return item;
     });
     
     setFeedback(updatedFeedback);
-    
-    // Update selected feedback if it's the one being marked
-    if (selectedFeedback && selectedFeedback.id === id) {
-      const updated = updatedFeedback.find(item => item.id === id);
-      if (updated) setSelectedFeedback(updated);
-    }
-    
-    toast.success('Feedback marked as resolved');
+    toast.success(`Feedback status updated to ${newStatus.replace('_', ' ')}`);
   };
   
-  const getFeedbackStatusBadge = (status: FeedbackStatus) => {
-    switch(status) {
-      case 'new':
-        return <Badge className="bg-blue-500">New</Badge>;
-      case 'reviewed':
-        return <Badge variant="outline" className="border-yellow-500 text-yellow-500">Reviewed</Badge>;
-      case 'responded':
-        return <Badge variant="outline" className="border-green-500 text-green-500">Responded</Badge>;
-      case 'resolved':
-        return <Badge variant="outline" className="border-green-700 text-green-700">Resolved</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-  
-  const renderStars = (rating: number) => {
+  // Render star rating
+  const renderStarRating = (rating: number) => {
     return (
-      <div className="flex">
-        {Array.from({ length: 5 }).map((_, index) => (
+      <div className="flex items-center">
+        {[...Array(5)].map((_, i) => (
           <Star
-            key={index}
-            className={`h-4 w-4 ${
-              index < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-            }`}
+            key={i}
+            className={`h-4 w-4 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
           />
         ))}
+        <span className="ml-1 text-sm font-medium">{rating}/5</span>
       </div>
     );
+  };
+  
+  // Get status badge
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'new':
+        return <Badge variant="secondary">New</Badge>;
+      case 'under_review':
+        return <Badge variant="outline" className="bg-blue-500/20 text-blue-500">Under Review</Badge>;
+      case 'responded':
+        return <Badge variant="outline" className="bg-green-500/20 text-green-500">Responded</Badge>;
+      case 'closed':
+        return <Badge variant="outline" className="bg-gray-500/20 text-gray-500">Closed</Badge>;
+      default:
+        return null;
+    }
+  };
+  
+  // Get category badge
+  const getCategoryBadge = (category: string) => {
+    switch (category) {
+      case 'product':
+        return <Badge variant="outline" className="bg-purple-500/20 text-purple-500">Product</Badge>;
+      case 'service':
+        return <Badge variant="outline" className="bg-blue-500/20 text-blue-500">Service</Badge>;
+      case 'delivery':
+        return <Badge variant="outline" className="bg-orange-500/20 text-orange-500">Delivery</Badge>;
+      case 'website':
+        return <Badge variant="outline" className="bg-green-500/20 text-green-500">Website</Badge>;
+      case 'general':
+        return <Badge variant="outline" className="bg-gray-500/20 text-gray-500">General</Badge>;
+      default:
+        return null;
+    }
   };
   
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">Customer Feedback</h1>
             <p className="text-muted-foreground">
-              Manage and respond to customer feedback and ratings
+              Manage and respond to customer feedback and reviews
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline">
-              <BarChart2 className="mr-2 h-4 w-4" />
-              Analytics
-            </Button>
+          
+          <div className="flex items-center gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <BarChart className="mr-2 h-4 w-4" />
+                  View Analytics
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Feedback Analytics</DialogTitle>
+                  <DialogDescription>
+                    Overview of customer feedback trends and ratings
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="py-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <Card>
+                      <CardContent className="pt-6 text-center">
+                        <div className="text-3xl font-bold">{stats.averageRating.toFixed(1)}</div>
+                        <div className="text-sm text-muted-foreground">Average Rating</div>
+                        <div className="flex justify-center mt-2">
+                          {renderStarRating(Math.round(stats.averageRating))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6 text-center">
+                        <div className="text-3xl font-bold">{stats.totalFeedback}</div>
+                        <div className="text-sm text-muted-foreground">Total Feedback</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6 text-center">
+                        <div className="text-3xl font-bold">{stats.newFeedback}</div>
+                        <div className="text-sm text-muted-foreground">New Feedback</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <h3 className="text-lg font-semibold mb-3">Feedback by Category</h3>
+                  <div className="space-y-3">
+                    {Object.entries(stats.categoryBreakdown).map(([category, count]) => (
+                      <div key={category} className="flex items-center">
+                        <div className="w-32 capitalize">{category}</div>
+                        <div className="flex-1">
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                            <div 
+                              className="bg-primary h-2.5 rounded-full" 
+                              style={{ width: `${(count / stats.totalFeedback) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        <div className="w-12 text-right">{count}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
             <Button>
-              <FileText className="mr-2 h-4 w-4" />
-              Export Report
+              <Send className="mr-2 h-4 w-4" />
+              Share Report
             </Button>
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="w-full sm:w-auto relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by customer, product, or keyword..." 
-              className="pl-10 w-full sm:w-[300px] md:w-[400px]"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <div className="rounded-full p-2 bg-primary/10">
+                  <MessageSquare className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{feedback.length}</div>
+                  <div className="text-sm text-muted-foreground">Total Feedback</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <div className="rounded-full p-2 bg-yellow-500/10">
+                  <Star className="h-6 w-6 text-yellow-500" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{stats.averageRating.toFixed(1)}</div>
+                  <div className="text-sm text-muted-foreground">Average Rating</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <div className="rounded-full p-2 bg-blue-500/10">
+                  <Clock className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{feedback.filter(item => item.status === 'new').length}</div>
+                  <div className="text-sm text-muted-foreground">Awaiting Response</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <div className="rounded-full p-2 bg-green-500/10">
+                  <CheckCircle2 className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{feedback.filter(item => item.status === 'responded' || item.status === 'closed').length}</div>
+                  <div className="text-sm text-muted-foreground">Resolved</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+          <div className="flex justify-between items-start mb-6">
+            <TabsList>
+              <TabsTrigger value="all">All Feedback</TabsTrigger>
+              <TabsTrigger value="new">New</TabsTrigger>
+              <TabsTrigger value="under_review">Under Review</TabsTrigger>
+              <TabsTrigger value="responded">Responded</TabsTrigger>
+              <TabsTrigger value="closed">Closed</TabsTrigger>
+            </TabsList>
+            
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search feedback..."
+                  className="pl-8 w-[200px]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute right-0 top-0 h-full"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          
+          <div className="flex flex-wrap gap-2 mb-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[150px]">
                 <Filter className="mr-2 h-4 w-4" />
-                <span>Status</span>
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="new">New</SelectItem>
-                <SelectItem value="reviewed">Reviewed</SelectItem>
+                <SelectItem value="under_review">Under Review</SelectItem>
                 <SelectItem value="responded">Responded</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
               </SelectContent>
             </Select>
             
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[130px]">
-                <span>Category</span>
+              <SelectTrigger className="w-[150px]">
+                <Tag className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="product_quality">Product Quality</SelectItem>
+                <SelectItem value="product">Product</SelectItem>
+                <SelectItem value="service">Service</SelectItem>
                 <SelectItem value="delivery">Delivery</SelectItem>
-                <SelectItem value="customer_service">Customer Service</SelectItem>
                 <SelectItem value="website">Website</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="general">General</SelectItem>
               </SelectContent>
             </Select>
             
             <Select value={ratingFilter} onValueChange={setRatingFilter}>
-              <SelectTrigger className="w-[130px]">
-                <span>Rating</span>
+              <SelectTrigger className="w-[150px]">
+                <Star className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Rating" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Ratings</SelectItem>
@@ -370,570 +554,216 @@ const CustomerFeedbackPage = () => {
                 <SelectItem value="1">1 Star</SelectItem>
               </SelectContent>
             </Select>
+            
+            <Button variant="outline" onClick={() => {
+              setStatusFilter('all');
+              setCategoryFilter('all');
+              setRatingFilter('all');
+              setSearchQuery('');
+            }}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reset Filters
+            </Button>
           </div>
-        </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="all" className="relative">
-              All
-              <Badge variant="secondary" className="ml-2">{counts.all}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="new" className="relative">
-              New
-              <Badge variant="secondary" className="ml-2">{counts.newCount}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="reviewed" className="relative">
-              Reviewed
-              <Badge variant="secondary" className="ml-2">{counts.reviewedCount}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="responded" className="relative">
-              Responded
-              <Badge variant="secondary" className="ml-2">{counts.respondedCount}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="resolved" className="relative">
-              Resolved
-              <Badge variant="secondary" className="ml-2">{counts.resolvedCount}</Badge>
-            </TabsTrigger>
-          </TabsList>
           
-          <TabsContent value="all">
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead className="hidden md:table-cell">Category</TableHead>
-                    <TableHead className="hidden md:table-cell">Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredFeedback.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-6">No feedback found</TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredFeedback.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{item.customer_name}</span>
-                            <span className="text-sm text-muted-foreground">{item.customer_email}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{renderStars(item.rating)}</TableCell>
-                        <TableCell className="hidden md:table-cell capitalize">
-                          {item.category.replace('_', ' ')}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {new Date(item.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>{getFeedbackStatusBadge(item.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Dialog onOpenChange={(open) => {
-                              if (open) setSelectedFeedback(item);
-                            }}>
-                              <DialogTrigger asChild>
-                                <Button size="icon" variant="ghost">
-                                  <MessageSquare className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[600px]">
-                                <DialogHeader>
-                                  <DialogTitle>Customer Feedback</DialogTitle>
-                                  <DialogDescription>
-                                    Review and respond to customer feedback
-                                  </DialogDescription>
-                                </DialogHeader>
-                                
-                                {selectedFeedback && (
-                                  <div className="space-y-6 py-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div className="space-y-1">
-                                        <p className="text-sm font-medium text-muted-foreground">Customer</p>
-                                        <div className="flex items-center gap-2">
-                                          <User className="h-4 w-4 text-muted-foreground" />
-                                          <p className="font-medium">{selectedFeedback.customer_name}</p>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">{selectedFeedback.customer_email}</p>
-                                      </div>
-                                      
-                                      <div className="space-y-1">
-                                        <p className="text-sm font-medium text-muted-foreground">Date Submitted</p>
-                                        <div className="flex items-center gap-2">
-                                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                                          <p className="font-medium">
-                                            {new Date(selectedFeedback.created_at).toLocaleDateString()}
-                                          </p>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">
-                                          {new Date(selectedFeedback.created_at).toLocaleTimeString()}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="space-y-1">
-                                      <p className="text-sm font-medium text-muted-foreground">Rating</p>
-                                      <div className="flex items-center gap-2">
-                                        {renderStars(selectedFeedback.rating)}
-                                        <p className="font-medium">{selectedFeedback.rating}/5</p>
-                                      </div>
-                                    </div>
-                                    
-                                    {selectedFeedback.product_name && (
-                                      <div className="space-y-1">
-                                        <p className="text-sm font-medium text-muted-foreground">Product</p>
-                                        <p className="font-medium">{selectedFeedback.product_name}</p>
-                                      </div>
-                                    )}
-                                    
-                                    <div className="space-y-1">
-                                      <p className="text-sm font-medium text-muted-foreground">Feedback</p>
-                                      <p className="p-3 border rounded-md bg-muted/50">{selectedFeedback.message}</p>
-                                    </div>
-                                    
-                                    {selectedFeedback.staff_notes && (
-                                      <div className="space-y-1">
-                                        <p className="text-sm font-medium text-muted-foreground">Staff Notes</p>
-                                        <p className="p-3 border rounded-md bg-muted/50 whitespace-pre-line">{selectedFeedback.staff_notes}</p>
-                                      </div>
-                                    )}
-                                    
-                                    {(selectedFeedback.status === 'new' || selectedFeedback.status === 'reviewed') && (
-                                      <div className="space-y-2">
-                                        <p className="text-sm font-medium text-muted-foreground">Respond to Customer</p>
-                                        <Textarea 
-                                          placeholder="Enter your response to the customer..."
-                                          value={responseText}
-                                          onChange={(e) => setResponseText(e.target.value)}
-                                          className="min-h-[120px]"
-                                        />
-                                        
-                                        <div className="flex gap-2">
-                                          <Button 
-                                            variant="outline" 
-                                            className="flex-1"
-                                            onClick={() => setResponseText("Thank you for your feedback! We appreciate you taking the time to share your thoughts with us.")}
-                                          >
-                                            Insert Template
-                                          </Button>
-                                          <Button 
-                                            className="flex-1"
-                                            onClick={handleSendResponse}
-                                            disabled={isResponding || !responseText.trim()}
-                                          >
-                                            <Send className="mr-2 h-4 w-4" />
-                                            {isResponding ? 'Sending...' : 'Send Response'}
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                                
-                                <DialogFooter className="flex-col sm:flex-row gap-2">
-                                  {selectedFeedback && selectedFeedback.status === 'new' && (
-                                    <Button 
-                                      variant="outline" 
-                                      onClick={() => markAsReviewed(selectedFeedback.id)}
-                                      className="flex-1"
-                                    >
-                                      <CheckCircle className="mr-2 h-4 w-4" />
-                                      Mark as Reviewed
-                                    </Button>
-                                  )}
-                                  
-                                  {selectedFeedback && (selectedFeedback.status === 'responded' || selectedFeedback.status === 'reviewed') && (
-                                    <Button 
-                                      variant="outline" 
-                                      onClick={() => markAsResolved(selectedFeedback.id)}
-                                      className="flex-1"
-                                    >
-                                      <CheckCircle className="mr-2 h-4 w-4" />
-                                      Mark as Resolved
-                                    </Button>
-                                  )}
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-              
-              {filteredFeedback.length > 0 && (
-                <div className="flex items-center justify-between px-4 py-2 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    Showing <strong>1-{filteredFeedback.length}</strong> of <strong>{filteredFeedback.length}</strong> items
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <Button size="icon" variant="outline" disabled>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="outline" disabled>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          {['new', 'reviewed', 'responded', 'resolved'].map((tab) => (
-            <TabsContent key={tab} value={tab}>
-              <div className="border rounded-md">
+          <TabsContent value={activeTab} className="m-0">
+            <Card>
+              <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Customer</TableHead>
+                      <TableHead>Feedback</TableHead>
                       <TableHead>Rating</TableHead>
-                      <TableHead className="hidden md:table-cell">Category</TableHead>
-                      <TableHead className="hidden md:table-cell">Date</TableHead>
+                      <TableHead>Category</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredFeedback.filter(item => item.status === tab).length === 0 ? (
+                    {filteredFeedback.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-6">No feedback found</TableCell>
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          {searchQuery || statusFilter !== 'all' || categoryFilter !== 'all' || ratingFilter !== 'all'
+                            ? "No feedback matching your filters"
+                            : "No feedback available"}
+                        </TableCell>
                       </TableRow>
                     ) : (
-                      filteredFeedback
-                        .filter(item => item.status === tab)
-                        .map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{item.customer_name}</span>
-                                <span className="text-sm text-muted-foreground">{item.customer_email}</span>
+                      filteredFeedback.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={item.customerAvatar} alt={item.customerName} />
+                                <AvatarFallback>{item.customerName.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{item.customerName}</div>
+                                <div className="text-xs text-muted-foreground">{item.customerEmail}</div>
                               </div>
-                            </TableCell>
-                            <TableCell>{renderStars(item.rating)}</TableCell>
-                            <TableCell className="hidden md:table-cell capitalize">
-                              {item.category.replace('_', ' ')}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              {new Date(item.created_at).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>{getFeedbackStatusBadge(item.status)}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Dialog onOpenChange={(open) => {
-                                  if (open) setSelectedFeedback(item);
-                                }}>
-                                  <DialogTrigger asChild>
-                                    <Button size="icon" variant="ghost">
-                                      <MessageSquare className="h-4 w-4" />
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="sm:max-w-[600px]">
-                                    <DialogHeader>
-                                      <DialogTitle>Customer Feedback</DialogTitle>
-                                      <DialogDescription>
-                                        Review and respond to customer feedback
-                                      </DialogDescription>
-                                    </DialogHeader>
-                                    
-                                    {selectedFeedback && (
-                                      <div className="space-y-6 py-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                          <div className="space-y-1">
-                                            <p className="text-sm font-medium text-muted-foreground">Customer</p>
-                                            <div className="flex items-center gap-2">
-                                              <User className="h-4 w-4 text-muted-foreground" />
-                                              <p className="font-medium">{selectedFeedback.customer_name}</p>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground">{selectedFeedback.customer_email}</p>
-                                          </div>
-                                          
-                                          <div className="space-y-1">
-                                            <p className="text-sm font-medium text-muted-foreground">Date Submitted</p>
-                                            <div className="flex items-center gap-2">
-                                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                                              <p className="font-medium">
-                                                {new Date(selectedFeedback.created_at).toLocaleDateString()}
-                                              </p>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground">
-                                              {new Date(selectedFeedback.created_at).toLocaleTimeString()}
-                                            </p>
-                                          </div>
-                                        </div>
-                                        
-                                        <div className="space-y-1">
-                                          <p className="text-sm font-medium text-muted-foreground">Rating</p>
-                                          <div className="flex items-center gap-2">
-                                            {renderStars(selectedFeedback.rating)}
-                                            <p className="font-medium">{selectedFeedback.rating}/5</p>
-                                          </div>
-                                        </div>
-                                        
-                                        {selectedFeedback.product_name && (
-                                          <div className="space-y-1">
-                                            <p className="text-sm font-medium text-muted-foreground">Product</p>
-                                            <p className="font-medium">{selectedFeedback.product_name}</p>
-                                          </div>
-                                        )}
-                                        
-                                        <div className="space-y-1">
-                                          <p className="text-sm font-medium text-muted-foreground">Feedback</p>
-                                          <p className="p-3 border rounded-md bg-muted/50">{selectedFeedback.message}</p>
-                                        </div>
-                                        
-                                        {selectedFeedback.staff_notes && (
-                                          <div className="space-y-1">
-                                            <p className="text-sm font-medium text-muted-foreground">Staff Notes</p>
-                                            <p className="p-3 border rounded-md bg-muted/50 whitespace-pre-line">{selectedFeedback.staff_notes}</p>
-                                          </div>
-                                        )}
-                                        
-                                        {(selectedFeedback.status === 'new' || selectedFeedback.status === 'reviewed') && (
-                                          <div className="space-y-2">
-                                            <p className="text-sm font-medium text-muted-foreground">Respond to Customer</p>
-                                            <Textarea 
-                                              placeholder="Enter your response to the customer..."
-                                              value={responseText}
-                                              onChange={(e) => setResponseText(e.target.value)}
-                                              className="min-h-[120px]"
-                                            />
-                                            
-                                            <div className="flex gap-2">
-                                              <Button 
-                                                variant="outline" 
-                                                className="flex-1"
-                                                onClick={() => setResponseText("Thank you for your feedback! We appreciate you taking the time to share your thoughts with us.")}
-                                              >
-                                                Insert Template
-                                              </Button>
-                                              <Button 
-                                                className="flex-1"
-                                                onClick={handleSendResponse}
-                                                disabled={isResponding || !responseText.trim()}
-                                              >
-                                                <Send className="mr-2 h-4 w-4" />
-                                                {isResponding ? 'Sending...' : 'Send Response'}
-                                              </Button>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-                                    
-                                    <DialogFooter className="flex-col sm:flex-row gap-2">
-                                      {selectedFeedback && selectedFeedback.status === 'new' && (
-                                        <Button 
-                                          variant="outline" 
-                                          onClick={() => markAsReviewed(selectedFeedback.id)}
-                                          className="flex-1"
-                                        >
-                                          <CheckCircle className="mr-2 h-4 w-4" />
-                                          Mark as Reviewed
-                                        </Button>
-                                      )}
-                                      
-                                      {selectedFeedback && (selectedFeedback.status === 'responded' || selectedFeedback.status === 'reviewed') && (
-                                        <Button 
-                                          variant="outline" 
-                                          onClick={() => markAsResolved(selectedFeedback.id)}
-                                          className="flex-1"
-                                        >
-                                          <CheckCircle className="mr-2 h-4 w-4" />
-                                          Mark as Resolved
-                                        </Button>
-                                      )}
-                                    </DialogFooter>
-                                  </DialogContent>
-                                </Dialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-xs">
+                              <div className="text-sm truncate">{item.comment}</div>
+                              {item.productName && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Product: {item.productName}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>{renderStarRating(item.rating)}</TableCell>
+                          <TableCell>{getCategoryBadge(item.category)}</TableCell>
+                          <TableCell>{getStatusBadge(item.status)}</TableCell>
+                          <TableCell>
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedFeedback(item);
+                                    setIsResponseDialogOpen(true);
+                                  }}
+                                >
+                                  <MessageSquare className="mr-2 h-4 w-4" />
+                                  Respond
+                                </DropdownMenuItem>
+                                
+                                {item.status !== 'under_review' && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleChangeStatus(item.id, 'under_review')}
+                                  >
+                                    <Clock className="mr-2 h-4 w-4" />
+                                    Mark as Under Review
+                                  </DropdownMenuItem>
+                                )}
+                                
+                                {item.status !== 'closed' && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleChangeStatus(item.id, 'closed')}
+                                  >
+                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                    Mark as Closed
+                                  </DropdownMenuItem>
+                                )}
+                                
+                                {item.orderNumber && (
+                                  <DropdownMenuItem>
+                                    <ShoppingBag className="mr-2 h-4 w-4" />
+                                    View Order: {item.orderNumber}
+                                  </DropdownMenuItem>
+                                )}
+                                
+                                {item.productId && (
+                                  <DropdownMenuItem>
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    View Product
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
                     )}
                   </TableBody>
                 </Table>
-                
-                {filteredFeedback.filter(item => item.status === tab).length > 0 && (
-                  <div className="flex items-center justify-between px-4 py-2 border-t">
-                    <p className="text-sm text-muted-foreground">
-                      Showing <strong>1-{filteredFeedback.filter(item => item.status === tab).length}</strong> of <strong>{filteredFeedback.filter(item => item.status === tab).length}</strong> items
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <Button size="icon" variant="outline" disabled>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="outline" disabled>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
+              </CardContent>
+              <CardFooter className="flex justify-between border-t pt-6">
+                <div className="text-sm text-muted-foreground">
+                  Showing {filteredFeedback.length} of {feedback.length} total feedback
+                </div>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+      
+      {/* Response Dialog */}
+      <Dialog open={isResponseDialogOpen} onOpenChange={setIsResponseDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Respond to Feedback</DialogTitle>
+            <DialogDescription>
+              Send a response to the customer's feedback
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedFeedback && (
+            <div className="py-4">
+              <div className="rounded-md bg-muted p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={selectedFeedback.customerAvatar} alt={selectedFeedback.customerName} />
+                      <AvatarFallback>{selectedFeedback.customerName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{selectedFeedback.customerName}</span>
+                  </div>
+                  {renderStarRating(selectedFeedback.rating)}
+                </div>
+                <p className="text-sm">{selectedFeedback.comment}</p>
+                {selectedFeedback.productName && (
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Product: {selectedFeedback.productName}
                   </div>
                 )}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Feedback Analytics</CardTitle>
-              <CardDescription>Overall customer satisfaction and feedback trends</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">Overall Rating</p>
-                  <div className="flex items-center gap-4">
-                    <div className="text-4xl font-bold text-primary">4.3</div>
-                    <div className="flex flex-col">
-                      {renderStars(4)}
-                      <p className="text-sm text-muted-foreground mt-1">Based on {feedback.length} reviews</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">Rating Distribution</p>
-                  <div className="space-y-2">
-                    {[5, 4, 3, 2, 1].map((rating) => {
-                      const count = feedback.filter(item => item.rating === rating).length;
-                      const percentage = Math.round((count / feedback.length) * 100) || 0;
-                      
-                      return (
-                        <div key={rating} className="flex items-center gap-2">
-                          <div className="w-10 text-right">{rating} ★</div>
-                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary"
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                          <div className="w-10 text-sm text-muted-foreground">{percentage}%</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">Top Feedback Categories</p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <ThumbsUp className="h-4 w-4 text-green-500" />
-                        <span>Product Quality</span>
-                      </div>
-                      <span className="text-sm font-medium">45%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <ThumbsDown className="h-4 w-4 text-red-500" />
-                        <span>Delivery Speed</span>
-                      </div>
-                      <span className="text-sm font-medium">25%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4 text-blue-500" />
-                        <span>Customer Service</span>
-                      </div>
-                      <span className="text-sm font-medium">15%</span>
-                    </div>
-                  </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Submitted on {new Date(selectedFeedback.createdAt).toLocaleDateString()}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              
+              {selectedFeedback.response && (
+                <div className="rounded-md bg-primary/10 p-4 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Previous Response</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(selectedFeedback.response.respondedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm">{selectedFeedback.response.text}</p>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Label htmlFor="response">Your Response</Label>
+                <Textarea
+                  id="response"
+                  placeholder="Type your response here..."
+                  rows={4}
+                  value={responseText}
+                  onChange={(e) => setResponseText(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Response Performance</CardTitle>
-              <CardDescription>How quickly we're responding to feedback</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 border rounded-md">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-muted-foreground">Average Response Time</p>
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <p className="text-2xl font-bold">3.2 hours</p>
-                    <p className="text-xs text-green-500">↓ 12% from last month</p>
-                  </div>
-                  
-                  <div className="p-4 border rounded-md">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium text-muted-foreground">Response Rate</p>
-                      <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <p className="text-2xl font-bold">94%</p>
-                    <p className="text-xs text-green-500">↑ 5% from last month</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">Customer Satisfaction</p>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>After Responding</span>
-                        <span className="font-medium">87%</span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-green-500"
-                          style={{ width: '87%' }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>Issue Resolution Rate</span>
-                        <span className="font-medium">92%</span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-green-500"
-                          style={{ width: '92%' }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">Most Common Feedback Sources</p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span>Post-Purchase Emails</span>
-                      <span className="text-sm font-medium">65%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Website Feedback Form</span>
-                      <span className="text-sm font-medium">20%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Support Tickets</span>
-                      <span className="text-sm font-medium">15%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResponseDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSendResponse}
+              disabled={!responseText.trim()}
+            >
+              <Send className="mr-2 h-4 w-4" />
+              Send Response
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
 
-export default CustomerFeedbackPage;
+export default CustomerFeedback;

@@ -34,7 +34,14 @@ const ProtectedRoute = ({ allowedRoles, children, redirectPath = "/auth" }: Prot
   
   // If user doesn't have required role, redirect to unauthorized
   if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
+    // Redirect to the appropriate section based on user role
+    if (user.role === 'admin') {
+      return <Navigate to="/admin" replace />;
+    } else if (['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role)) {
+      return <Navigate to="/staff" replace />;
+    } else {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
   
   // Render children or Outlet
