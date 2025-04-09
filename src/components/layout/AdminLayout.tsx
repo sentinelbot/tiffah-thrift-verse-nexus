@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -7,7 +6,7 @@ import {
   ShoppingCart, 
   Layers, 
   Printer, 
-  BarcodeScan,
+  Barcode, 
   BrainCircuit, 
   Settings, 
   Menu, 
@@ -71,7 +70,7 @@ const Sidebar = ({ className }: { className?: string }) => {
     },
     {
       label: 'Scanning',
-      icon: BarcodeScan,
+      icon: Barcode,
       href: '/admin/scanning',
       active: pathname === '/admin/scanning',
       allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
