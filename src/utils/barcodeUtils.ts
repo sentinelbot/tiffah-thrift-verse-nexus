@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import JsBarcode from 'jsbarcode';
 
 /**
  * Generates a unique barcode for a product
@@ -41,3 +42,35 @@ export const validateBarcode = (barcode: string): boolean => {
   const regex = /^TTS-\d{5}$/;
   return regex.test(barcode);
 };
+
+/**
+ * Generates a barcode data URL for display or printing
+ */
+export const generateBarcodeDataURL = (barcodeText: string): string => {
+  if (!barcodeText) return '';
+  
+  // Create a canvas element to render the barcode
+  const canvas = document.createElement('canvas');
+  
+  try {
+    // Generate the barcode on the canvas
+    JsBarcode(canvas, barcodeText, {
+      format: 'CODE128',
+      displayValue: false,
+      background: '#ffffff',
+      lineColor: '#000000',
+      width: 2,
+      height: 70,
+      margin: 10,
+    });
+    
+    // Convert the canvas to a data URL
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.error('Error generating barcode:', error);
+    return '';
+  }
+};
+
+// Alias for backward compatibility
+export const generateUniqueBarcode = generateBarcode;
