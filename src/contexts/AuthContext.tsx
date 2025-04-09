@@ -40,14 +40,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // In production, fetch the user profile from our database
           try {
             // Fetch the user's profile from our database
-            const { data: userData, error: userError } = await supabase
+            const { data: profileData, error: profileError } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', data.session.user.id)
               .single();
               
-            if (userError) {
-              console.error('Error fetching user profile:', userError);
+            if (profileError) {
+              console.error('Error fetching user profile:', profileError);
               // Fall back to basic user data from auth
               setUser({
                 id: data.session.user.id,
@@ -55,13 +55,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 name: data.session.user.user_metadata?.name || 'User',
                 role: data.session.user.user_metadata?.role || 'customer',
               });
-            } else if (userData) {
+            } else if (profileData) {
               // Set user with data from our profile table
               setUser({
                 id: data.session.user.id,
                 email: data.session.user.email || '',
-                name: userData.name || data.session.user.user_metadata?.name || 'User',
-                role: userData.role || data.session.user.user_metadata?.role || 'customer',
+                name: profileData.name || data.session.user.user_metadata?.name || 'User',
+                role: profileData.role || data.session.user.user_metadata?.role || 'customer',
               });
             }
           } catch (profileError) {
@@ -91,14 +91,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session) {
           try {
             // Fetch the user's profile from our database when auth state changes
-            const { data: userData, error: userError } = await supabase
+            const { data: profileData, error: profileError } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
               .single();
               
-            if (userError) {
-              console.error('Error fetching user profile on auth change:', userError);
+            if (profileError) {
+              console.error('Error fetching user profile on auth change:', profileError);
               // Fall back to basic user data from auth
               setUser({
                 id: session.user.id,
@@ -106,13 +106,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 name: session.user.user_metadata?.name || 'User',
                 role: session.user.user_metadata?.role || 'customer',
               });
-            } else if (userData) {
+            } else if (profileData) {
               // Set user with data from our profile table
               setUser({
                 id: session.user.id,
                 email: session.user.email || '',
-                name: userData.name || session.user.user_metadata?.name || 'User',
-                role: userData.role || session.user.user_metadata?.role || 'customer',
+                name: profileData.name || session.user.user_metadata?.name || 'User',
+                role: profileData.role || session.user.user_metadata?.role || 'customer',
               });
             }
           } catch (profileError) {
@@ -200,7 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not authenticated');
       }
 
-      // Update in Supabase profiles table
+      // Use type assertion to tell TypeScript we know what we're doing
       const { error } = await supabase
         .from('profiles')
         .update({
