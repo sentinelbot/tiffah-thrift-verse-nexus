@@ -17,9 +17,9 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMobile = useMobile();
   
-  // Fix the cart reference error by getting items length safely
-  const { cart } = useCart();
-  const cartCount = cart && cart.items ? cart.items.length : 0;
+  // Fix the cart reference error by safely accessing the items
+  const { items } = useCart();
+  const cartCount = items ? items.length : 0;
 
   const handleSignOut = async () => {
     await signOut();
@@ -122,6 +122,19 @@ const Navbar = () => {
                         <Link to="/admin">
                           <LayoutDashboard className="mr-2 h-4 w-4" />
                           <span>Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                  {/* Staff links based on role */}
+                  {['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/staff">
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          <span>Staff Dashboard</span>
                         </Link>
                       </DropdownMenuItem>
                     </>

@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -51,10 +52,6 @@ import StaffTraining from '@/pages/staff/Training';
 // Components
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { ConnectivityIndicator } from '@/components/ui/connectivity-indicator';
-
-// Route components
-import AdminRoutes from '@/routes/AdminRoutes';
-import StaffRoutes from '@/routes/StaffRoutes';
 
 // Initialize offline service
 import { initializeOfflineService } from '@/services/offlineService';
@@ -124,12 +121,45 @@ function App() {
                 
                 {/* Protected admin routes */}
                 <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-                  <AdminRoutes />
+                  <Route path="/admin" element={<Dashboard />} />
+                  <Route path="/admin/products" element={<Products />} />
+                  <Route path="/admin/products/new" element={<ProductForm />} />
+                  <Route path="/admin/products/:id" element={<ProductForm />} />
+                  <Route path="/admin/orders" element={<Orders />} />
+                  <Route path="/admin/categories" element={<Categories />} />
+                  <Route path="/admin/printing" element={<Printing />} />
+                  <Route path="/admin/scanning" element={<Scanning />} />
+                  <Route path="/admin/analytics" element={<Analytics />} />
+                  <Route path="/admin/marketing" element={<Marketing />} />
+                  <Route path="/admin/users" element={<Users />} />
+                  <Route path="/admin/ai" element={<AiDashboard />} />
+                  <Route path="/admin/settings" element={<Settings />} />
+                  <Route path="/admin/staff" element={<StaffManagement />} />
+                  <Route path="/admin/content" element={<ContentManagement />} />
+                  <Route path="/admin/features" element={<FeatureToggles />} />
+                  <Route path="/admin/communications" element={<Communications />} />
                 </Route>
                 
                 {/* Protected staff routes */}
                 <Route element={<ProtectedRoute allowedRoles={['productManager', 'orderPreparer', 'deliveryStaff']} />}>
-                  <StaffRoutes />
+                  <Route path="/staff" element={<StaffDashboard />} />
+                  
+                  {/* Product Manager Routes */}
+                  <Route path="/staff/products" element={<ProductManager />} />
+                  <Route path="/staff/products/new" element={<ProductManager />} />
+                  <Route path="/staff/products/:id" element={<ProductManager />} />
+                  
+                  {/* Order Preparer Routes */}
+                  <Route path="/staff/orders" element={<OrderPreparer />} />
+                  
+                  {/* Delivery Staff Routes */}
+                  <Route path="/staff/deliveries" element={<DeliveryStaff />} />
+                  
+                  {/* Common Staff Routes */}
+                  <Route path="/staff/profile" element={<StaffProfile />} />
+                  <Route path="/staff/communications" element={<StaffCommunications />} />
+                  <Route path="/staff/schedule" element={<StaffSchedule />} />
+                  <Route path="/staff/training" element={<StaffTraining />} />
                 </Route>
                 
                 {/* Error routes */}
