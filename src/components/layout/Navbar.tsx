@@ -8,6 +8,7 @@ import { Menu, Heart, ShoppingBag, UserCircle2, LogOut, LayoutDashboard, FolderC
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import EnhancedSearch from "../shop/EnhancedSearch";
 import NotificationCenter from '../notifications/NotificationCenter';
+import { useMobile } from "@/hooks/use-mobile";
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -15,6 +16,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const cartCount = cart?.items?.length || 0;
+  const isMobile = useMobile();
 
   const handleSignOut = async () => {
     await signOut();

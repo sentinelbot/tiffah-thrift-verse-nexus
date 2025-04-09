@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,6 @@ const CustomerServiceChat = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
-  // Initial welcome message
   useEffect(() => {
     setMessages([
       {
@@ -42,7 +40,6 @@ const CustomerServiceChat = () => {
     ]);
   }, []);
 
-  // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -51,7 +48,6 @@ const CustomerServiceChat = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input,
@@ -64,14 +60,12 @@ const CustomerServiceChat = () => {
     setInput('');
 
     try {
-      // Call the Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('customer-service-chat', {
         body: { question: input },
       });
 
       if (error) throw error;
 
-      // Add AI response
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: data.answer,
@@ -81,7 +75,6 @@ const CustomerServiceChat = () => {
       
       setMessages((prev) => [...prev, aiMessage]);
       
-      // Set related products if any
       if (data.relatedProducts && data.relatedProducts.length > 0) {
         setRelatedProducts(data.relatedProducts);
       }
@@ -89,7 +82,6 @@ const CustomerServiceChat = () => {
       console.error('Error querying AI assistant:', error);
       toast.error('Sorry, I had trouble processing your question. Please try again.');
       
-      // Add error message
       setMessages((prev) => [
         ...prev,
         {
@@ -172,7 +164,6 @@ const CustomerServiceChat = () => {
     </>
   );
 
-  // Use Drawer on mobile, Dialog on desktop
   return isMobile ? (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
