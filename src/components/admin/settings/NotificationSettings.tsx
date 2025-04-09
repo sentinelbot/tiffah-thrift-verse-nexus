@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { 
   Card, 
@@ -884,3 +885,47 @@ const NotificationSettings = () => {
               </div>
             </CardContent>
             <CardFooter className="border-t pt-6">
+              <Button>
+                Save Scheduling Settings
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="templates" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Message Templates</CardTitle>
+              <CardDescription>
+                Configure templates for different notification types
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center text-muted-foreground py-12">
+                Template editor coming soon
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="preferences" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Notification Preferences</CardTitle>
+              <CardDescription>
+                Configure default notification preferences for users
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center text-muted-foreground py-12">
+                User preferences management coming soon
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default NotificationSettings;
