@@ -1,4 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
+import { getOnlineStatus, addToSyncQueue } from '@/services/offlineService';
 
 export type NotificationType = 
   | 'order_confirmation' 
@@ -37,6 +39,30 @@ export const sendNotification = async (
   request: NotificationRequest
 ): Promise<NotificationResult> => {
   try {
+    // Check if we're online
+    if (!getOnlineStatus()) {
+      // Queue the notification for later
+      await addToSyncQueue({
+        url: '/api/notifications',
+        method: 'POST',
+        body: JSON.stringify(request),
+        headers: { 'Content-Type': 'application/json' },
+        type: 'other'
+      });
+      
+      // Return a fake success for offline mode
+      return {
+        success: true,
+        results: {
+          email: false,
+          sms: false,
+          whatsapp: false,
+          in_app: true
+        }
+      };
+    }
+    
+    // We're online, proceed with the actual API call
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: request,
     });
@@ -122,21 +148,25 @@ export const sendAbandonedCartReminder = async (
 export const processAbandonedCarts = async () => {
   console.log('Processing abandoned carts...');
   
+  // If offline, queue this task for later
+  if (!getOnlineStatus()) {
+    await addToSyncQueue({
+      url: '/api/process-abandoned-carts',
+      method: 'POST',
+      body: JSON.stringify({}),
+      headers: { 'Content-Type': 'application/json' },
+      type: 'other'
+    });
+    
+    return { success: false, error: "Offline, task queued for sync" };
+  }
+  
   const hours = 4; // Hours since cart was abandoned
   const currentTime = new Date();
   const cutoffTime = new Date(currentTime.getTime() - hours * 60 * 60 * 1000);
   
   try {
-    interface CartItem {
-      id: string;
-      user_id: string;
-      user_email: string;
-      items: any[];
-      total_amount: number;
-      status: string;
-      updated_at: string;
-    }
-    
+    // Get abandoned carts
     const { data: abandonedCarts, error } = await supabase
       .from('carts')
       .select('*')
@@ -147,7 +177,7 @@ export const processAbandonedCarts = async () => {
     if (error) throw error;
     
     if (abandonedCarts) {
-      for (const cart of abandonedCarts as CartItem[]) {
+      for (const cart of abandonedCarts) {
         await sendAbandonedCartReminder(
           cart.user_id,
           cart.user_email,

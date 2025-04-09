@@ -50,3 +50,19 @@ export interface User {
   name?: string;
   role: 'admin' | 'productManager' | 'orderPreparer' | 'deliveryStaff' | 'customer';
 }
+
+export interface OfflineStatus {
+  isOnline: boolean;
+  lastSync?: Date;
+  pendingSyncCount?: number;
+}
+
+export interface CartItem {
+  id: string;
+  user_id: string;
+  user_email: string;
+  items: any[];
+  total_amount: number;
+  status: string;
+  updated_at: string;
+}
