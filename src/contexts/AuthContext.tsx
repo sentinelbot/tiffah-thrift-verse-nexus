@@ -1,130 +1,171 @@
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
-import { Session } from '@supabase/supabase-js';
-import { toast } from 'sonner';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
-  session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, role?: string) => Promise<void>;
   signOut: () => Promise<void>;
-  setUserRole: (userId: string, role: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // First set up the auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      if (session?.user) {
-        const { id, email } = session.user;
-        const role = session.user.app_metadata.role || 'customer';
-        setUser({ id, email: email || '', role });
-      } else {
+    // Mock user authentication for development
+    const checkAuth = async () => {
+      // In a real app, we would check session with Supabase
+      try {
+        // Mock authenticated user for development
+        const mockUser: User = {
+          id: '1',
+          email: 'admin@example.com',
+          name: 'Admin User',
+          role: 'admin'
+        };
+        
+        // Simulate auth delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setUser(mockUser);
+      } catch (error) {
+        console.error('Auth error:', error);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        const { id, email } = session.user;
-        const role = session.user.app_metadata.role || 'customer';
-        setUser({ id, email: email || '', role });
-      }
-      setLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
     };
+
+    checkAuth();
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || 'Error signing in');
+      // Mock sign in for development
+      // In a real app, we would use Supabase auth.signIn
+      
+      let mockUser: User;
+      
+      if (email.includes('admin')) {
+        mockUser = {
+          id: '1',
+          email: email,
+          name: 'Admin User',
+          role: 'admin'
+        };
+      } else if (email.includes('product')) {
+        mockUser = {
+          id: '2',
+          email: email,
+          name: 'Product Manager',
+          role: 'productManager'
+        };
+      } else if (email.includes('order')) {
+        mockUser = {
+          id: '3',
+          email: email,
+          name: 'Order Preparer',
+          role: 'orderPreparer'
+        };
+      } else if (email.includes('delivery')) {
+        mockUser = {
+          id: '4',
+          email: email,
+          name: 'Delivery Staff',
+          role: 'deliveryStaff'
+        };
+      } else {
+        mockUser = {
+          id: '5',
+          email: email,
+          name: 'Customer',
+          role: 'customer'
+        };
+      }
+      
+      setUser(mockUser);
+    } catch (error) {
+      console.error('Sign in error:', error);
       throw error;
-    }
-  };
-
-  const signUp = async (email: string, password: string, role = 'customer') => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            role,
-          },
-        },
-      });
-      if (error) throw error;
-      toast.success('Registration successful! Check your email for verification.');
-    } catch (error: any) {
-      toast.error(error.message || 'Error signing up');
-      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || 'Error signing out');
+      // Mock sign out for development
+      // In a real app, we would use Supabase auth.signOut
+      setUser(null);
+    } catch (error) {
+      console.error('Sign out error:', error);
       throw error;
     }
   };
 
-  const setUserRole = async (userId: string, role: string) => {
+  const signUp = async (email: string, password: string, name: string) => {
+    setLoading(true);
     try {
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        app_metadata: { role },
+      // Mock sign up for development
+      // In a real app, we would use Supabase auth.signUp
+      
+      const mockUser: User = {
+        id: '6',
+        email: email,
+        name: name,
+        role: 'customer'
+      };
+      
+      setUser(mockUser);
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProfile = async (data: Partial<User>) => {
+    if (!user) throw new Error('Not authenticated');
+    
+    try {
+      // Mock profile update for development
+      // In a real app, we would use Supabase to update the profile
+      
+      setUser({
+        ...user,
+        ...data
       });
-      if (error) throw error;
-      toast.success(`User role updated to ${role}`);
-    } catch (error: any) {
-      toast.error(error.message || 'Error updating user role');
+    } catch (error) {
+      console.error('Update profile error:', error);
       throw error;
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        setUserRole,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  const value = {
+    user,
+    loading,
+    signIn,
+    signOut,
+    signUp,
+    updateProfile
+  };
 
-export function useAuth() {
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};

@@ -30,7 +30,8 @@ import ProductForm from "./pages/admin/ProductForm";
 import Categories from "./pages/admin/Categories";
 import Users from "./pages/admin/Users";
 import Orders from "./pages/admin/Orders";
-import PrintingPage from "./pages/admin/Printing"; // Fixed import path
+import Printing from "./pages/admin/Printing";
+import Scanning from "./pages/admin/Scanning"; // Import the new Scanning page
 
 function App() {
   const [queryClient] = useState(() => new QueryClient());
@@ -75,7 +76,8 @@ function App() {
                   <Route path="/admin/categories" element={<Categories />} />
                   <Route path="/admin/orders" element={<Orders />} />
                   <Route path="/admin/users" element={<Users />} />
-                  <Route path="/admin/printing" element={<PrintingPage />} />
+                  <Route path="/admin/printing" element={<Printing />} />
+                  <Route path="/admin/scanning" element={<Scanning />} /> {/* Add the new Scanning route */}
                 </Route>
                 
                 {/* Error Routes */}

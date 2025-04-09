@@ -1,3 +1,4 @@
+
 export type ProductCondition = 'new' | 'likeNew' | 'good' | 'fair';
 
 export type ProductStatus = 'available' | 'reserved' | 'sold';
@@ -46,5 +47,6 @@ export interface ProductCategory {
 export interface User {
   id: string;
   email: string;
+  name?: string;
   role: 'admin' | 'productManager' | 'orderPreparer' | 'deliveryStaff' | 'customer';
 }

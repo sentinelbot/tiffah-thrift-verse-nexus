@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -14,7 +15,8 @@ import {
   Truck,
   Settings,
   User,
-  Printer
+  Printer,
+  ScanBarcode
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -35,6 +37,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { icon: Tag, label: 'Categories', path: '/admin/categories', roles: ['admin'] },
     { icon: ShoppingBag, label: 'Orders', path: '/admin/orders', roles: ['admin', 'orderPreparer'] },
     { icon: Truck, label: 'Deliveries', path: '/admin/deliveries', roles: ['admin', 'deliveryStaff'] },
+    { icon: ScanBarcode, label: 'Scanning', path: '/admin/scanning', roles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff'] },
     { icon: Printer, label: 'Printing', path: '/admin/printing', roles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff'] },
     { icon: Users, label: 'Users', path: '/admin/users', roles: ['admin'] },
     { icon: Settings, label: 'Settings', path: '/admin/settings', roles: ['admin'] },
@@ -205,7 +208,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       )}
       
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 pt-6 md:pt-0">
+      <main className="flex-1 md:ml-64 pt-6 md:pt-0 mt-14 md:mt-0">
         <div className="px-4 py-4 md:py-6 md:px-8">
           {children}
         </div>
