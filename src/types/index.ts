@@ -1,4 +1,3 @@
-
 export type ProductCondition = 'new' | 'likeNew' | 'good' | 'fair';
 
 export type ProductStatus = 'available' | 'reserved' | 'sold';
@@ -6,31 +5,31 @@ export type ProductStatus = 'available' | 'reserved' | 'sold';
 export interface Product {
   id: string;
   name: string;
-  description: string | null;
+  description?: string;
   price: number;
-  original_price: number | null;
+  original_price?: number;
   category: string;
-  sub_category: string | null;
-  tags: string[] | null;
-  size: string | null;
-  color: string | null;
-  brand: string | null;
-  condition: ProductCondition;
+  sub_category?: string;
+  tags?: string[];
+  size?: string;
+  color?: string;
+  brand?: string;
+  condition: 'new' | 'likeNew' | 'good' | 'fair';
   barcode: string;
-  status: ProductStatus;
+  status: 'available' | 'reserved' | 'sold';
   featured: boolean;
-  added_by: string | null;
+  added_by?: string;
   date_added: string;
   last_updated: string;
-  measurements: Record<string, any> | null;
-  inventory_tracking: Record<string, any> | null;
+  measurements?: Record<string, any>;
+  inventory_tracking?: Record<string, any>;
 }
 
 export interface ProductImage {
   id: string;
   product_id: string;
   url: string;
-  alt: string | null;
+  alt?: string;
   is_main: boolean;
   display_order: number;
   created_at: string;
@@ -39,8 +38,8 @@ export interface ProductImage {
 export interface ProductCategory {
   id: string;
   name: string;
-  description: string | null;
-  parent_id: string | null;
+  description?: string;
+  parent_id?: string;
   created_at: string;
 }
 
