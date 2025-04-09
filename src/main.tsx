@@ -4,7 +4,6 @@ import App from './App.tsx'
 import './index.css'
 import './styles/animations.css'
 import { toast } from 'sonner';
-import { I18nProvider } from './contexts/I18nContext';
 
 // Measure initial page load performance
 if (typeof window !== 'undefined' && window.performance) {
@@ -14,10 +13,9 @@ if (typeof window !== 'undefined' && window.performance) {
       // Create an observer for CLS (Cumulative Layout Shift)
       const clsObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry) => {
-          if ('hadRecentInput' in entry && !(entry as any).hadRecentInput) {
-            console.log('CLS:', entry);
-          }
+        entries.forEach((entry: any) => {
+          if (entry.hadRecentInput) return;
+          console.log('CLS:', entry);
         });
       });
       clsObserver.observe({ type: 'layout-shift', buffered: true });
@@ -34,11 +32,8 @@ if (typeof window !== 'undefined' && window.performance) {
       // Create an observer for FID (First Input Delay)
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry) => {
-          if ('processingStart' in entry && 'startTime' in entry) {
-            const processingTime = (entry as any).processingStart - entry.startTime;
-            console.log('FID:', processingTime, 'ms');
-          }
+        entries.forEach((entry: any) => {
+          console.log('FID:', entry.processingStart - entry.startTime, 'ms');
         });
       });
       fidObserver.observe({ type: 'first-input', buffered: true });
@@ -65,8 +60,4 @@ window.addEventListener('online', () => {
 });
 
 // Initialize the app
-createRoot(document.getElementById("root")!).render(
-  <I18nProvider>
-    <App />
-  </I18nProvider>
-);
+createRoot(document.getElementById("root")!).render(<App />);

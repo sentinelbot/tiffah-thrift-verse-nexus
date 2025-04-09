@@ -4,8 +4,6 @@ import { CreditCard, Banknote, Phone } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { formatMpesaPhone } from "@/utils/kenyaUtils";
-import { useI18n } from "@/contexts/I18nContext";
 
 interface PaymentMethodProps {
   data: {
@@ -20,28 +18,27 @@ interface PaymentMethodProps {
 }
 
 export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
-  const { t } = useI18n();
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   const validateField = (field: string, value: string) => {
     if (!value.trim()) {
-      return t('common.errors.required_field');
+      return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
     }
     
     if (field === "cardNumber" && !/^[0-9]{16}$/.test(value.replace(/\s/g, ""))) {
-      return t('common.errors.invalid_card');
+      return "Please enter a valid 16-digit card number";
     }
     
     if (field === "expiryDate" && !/^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(value)) {
-      return t('common.errors.invalid_expiry');
+      return "Please enter a valid expiry date (MM/YY)";
     }
     
     if (field === "cvv" && !/^[0-9]{3,4}$/.test(value)) {
-      return t('common.errors.invalid_cvv');
+      return "Please enter a valid CVV (3 or 4 digits)";
     }
     
     if (field === "mpesaPhone" && !/^(?:\+254|0)[1-9][0-9]{8}$/.test(value)) {
-      return t('common.errors.invalid_phone');
+      return "Please enter a valid Kenyan phone number";
     }
     
     return "";
@@ -89,23 +86,7 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
       return;
     }
     
-    // Format M-Pesa phone number
-    if (name === "mpesaPhone") {
-      let formattedValue = value.replace(/\s/g, "");
-      
-      // Validate the field
-      const error = validateField(name, formattedValue);
-      setErrors((prev) => ({
-        ...prev,
-        [name]: error
-      }));
-      
-      // Update the data
-      updateData({ [name]: formattedValue });
-      return;
-    }
-    
-    // Validate other fields
+    // Validate the field
     const error = validateField(name, value);
     setErrors((prev) => ({
       ...prev,
@@ -129,7 +110,7 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
             <div className="flex items-center justify-between">
               <Label htmlFor="mpesa" className="font-medium cursor-pointer flex items-center">
                 <Phone className="mr-2 h-4 w-4 text-primary" />
-                {t('common.payment.mpesa')}
+                M-Pesa
               </Label>
               <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/2560px-M-PESA_LOGO-01.svg.png" alt="M-Pesa" className="h-6 object-contain" />
             </div>
@@ -137,7 +118,7 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
             {data.method === "mpesa" && (
               <div className="mt-3 space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="mpesaPhone">{t('common.payment.mpesa_phone')}</Label>
+                  <Label htmlFor="mpesaPhone">M-Pesa Phone Number</Label>
                   <Input
                     id="mpesaPhone"
                     name="mpesaPhone"
@@ -148,7 +129,7 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
                   />
                   {errors.mpesaPhone && <p className="text-xs text-destructive">{errors.mpesaPhone}</p>}
                   <p className="text-xs text-muted-foreground">
-                    {t('common.payment.mpesa_instructions')}
+                    You will receive an STK push to this number to complete payment.
                   </p>
                 </div>
               </div>
@@ -162,7 +143,7 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
             <div className="flex items-center justify-between">
               <Label htmlFor="card" className="font-medium cursor-pointer flex items-center">
                 <CreditCard className="mr-2 h-4 w-4 text-primary" />
-                {t('common.payment.card')}
+                Credit/Debit Card
               </Label>
               <div className="flex space-x-1">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Mastercard_2019_logo.svg/1920px-Mastercard_2019_logo.svg.png" alt="Mastercard" className="h-6 object-contain" />
@@ -173,7 +154,7 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
             {data.method === "card" && (
               <div className="mt-3 space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="cardName">{t('common.payment.name_on_card')}</Label>
+                  <Label htmlFor="cardName">Name on Card</Label>
                   <Input
                     id="cardName"
                     name="cardName"
@@ -186,7 +167,7 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="cardNumber">{t('common.payment.card_number')}</Label>
+                  <Label htmlFor="cardNumber">Card Number</Label>
                   <Input
                     id="cardNumber"
                     name="cardNumber"
@@ -201,7 +182,7 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="expiryDate">{t('common.payment.expiry_date')}</Label>
+                    <Label htmlFor="expiryDate">Expiry Date</Label>
                     <Input
                       id="expiryDate"
                       name="expiryDate"
@@ -215,7 +196,7 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="cvv">{t('common.payment.cvv')}</Label>
+                    <Label htmlFor="cvv">CVV</Label>
                     <Input
                       id="cvv"
                       name="cvv"
@@ -239,10 +220,10 @@ export function PaymentMethod({ data, updateData }: PaymentMethodProps) {
           <div className="grid gap-1.5">
             <Label htmlFor="cash" className="font-medium cursor-pointer flex items-center">
               <Banknote className="mr-2 h-4 w-4 text-primary" />
-              {t('common.payment.cash')}
+              Cash on Delivery
             </Label>
             <p className="text-sm text-muted-foreground">
-              {t('common.payment.cash_instructions')}
+              Pay with cash when your order is delivered.
             </p>
           </div>
         </div>

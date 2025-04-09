@@ -5,7 +5,6 @@ import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/context/CartContext';
-import { useI18n } from '@/contexts/I18nContext';
 
 // Pages
 import Index from '@/pages/Index';
@@ -55,9 +54,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function AppContent() {
-  const { t } = useI18n();
-  
+function App() {
   useEffect(() => {
     // Initialize offline capabilities
     initializeOfflineService().catch(console.error);
@@ -139,10 +136,6 @@ function AppContent() {
       </QueryClientProvider>
     </>
   );
-}
-
-function App() {
-  return <AppContent />;
 }
 
 export default App;

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -22,14 +22,12 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { createOrder } from "@/services/orderService";
 import { processPayment } from "@/services/paymentService";
 import { useAuth } from "@/contexts/AuthContext";
-import { useI18n } from "@/contexts/I18nContext";
-import { formatMpesaPhone } from "@/utils/kenyaUtils";
 import { PaymentMethod as PaymentMethodType, PaymentStatus, ShippingInfo } from "@/types/order";
 
 const steps = [
-  { id: "shipping", title: "shipping" },
-  { id: "payment", title: "payment" },
-  { id: "confirmation", title: "confirmation" }
+  { id: "shipping", title: "Shipping" },
+  { id: "payment", title: "Payment" },
+  { id: "confirmation", title: "Confirmation" }
 ];
 
 interface CheckoutData {
@@ -54,8 +52,7 @@ const defaultData: CheckoutData = {
     state: "",
     postalCode: "",
     country: "Kenya",
-    shippingMethod: "standard",
-    specialInstructions: ""
+    shippingMethod: "standard"
   },
   payment: {
     method: "mpesa",
@@ -67,30 +64,15 @@ const Checkout = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<CheckoutData>(defaultData);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [shippingCost, setShippingCost] = useState(200); // Default to standard Nairobi shipping
   
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { cartItems, calculateCartTotal, clearCart } = useCart();
-  const { t, formatCurrency } = useI18n();
-  
-  // Pre-fill user data if available
-  useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        shipping: {
-          ...prev.shipping,
-          fullName: user.name || prev.shipping.fullName,
-          email: user.email || prev.shipping.email
-        }
-      }));
-    }
-  }, [user]);
   
   // Calculate costs
   const subtotal = calculateCartTotal();
+  const shippingCost = formData.shipping.shippingMethod === "express" ? 500 : 200;
   // VAT (16% in Kenya)
   const vatRate = 0.16;
   const vatAmount = subtotal * vatRate;
@@ -110,21 +92,6 @@ const Checkout = () => {
         ...data
       }
     }));
-
-    // If the user updates the shipping phone number and M-Pesa phone is empty, sync them
-    if (step === 'shipping' && data.phone && !formData.payment.mpesaPhone) {
-      setFormData(prev => ({
-        ...prev,
-        payment: {
-          ...prev.payment,
-          mpesaPhone: data.phone
-        }
-      }));
-    }
-  };
-
-  const updateShippingCost = (cost: number) => {
-    setShippingCost(cost);
   };
   
   const handleNext = () => {
@@ -133,7 +100,7 @@ const Checkout = () => {
       const { fullName, email, phone, address, city, state, postalCode } = formData.shipping;
       if (!fullName || !email || !phone || !address || !city || !state || !postalCode) {
         toast({
-          title: t('common.errors.required_fields'),
+          title: "Please fill in all required fields",
           variant: "destructive"
         });
         return;
@@ -143,7 +110,7 @@ const Checkout = () => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         toast({
-          title: t('common.errors.invalid_email'),
+          title: "Invalid email address",
           variant: "destructive"
         });
         return;
@@ -153,8 +120,8 @@ const Checkout = () => {
       const phoneRegex = /^(?:\+254|0)[1-9][0-9]{8}$/;
       if (!phoneRegex.test(phone)) {
         toast({
-          title: t('common.errors.invalid_phone'),
-          description: t('common.errors.invalid_kenyan_phone'),
+          title: "Invalid phone number",
+          description: "Please enter a valid Kenyan phone number",
           variant: "destructive"
         });
         return;
@@ -168,34 +135,37 @@ const Checkout = () => {
       if (method === "card") {
         if (!cardName || !cardNumber || !expiryDate || !cvv) {
           toast({
-            title: t('common.errors.card_details_required'),
+            title: "Please fill in all card details",
             variant: "destructive"
           });
           return;
         }
         
         // Validate card number
-        if (!/^[0-9]{16}$/.test(cardNumber?.replace(/\s/g, "") || "")) {
+        if (!/^[0-9]{16}$/.test(cardNumber.replace(/\s/g, ""))) {
           toast({
-            title: t('common.errors.invalid_card'),
+            title: "Invalid card number",
+            description: "Please enter a valid 16-digit card number",
             variant: "destructive"
           });
           return;
         }
         
         // Validate expiry date
-        if (!/^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(expiryDate || "")) {
+        if (!/^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(expiryDate)) {
           toast({
-            title: t('common.errors.invalid_expiry'),
+            title: "Invalid expiry date",
+            description: "Please enter a valid expiry date (MM/YY)",
             variant: "destructive"
           });
           return;
         }
         
         // Validate CVV
-        if (!/^[0-9]{3,4}$/.test(cvv || "")) {
+        if (!/^[0-9]{3,4}$/.test(cvv)) {
           toast({
-            title: t('common.errors.invalid_cvv'),
+            title: "Invalid CVV",
+            description: "Please enter a valid CVV (3 or 4 digits)",
             variant: "destructive"
           });
           return;
@@ -203,7 +173,7 @@ const Checkout = () => {
       } else if (method === "mpesa") {
         if (!mpesaPhone) {
           toast({
-            title: t('common.errors.mpesa_phone_required'),
+            title: "Please enter your M-Pesa phone number",
             variant: "destructive"
           });
           return;
@@ -213,7 +183,8 @@ const Checkout = () => {
         const phoneRegex = /^(?:\+254|0)[1-9][0-9]{8}$/;
         if (!phoneRegex.test(mpesaPhone)) {
           toast({
-            title: t('common.errors.invalid_mpesa_phone'),
+            title: "Invalid M-Pesa phone number",
+            description: "Please enter a valid Kenyan phone number",
             variant: "destructive"
           });
           return;
@@ -234,11 +205,6 @@ const Checkout = () => {
     setIsProcessing(true);
     
     try {
-      // Format M-Pesa phone number if needed
-      if (formData.payment.method === 'mpesa' && formData.payment.mpesaPhone) {
-        formData.payment.mpesaPhone = formatMpesaPhone(formData.payment.mpesaPhone);
-      }
-      
       // Process payment first
       const paymentResult = await processPayment(
         formData.payment.method,
@@ -294,8 +260,8 @@ const Checkout = () => {
     } catch (error) {
       console.error("Error processing order:", error);
       toast({
-        title: t('common.errors.order_processing'),
-        description: t('common.errors.try_again'),
+        title: "Error processing your order",
+        description: "Please try again or contact customer support.",
         variant: "destructive"
       });
       setIsProcessing(false);
@@ -306,7 +272,7 @@ const Checkout = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6">{t('common.checkout.checkout')}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-6">Checkout</h1>
         
         {/* Checkout steps */}
         <div className="flex justify-between mb-8">
@@ -332,7 +298,7 @@ const Checkout = () => {
                   index <= currentStep ? "text-foreground" : "text-muted-foreground"
                 }`}
               >
-                {t(`common.checkout.${steps[index].title}`)}
+                {step.title}
               </span>
               {index < steps.length - 1 && (
                 <div 
@@ -350,11 +316,11 @@ const Checkout = () => {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>{t(`common.checkout.${steps[currentStep].title}`)}</CardTitle>
+                <CardTitle>{steps[currentStep].title}</CardTitle>
                 <CardDescription>
-                  {currentStep === 0 && t('common.checkout.enter_shipping')}
-                  {currentStep === 1 && t('common.checkout.choose_payment')}
-                  {currentStep === 2 && t('common.checkout.review_confirm')}
+                  {currentStep === 0 && "Enter your shipping details"}
+                  {currentStep === 1 && "Choose your payment method"}
+                  {currentStep === 2 && "Review and confirm your order"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -362,7 +328,6 @@ const Checkout = () => {
                   <ShippingForm 
                     data={formData.shipping} 
                     updateData={(data) => updateFormData("shipping", data)} 
-                    updateShippingCost={updateShippingCost}
                   />
                 )}
                 
@@ -376,34 +341,34 @@ const Checkout = () => {
                 {currentStep === 2 && (
                   <div className="space-y-6">
                     <div>
-                      <h3 className="font-medium mb-2">{t('common.checkout.shipping_address')}</h3>
+                      <h3 className="font-medium mb-2">Shipping Address</h3>
                       <div className="text-sm text-muted-foreground">
                         <p>{formData.shipping.fullName}</p>
                         <p>{formData.shipping.address}</p>
                         <p>{formData.shipping.city}, {formData.shipping.state} {formData.shipping.postalCode}</p>
                         <p>{formData.shipping.country}</p>
-                        <p>{t('common.checkout.phone')}: {formData.shipping.phone}</p>
-                        <p>{t('common.checkout.email')}: {formData.shipping.email}</p>
+                        <p>Phone: {formData.shipping.phone}</p>
+                        <p>Email: {formData.shipping.email}</p>
                       </div>
                     </div>
                     
                     <Separator />
                     
                     <div>
-                      <h3 className="font-medium mb-2">{t('common.checkout.shipping_method')}</h3>
+                      <h3 className="font-medium mb-2">Shipping Method</h3>
                       <p className="text-sm text-muted-foreground">
                         {formData.shipping.shippingMethod === "standard" 
-                          ? t('common.checkout.standard_shipping_days', { days: '3-7' }) 
-                          : t('common.checkout.express_shipping_days', { days: '1-3' })}
+                          ? "Standard Shipping (3-7 business days)" 
+                          : "Express Shipping (1-3 business days)"}
                       </p>
                     </div>
                     
                     <Separator />
                     
                     <div>
-                      <h3 className="font-medium mb-2">{t('common.checkout.payment_method')}</h3>
+                      <h3 className="font-medium mb-2">Payment Method</h3>
                       <p className="text-sm text-muted-foreground capitalize">
-                        {t(`common.payment.${formData.payment.method}`)}
+                        {formData.payment.method}
                         {formData.payment.method === "mpesa" && ` (${formData.payment.mpesaPhone})`}
                       </p>
                     </div>
@@ -411,7 +376,7 @@ const Checkout = () => {
                     <Separator />
                     
                     <div>
-                      <h3 className="font-medium mb-2">{t('common.checkout.order_items')}</h3>
+                      <h3 className="font-medium mb-2">Order Items</h3>
                       <div className="space-y-3">
                         {cartItems.map((item) => (
                           <div key={item.product.id} className="flex justify-between">
@@ -426,12 +391,12 @@ const Checkout = () => {
                               <div>
                                 <p className="text-sm font-medium">{item.product.title}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {t('common.cart.quantity')}: {item.quantity} × {formatCurrency(item.product.price)}
+                                  Qty: {item.quantity} × KSh {item.product.price.toFixed(2)}
                                 </p>
                               </div>
                             </div>
                             <span className="text-sm">
-                              {formatCurrency(item.product.price * item.quantity)}
+                              KSh {(item.product.price * item.quantity).toFixed(2)}
                             </span>
                           </div>
                         ))}
@@ -440,21 +405,21 @@ const Checkout = () => {
                     
                     <div className="mt-6 ml-auto w-full max-w-[240px]">
                       <div className="flex justify-between text-sm mb-1">
-                        <span>{t('common.cart.subtotal')}:</span>
-                        <span>{formatCurrency(subtotal)}</span>
+                        <span>Subtotal:</span>
+                        <span>KSh {subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span>{t('common.cart.tax')}:</span>
-                        <span>{formatCurrency(vatAmount)}</span>
+                        <span>VAT (16%):</span>
+                        <span>KSh {vatAmount.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span>{t('common.cart.shipping')}:</span>
-                        <span>{formatCurrency(shippingCost)}</span>
+                        <span>Shipping:</span>
+                        <span>KSh {shippingCost.toFixed(2)}</span>
                       </div>
                       <Separator className="my-2" />
                       <div className="flex justify-between font-bold">
-                        <span>{t('common.cart.total')}:</span>
-                        <span>{formatCurrency(total)}</span>
+                        <span>Total:</span>
+                        <span>KSh {total.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -463,7 +428,7 @@ const Checkout = () => {
               <CardFooter className="flex justify-between">
                 {currentStep > 0 ? (
                   <Button variant="outline" onClick={handleBack} disabled={isProcessing}>
-                    {t('common.buttons.back')}
+                    Back
                   </Button>
                 ) : (
                   <div></div>
@@ -471,17 +436,17 @@ const Checkout = () => {
                 
                 {currentStep < steps.length - 1 ? (
                   <Button onClick={handleNext}>
-                    {t('common.buttons.next')}
+                    Continue
                   </Button>
                 ) : (
                   <Button onClick={handleComplete} disabled={isProcessing}>
                     {isProcessing ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {t('common.checkout.processing')}
+                        Processing...
                       </>
                     ) : (
-                      t('common.checkout.place_order')
+                      "Place Order"
                     )}
                   </Button>
                 )}
