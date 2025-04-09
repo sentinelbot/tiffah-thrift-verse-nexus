@@ -40,8 +40,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // In production, fetch the user profile from our database
           try {
             // Fetch the user's profile from our database
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
+            // Use a type assertion to resolve the TypeScript error
+            const { data: profileData, error: profileError } = await (supabase
+              .from('profiles') as any)
               .select('*')
               .eq('id', data.session.user.id)
               .single();
@@ -57,11 +58,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               });
             } else if (profileData) {
               // Set user with data from our profile table
+              // Use a type assertion to tell TypeScript we know the shape
+              const profile = profileData as any;
               setUser({
                 id: data.session.user.id,
                 email: data.session.user.email || '',
-                name: profileData.name || data.session.user.user_metadata?.name || 'User',
-                role: profileData.role || data.session.user.user_metadata?.role || 'customer',
+                name: profile.name || data.session.user.user_metadata?.name || 'User',
+                role: profile.role || data.session.user.user_metadata?.role || 'customer',
               });
             }
           } catch (profileError) {
@@ -91,8 +94,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session) {
           try {
             // Fetch the user's profile from our database when auth state changes
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
+            // Use a type assertion to resolve the TypeScript error
+            const { data: profileData, error: profileError } = await (supabase
+              .from('profiles') as any)
               .select('*')
               .eq('id', session.user.id)
               .single();
@@ -108,11 +112,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               });
             } else if (profileData) {
               // Set user with data from our profile table
+              // Use a type assertion to tell TypeScript we know the shape
+              const profile = profileData as any;
               setUser({
                 id: session.user.id,
                 email: session.user.email || '',
-                name: profileData.name || session.user.user_metadata?.name || 'User',
-                role: profileData.role || session.user.user_metadata?.role || 'customer',
+                name: profile.name || session.user.user_metadata?.name || 'User',
+                role: profile.role || session.user.user_metadata?.role || 'customer',
               });
             }
           } catch (profileError) {
@@ -201,8 +207,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Use type assertion to tell TypeScript we know what we're doing
-      const { error } = await supabase
-        .from('profiles')
+      const { error } = await (supabase
+        .from('profiles') as any)
         .update({
           name: data.name,
           // Add other fields you want to update
