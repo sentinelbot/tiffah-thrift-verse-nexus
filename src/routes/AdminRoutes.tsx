@@ -1,12 +1,43 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminRoutes = () => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
+  
+  // Check if the user is on the unauthorized page and try to refresh their role
+  useEffect(() => {
+    const checkAndRefreshRole = async () => {
+      if (user && user.role !== 'admin' && location.pathname === '/unauthorized') {
+        try {
+          // Get fresh user data from the database
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+            
+          if (error) throw error;
+          
+          if (data && data.role === 'admin') {
+            // Role has been updated in the database but not in the local state
+            // Refresh the page to update the user context
+            window.location.href = '/admin';
+          }
+        } catch (error) {
+          console.error('Error refreshing role:', error);
+        }
+      }
+    };
+    
+    if (!isLoading && user) {
+      checkAndRefreshRole();
+    }
+  }, [user, isLoading, location.pathname]);
   
   // Show loading indicator while authentication status is being determined
   if (isLoading) {
