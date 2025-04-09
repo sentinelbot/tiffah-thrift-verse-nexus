@@ -14,6 +14,7 @@ import {
   Truck,
   Settings,
   User,
+  Printer
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -34,6 +35,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { icon: Tag, label: 'Categories', path: '/admin/categories', roles: ['admin'] },
     { icon: ShoppingBag, label: 'Orders', path: '/admin/orders', roles: ['admin', 'orderPreparer'] },
     { icon: Truck, label: 'Deliveries', path: '/admin/deliveries', roles: ['admin', 'deliveryStaff'] },
+    { icon: Printer, label: 'Printing', path: '/admin/printing', roles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff'] },
     { icon: Users, label: 'Users', path: '/admin/users', roles: ['admin'] },
     { icon: Settings, label: 'Settings', path: '/admin/settings', roles: ['admin'] },
   ];

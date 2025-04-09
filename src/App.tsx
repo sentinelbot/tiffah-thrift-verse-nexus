@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,9 +28,10 @@ import Products from "./pages/admin/Products";
 import ProductForm from "./pages/admin/ProductForm";
 import Categories from "./pages/admin/Categories";
 import Users from "./pages/admin/Users";
+import Orders from "./pages/admin/Orders";
+import PrintingPage from "./pages/admin/PrintingPage";
 
-const App = () => {
-  // Create a new QueryClient instance inside the component
+function App() {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
@@ -46,89 +46,35 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/shop" element={<Shop />} />
-                <Route path="/category/:categoryId" element={<CategoryPage />} />
                 <Route path="/new-arrivals" element={<NewArrivals />} />
+                <Route path="/category/:id" element={<CategoryPage />} />
                 <Route path="/product/:id" element={<ProductDetails />} />
                 <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
                 <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/order-confirmation" element={<OrderConfirmation />} />
+                <Route path="/auth" element={<Auth />} />
                 
                 {/* Protected Customer Routes */}
-                <Route 
-                  path="/account" 
-                  element={
-                    <ProtectedRoute allowedRoles={['customer', 'admin', 'productManager', 'orderPreparer', 'deliveryStaff']}>
-                      <Account />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route
-                  path="/order-confirmation"
-                  element={<OrderConfirmation />}
-                />
-                <Route
-                  path="/order/:id"
-                  element={
-                    <ProtectedRoute allowedRoles={['customer', 'admin', 'productManager', 'orderPreparer', 'deliveryStaff']}>
-                      <OrderDetail />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route element={<ProtectedRoute allowedRoles={['customer', 'admin']} />}>
+                  <Route path="/account" element={<Account />} />
+                  <Route path="/order/:id" element={<OrderDetail />} />
+                </Route>
                 
-                <Route path="/auth" element={<Auth />} />
+                {/* Protected Admin Routes */}
+                <Route element={<ProtectedRoute allowedRoles={['admin', 'productManager', 'orderPreparer', 'deliveryStaff']} />}>
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/products" element={<Products />} />
+                  <Route path="/admin/products/new" element={<ProductForm />} />
+                  <Route path="/admin/products/:id" element={<ProductForm />} />
+                  <Route path="/admin/categories" element={<Categories />} />
+                  <Route path="/admin/orders" element={<Orders />} />
+                  <Route path="/admin/users" element={<Users />} />
+                  <Route path="/admin/printing" element={<PrintingPage />} />
+                </Route>
+                
+                {/* Error Routes */}
                 <Route path="/unauthorized" element={<Unauthorized />} />
-                
-                {/* Admin Routes - Protected */}
-                <Route 
-                  path="/admin" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'productManager', 'orderPreparer', 'deliveryStaff']}>
-                      <AdminDashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/products" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'productManager']}>
-                      <Products />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/products/new" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'productManager']}>
-                      <ProductForm />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/products/:id" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'productManager']}>
-                      <ProductForm />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/categories" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <Categories />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/users" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <Users />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Catch-all route - 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
@@ -137,6 +83,6 @@ const App = () => {
       </AuthProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
