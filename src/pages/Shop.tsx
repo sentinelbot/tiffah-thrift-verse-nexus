@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -7,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
 import ProductFilters, { FilterState } from "@/components/shop/ProductFilters";
 import ProductSort, { SortOption } from "@/components/shop/ProductSort";
+import EnhancedSearch from "@/components/shop/EnhancedSearch";
+import CustomerServiceChat from "@/components/ai/CustomerServiceChat";
 
 // Mock data
 const products: ProductType[] = [
@@ -116,19 +117,45 @@ const Shop = () => {
   });
   const [sortOption, setSortOption] = useState<SortOption>("featured");
   const [filteredProducts, setFilteredProducts] = useState(products);
+  const [enhancedProductIds, setEnhancedProductIds] = useState<string[]>([]);
+  
+  // Handle search with optional AI enhanced results
+  const handleSearch = (query: string, enhancedResults?: string[]) => {
+    setFilters(prev => ({
+      ...prev,
+      search: query
+    }));
+    
+    if (enhancedResults && enhancedResults.length > 0) {
+      setEnhancedProductIds(enhancedResults);
+    } else {
+      setEnhancedProductIds([]);
+    }
+  };
   
   // Apply filters and sorting whenever they change
   useEffect(() => {
     // Filter products
     let result = [...products];
     
-    // Apply search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(product => 
-        product.title.toLowerCase().includes(searchLower) ||
-        (product.brand && product.brand.toLowerCase().includes(searchLower))
+    // If we have AI-enhanced search results, prioritize those products
+    if (enhancedProductIds.length > 0) {
+      // First, include all AI-recommended products
+      const enhancedProducts = products.filter(product => 
+        enhancedProductIds.includes(product.id)
       );
+      
+      // Then, include other filtered products not in the enhanced set
+      const otherFilteredProducts = products.filter(product => 
+        !enhancedProductIds.includes(product.id) &&
+        (filters.search ? matchesSearchQuery(product, filters.search) : true)
+      );
+      
+      result = [...enhancedProducts, ...otherFilteredProducts];
+    } 
+    // Otherwise, apply regular search filtering
+    else if (filters.search) {
+      result = result.filter(product => matchesSearchQuery(product, filters.search));
     }
     
     // Apply category filter
@@ -189,12 +216,27 @@ const Shop = () => {
         result.sort((a, b) => b.title.localeCompare(a.title));
         break;
       default:
-        // "featured" is default, no sorting needed
+        // If we have enhanced results and "featured" is selected, preserve the AI ordering
+        if (enhancedProductIds.length > 0 && sortOption === "featured") {
+          // Do nothing, keep the AI-recommended order
+        }
         break;
     }
     
     setFilteredProducts(result);
-  }, [filters, sortOption]);
+  }, [filters, sortOption, enhancedProductIds]);
+  
+  // Helper function to check if a product matches the search query
+  const matchesSearchQuery = (product: ProductType, query: string) => {
+    const searchLower = query.toLowerCase();
+    return (
+      product.title.toLowerCase().includes(searchLower) ||
+      (product.brand && product.brand.toLowerCase().includes(searchLower)) ||
+      (product.color && product.color.toLowerCase().includes(searchLower)) ||
+      (product.category && product.category.toLowerCase().includes(searchLower)) ||
+      (product.condition && product.condition.toLowerCase().includes(searchLower))
+    );
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -226,23 +268,43 @@ const Shop = () => {
             
             {/* Products grid */}
             <div className="flex-1">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h1 className="text-2xl font-bold hidden md:block">Shop All</h1>
-                  <span className="text-sm text-muted-foreground">
-                    {filteredProducts.length} products
-                  </span>
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-2xl font-bold hidden md:block">Shop All</h1>
+                    <span className="text-sm text-muted-foreground">
+                      {filteredProducts.length} products
+                    </span>
+                  </div>
+                  <ProductSort 
+                    value={sortOption}
+                    onChange={setSortOption}
+                  />
                 </div>
-                <ProductSort 
-                  value={sortOption}
-                  onChange={setSortOption}
+                
+                <EnhancedSearch 
+                  onSearch={handleSearch}
+                  initialValue={filters.search}
                 />
               </div>
               
               {filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <div key={product.id} className="relative">
+                      {/* Show indicator for AI-enhanced results */}
+                      {enhancedProductIds.includes(product.id) && (
+                        <div className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                          <span className="sr-only">AI recommended</span>
+                          <span aria-hidden="true">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                          </span>
+                        </div>
+                      )}
+                      <ProductCard product={product} />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -262,6 +324,7 @@ const Shop = () => {
                         brands: [],
                         search: ""
                       });
+                      setEnhancedProductIds([]);
                     }}
                   >
                     Clear Filters
@@ -273,6 +336,9 @@ const Shop = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Customer Service Chatbot */}
+      <CustomerServiceChat />
     </div>
   );
 };

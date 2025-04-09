@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -23,6 +22,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -31,8 +32,11 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateUniqueBarcode } from '@/utils/barcodeUtils';
+import AIDescriptionGenerator from '@/components/ai/AIDescriptionGenerator';
+import AIPriceOptimizer from '@/components/ai/AIPriceOptimizer';
+import AIImageEnhancer from '@/components/ai/AIImageEnhancer';
+import { Sparkles } from 'lucide-react';
 
-// Schema for product form validation
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Name must be at least 3 characters' }),
   description: z.string().optional(),
@@ -57,9 +61,13 @@ const ProductForm = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("basic");
   const isEditing = !!id;
 
-  // Setup form
+  const [productImage, setProductImage] = useState<string>(
+    "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"
+  );
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -78,7 +86,6 @@ const ProductForm = () => {
     },
   });
 
-  // Fetch product data if editing
   useEffect(() => {
     const fetchProduct = async () => {
       if (isEditing) {
@@ -93,7 +100,6 @@ const ProductForm = () => {
           if (error) throw error;
 
           if (data) {
-            // Update form values
             form.reset({
               name: data.name,
               description: data.description || '',
@@ -120,17 +126,14 @@ const ProductForm = () => {
     fetchProduct();
   }, [id, isEditing, form]);
 
-  // Handle form submission
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      // Generate barcode if not provided
       if (!values.barcode) {
         values.barcode = generateUniqueBarcode();
       }
 
       if (isEditing) {
-        // Update existing product
         const { error } = await supabase
           .from('products')
           .update({
@@ -153,7 +156,6 @@ const ProductForm = () => {
         if (error) throw error;
         toast.success('Product updated successfully');
       } else {
-        // Create new product
         const { error } = await supabase
           .from('products')
           .insert({
@@ -179,13 +181,32 @@ const ProductForm = () => {
         toast.success('Product created successfully');
       }
 
-      // Navigate back to products list
       navigate('/admin/products');
     } catch (error: any) {
       toast.error(error.message || 'Error saving product');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDescriptionGenerated = (description: string, keyPoints: string[], seoKeywords: string[]) => {
+    form.setValue('description', description);
+    console.log('Key points:', keyPoints);
+    console.log('SEO keywords:', seoKeywords);
+  };
+
+  const handlePriceRecommended = (price: number) => {
+    form.setValue('price', price);
+  };
+
+  const handleEnhancedImage = (enhancedUrl: string) => {
+    setProductImage(enhancedUrl);
+    toast.success('Enhanced image will be used for this product');
+  };
+
+  const handleBackgroundRemoved = (processedUrl: string) => {
+    setProductImage(processedUrl);
+    toast.success('Image with removed background will be used for this product');
   };
 
   return (
@@ -198,287 +219,364 @@ const ProductForm = () => {
           </p>
         </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Basic Information Section */}
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">Basic Information</h2>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="basic">Basic Information</TabsTrigger>
+            <TabsTrigger value="ai" className="flex items-center gap-1">
+              <Sparkles className="h-4 w-4 text-primary" />
+              AI Assistance
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="basic">
+            <Card>
+              <CardContent className="pt-6">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="space-y-4">
+                      <h2 className="text-xl font-semibold">Basic Information</h2>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Product Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Vintage Denim Jacket" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Product Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Vintage Denim Jacket" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="price"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Price (KES)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" min="0" step="0.01" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="original_price"
+                            render={({ field: { value, onChange, ...field } }) => (
+                              <FormItem>
+                                <FormLabel>Original Price (KES)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={value === undefined ? '' : value}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      onChange(value === '' ? undefined : parseFloat(value));
+                                    }}
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormDescription>Optional</FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+
                       <FormField
                         control={form.control}
-                        name="price"
+                        name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Price (KES)</FormLabel>
+                            <FormLabel>Description</FormLabel>
                             <FormControl>
-                              <Input type="number" min="0" step="0.01" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="original_price"
-                        render={({ field: { value, onChange, ...field } }) => (
-                          <FormItem>
-                            <FormLabel>Original Price (KES)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={value === undefined ? '' : value}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  onChange(value === '' ? undefined : parseFloat(value));
-                                }}
+                              <Textarea
+                                placeholder="Enter product description..."
+                                className="min-h-32"
                                 {...field}
                               />
                             </FormControl>
-                            <FormDescription>Optional</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
-                  </div>
 
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Enter product description..."
-                            className="min-h-32"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                    <div className="space-y-4 pt-4 border-t">
+                      <h2 className="text-xl font-semibold">Classification</h2>
 
-                {/* Classification Section */}
-                <div className="space-y-4 pt-4 border-t">
-                  <h2 className="text-xl font-semibold">Classification</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="category"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Category</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="clothing">Clothing</SelectItem>
+                                  <SelectItem value="accessories">Accessories</SelectItem>
+                                  <SelectItem value="footwear">Footwear</SelectItem>
+                                  <SelectItem value="home">Home</SelectItem>
+                                  <SelectItem value="vintage">Vintage</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="category"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormField
+                          control={form.control}
+                          name="sub_category"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sub-Category</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. T-shirts, Jeans, Earrings" {...field} />
+                              </FormControl>
+                              <FormDescription>Optional</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="brand"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Brand</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Brand name" {...field} />
+                              </FormControl>
+                              <FormDescription>Optional</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="size"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Size</FormLabel>
+                              <FormControl>
+                                <Input placeholder="S, M, L, XL, etc." {...field} />
+                              </FormControl>
+                              <FormDescription>Optional</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="color"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Color</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. Blue, Red, Black" {...field} />
+                              </FormControl>
+                              <FormDescription>Optional</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t">
+                      <h2 className="text-xl font-semibold">Other Details</h2>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="condition"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Condition</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select condition" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="new">New</SelectItem>
+                                  <SelectItem value="likeNew">Like New</SelectItem>
+                                  <SelectItem value="good">Good</SelectItem>
+                                  <SelectItem value="fair">Fair</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="barcode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Barcode</FormLabel>
+                              <div className="flex space-x-2">
+                                <FormControl>
+                                  <Input
+                                    placeholder="Leave empty to auto-generate"
+                                    {...field}
+                                    value={field.value || ''}
+                                  />
+                                </FormControl>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const barcode = generateUniqueBarcode();
+                                    form.setValue('barcode', barcode);
+                                  }}
+                                  className="shrink-0"
+                                >
+                                  Generate
+                                </Button>
+                              </div>
+                              <FormDescription>
+                                Leave empty to auto-generate on save
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="featured"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="clothing">Clothing</SelectItem>
-                              <SelectItem value="accessories">Accessories</SelectItem>
-                              <SelectItem value="footwear">Footwear</SelectItem>
-                              <SelectItem value="home">Home</SelectItem>
-                              <SelectItem value="vintage">Vintage</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="sub_category"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sub-Category</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g. T-shirts, Jeans, Earrings" {...field} />
-                          </FormControl>
-                          <FormDescription>Optional</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="brand"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Brand</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Brand name" {...field} />
-                          </FormControl>
-                          <FormDescription>Optional</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="size"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Size</FormLabel>
-                          <FormControl>
-                            <Input placeholder="S, M, L, XL, etc." {...field} />
-                          </FormControl>
-                          <FormDescription>Optional</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Color</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g. Blue, Red, Black" {...field} />
-                          </FormControl>
-                          <FormDescription>Optional</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Other Details Section */}
-                <div className="space-y-4 pt-4 border-t">
-                  <h2 className="text-xl font-semibold">Other Details</h2>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="condition"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Condition</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select condition" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="new">New</SelectItem>
-                              <SelectItem value="likeNew">Like New</SelectItem>
-                              <SelectItem value="good">Good</SelectItem>
-                              <SelectItem value="fair">Fair</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="barcode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Barcode</FormLabel>
-                          <div className="flex space-x-2">
-                            <FormControl>
-                              <Input
-                                placeholder="Leave empty to auto-generate"
-                                {...field}
-                                value={field.value || ''}
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
                               />
                             </FormControl>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => {
-                                const barcode = generateUniqueBarcode();
-                                form.setValue('barcode', barcode);
-                              }}
-                              className="shrink-0"
-                            >
-                              Generate
-                            </Button>
-                          </div>
-                          <FormDescription>
-                            Leave empty to auto-generate on save
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Featured Product</FormLabel>
+                              <FormDescription>
+                                Featured products are displayed prominently on the homepage
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate('/admin/products')}
+                        disabled={loading}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={loading}>
+                        {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Product'}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="ai">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <h2 className="text-xl font-semibold mb-4">AI Image Processing</h2>
+                  <Separator className="my-4" />
+                  
+                  <div className="mb-4">
+                    <p className="text-sm text-muted-foreground mb-2">Current Product Image</p>
+                    <div className="aspect-square overflow-hidden rounded-md bg-muted/50 flex items-center justify-center">
+                      <img 
+                        src={productImage} 
+                        alt="Product" 
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
                   </div>
-
-                  <FormField
-                    control={form.control}
-                    name="featured"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Featured Product</FormLabel>
-                          <FormDescription>
-                            Featured products are displayed prominently on the homepage
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
+                  
+                  <AIImageEnhancer 
+                    imageUrl={productImage}
+                    onEnhancedImage={handleEnhancedImage}
+                    onBackgroundRemoved={handleBackgroundRemoved}
                   />
-                </div>
-
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => navigate('/admin/products')}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Product'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+              
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <AIDescriptionGenerator
+                      name={form.getValues('name')}
+                      category={form.getValues('category')}
+                      condition={form.getValues('condition')}
+                      originalPrice={form.getValues('original_price')}
+                      brand={form.getValues('brand')}
+                      color={form.getValues('color')}
+                      onDescriptionGenerated={handleDescriptionGenerated}
+                    />
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <AIPriceOptimizer
+                      condition={form.getValues('condition')}
+                      category={form.getValues('category')}
+                      brand={form.getValues('brand')}
+                      originalPrice={form.getValues('original_price')}
+                      onPriceRecommended={handlePriceRecommended}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 justify-end mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab("basic")}
+              >
+                Back to Basic Info
+              </Button>
+              <Button onClick={form.handleSubmit(onSubmit)} disabled={loading}>
+                {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Product'}
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );

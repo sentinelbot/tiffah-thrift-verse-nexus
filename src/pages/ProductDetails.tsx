@@ -1,16 +1,18 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Share2, ShoppingBag, Plus, Minus } from "lucide-react";
+import { Heart, Share2, ShoppingBag, Plus, Minus, Sparkles } from "lucide-react";
 import { ProductType } from "@/components/products/ProductCard";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCart } from "@/context/CartContext";
 import RelatedProducts from "@/components/products/RelatedProducts";
+import AIProductRecommendations from "@/components/ai/AIProductRecommendations";
+import CustomerServiceChat from "@/components/ai/CustomerServiceChat";
 
 // Mock product data
 const products: Record<string, ProductType> = {
@@ -48,9 +50,17 @@ const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showAIRecommendations, setShowAIRecommendations] = useState(false);
   const { addToCart, addToWishlist, isInCart, isInWishlist } = useCart();
   
   const product = id ? products[id] : null;
+  
+  useEffect(() => {
+    // Reset state when product changes
+    setQuantity(1);
+    setSelectedImage(0);
+    setShowAIRecommendations(false);
+  }, [id]);
   
   if (!product) {
     return (
@@ -244,6 +254,21 @@ const ProductDetails = () => {
                   <Share2 className="h-4 w-4" />
                 </Button>
               </div>
+              
+              <Button 
+                variant="secondary" 
+                className="w-full flex items-center gap-2"
+                onClick={() => setShowAIRecommendations(!showAIRecommendations)}
+              >
+                <Sparkles className="h-4 w-4 text-primary" />
+                {showAIRecommendations ? 'Hide AI Recommendations' : 'Show AI Recommendations'}
+              </Button>
+              
+              {showAIRecommendations && (
+                <div className="mt-4 p-4 border rounded-md bg-muted/20">
+                  <AIProductRecommendations productId={product.id} />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -352,6 +377,9 @@ const ProductDetails = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Customer Service Chatbot */}
+      <CustomerServiceChat />
     </div>
   );
 };

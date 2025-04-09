@@ -32,6 +32,7 @@ import Users from "./pages/admin/Users";
 import Orders from "./pages/admin/Orders";
 import Printing from "./pages/admin/Printing";
 import Scanning from "./pages/admin/Scanning";
+import AiDashboard from "./pages/admin/AiDashboard";
 
 function App() {
   const [queryClient] = useState(() => new QueryClient());
@@ -78,6 +79,7 @@ function App() {
                   <Route path="/admin/users" element={<Users />} />
                   <Route path="/admin/printing" element={<Printing />} />
                   <Route path="/admin/scanning" element={<Scanning />} />
+                  <Route path="/admin/ai" element={<AiDashboard />} />
                 </Route>
                 
                 {/* Error Routes */}
