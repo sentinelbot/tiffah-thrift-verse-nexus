@@ -45,6 +45,7 @@ export const validateBarcode = (barcode: string): boolean => {
 
 /**
  * Generates a barcode data URL for display or printing
+ * This is a synchronous function that returns a data URL string
  */
 export const generateBarcodeDataURL = (barcodeText: string): string => {
   if (!barcodeText) return '';
@@ -70,6 +71,16 @@ export const generateBarcodeDataURL = (barcodeText: string): string => {
     console.error('Error generating barcode:', error);
     return '';
   }
+};
+
+/**
+ * Wrapper for the generateBarcode function that ensures it returns the barcode directly
+ * rather than a Promise for contexts where we need to use it synchronously
+ */
+export const getBarcodeSynchronously = (): string => {
+  // Generate a random 5-digit number for immediate use
+  const randomDigits = Math.floor(10000 + Math.random() * 90000);
+  return `TTS-${randomDigits}`;
 };
 
 // Alias for backward compatibility

@@ -7,7 +7,7 @@ import { StaffPerformance } from '@/components/admin/staff/StaffPerformance';
 import { Button } from '@/components/ui/button';
 import { Plus, UserCheck, UserCog, Users } from 'lucide-react';
 
-const Staff = () => {
+const StaffManagement = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -76,4 +76,4 @@ const Staff = () => {
   );
 };
 
-export default Staff;
+export default StaffManagement;

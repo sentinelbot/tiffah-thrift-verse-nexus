@@ -7,7 +7,7 @@ import Products from '@/pages/admin/Products';
 import Orders from '@/pages/admin/Orders';
 import Scanning from '@/pages/admin/Scanning';
 import Analytics from '@/pages/admin/Analytics';
-import Staff from '@/pages/admin/Staff';
+import Staff from '@/components/admin/staff/StaffManagement';
 import Settings from '@/pages/admin/Settings';
 import AdminAuth from '@/pages/admin/Auth';
 import Unauthorized from '@/pages/Unauthorized';
