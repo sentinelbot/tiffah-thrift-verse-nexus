@@ -1,47 +1,47 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LogIn, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Form schema for login
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters long' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
 });
 
-const registerSchema = loginSchema.extend({
-  confirmPassword: z.string().min(6, { message: 'Password must be at least 6 characters long' }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+// Form schema for registration
+const registerSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
   path: ['confirmPassword'],
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
-type RegisterFormValues = z.infer<typeof registerSchema>;
+// Types based on schema
+type LoginValues = z.infer<typeof loginSchema>;
+type RegisterValues = z.infer<typeof registerSchema>;
 
-const Auth = () => {
+const Auth: React.FC = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
-  
-  const from = location.state?.from?.pathname || '/';
+  const [activeTab, setActiveTab] = useState<string>('login');
 
-  const loginForm = useForm<LoginFormValues>({
+  // Login form
+  const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
@@ -49,61 +49,61 @@ const Auth = () => {
     },
   });
 
-  const registerForm = useForm<RegisterFormValues>({
+  // Register form
+  const registerForm = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
       confirmPassword: '',
     },
   });
 
-  const onLoginSubmit = async (values: LoginFormValues) => {
+  const onLoginSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     try {
       await signIn(values.email, values.password);
-      toast.success('Login successful!');
-      navigate(from, { replace: true });
+      toast.success('Login successful');
+      navigate('/');
     } catch (error) {
-      // Error is handled in the auth context
+      console.error('Login error:', error);
+      toast.error('Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onRegisterSubmit = async (values: RegisterFormValues) => {
+  const onRegisterSubmit = async (values: RegisterValues) => {
     setIsLoading(true);
     try {
-      await signUp(values.email, values.password);
-      registerForm.reset();
+      await signUp(values.email, values.password, values.name);
+      toast.success('Registration successful');
+      setActiveTab('login');
     } catch (error) {
-      // Error is handled in the auth context
+      console.error('Registration error:', error);
+      toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">
-            <span className="text-gradient">Tiffah</span>
-            <span className="text-foreground">Thrift</span>
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Second-hand fashion, first-class style
-          </p>
-        </div>
-        
-        <div className="bg-card p-6 rounded-lg shadow-md border border-border">
-          <Tabs defaultValue="login">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Tiffah Thrift Store</CardTitle>
+          <CardDescription>Sign in to your account or create a new one</CardDescription>
+        </CardHeader>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-2 w-full">
+            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="register">Register</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="login">
+            <CardContent className="space-y-4 pt-4">
               <Form {...loginForm}>
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                   <FormField
@@ -113,13 +113,17 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="your@email.com" {...field} />
+                          <Input
+                            type="email"
+                            placeholder="your.email@example.com"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={loginForm.control}
                     name="password"
@@ -127,23 +131,58 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Signing in...' : 'Sign In'}
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin">⏳</span> Signing in...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <LogIn className="h-4 w-4" /> Sign In
+                      </span>
+                    )}
                   </Button>
                 </form>
               </Form>
-            </TabsContent>
-            
-            <TabsContent value="register">
+            </CardContent>
+          </TabsContent>
+
+          <TabsContent value="register">
+            <CardContent className="space-y-4 pt-4">
               <Form {...registerForm}>
                 <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                  <FormField
+                    control={registerForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Your name"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={registerForm.control}
                     name="email"
@@ -151,13 +190,17 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="your@email.com" {...field} />
+                          <Input
+                            type="email"
+                            placeholder="your.email@example.com"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={registerForm.control}
                     name="password"
@@ -165,13 +208,17 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={registerForm.control}
                     name="confirmPassword"
@@ -179,22 +226,44 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Creating Account...' : 'Create Account'}
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin">⏳</span> Creating account...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4" /> Create Account
+                      </span>
+                    )}
                   </Button>
                 </form>
               </Form>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+            </CardContent>
+          </TabsContent>
+        </Tabs>
+
+        <CardFooter className="flex flex-col space-y-4 border-t p-4">
+          <p className="text-center text-sm text-muted-foreground">
+            By continuing, you agree to our Terms of Service and Privacy Policy.
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

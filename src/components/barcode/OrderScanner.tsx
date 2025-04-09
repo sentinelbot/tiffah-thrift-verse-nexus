@@ -167,7 +167,7 @@ const OrderScanner: React.FC = () => {
                             </span>
                           </div>
                           <Button 
-                            variant={verifiedItems[item.id] ? "success" : "outline"}
+                            variant={verifiedItems[item.id] ? "secondary" : "outline"}
                             size="sm"
                             onClick={() => toggleItemVerification(item.id)}
                           >

@@ -123,7 +123,7 @@ const ProductScanner: React.FC = () => {
               
               <div className="flex justify-between items-center">
                 <span className="font-semibold">Status:</span>
-                <Badge variant={scanResult.status === 'available' ? 'success' : 'secondary'}>
+                <Badge variant={scanResult.status === 'available' ? 'secondary' : 'default'}>
                   {scanResult.status === 'pending-sync' ? 'Pending Sync' : scanResult.status}
                 </Badge>
               </div>
