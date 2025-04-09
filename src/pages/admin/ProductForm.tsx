@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -29,7 +30,7 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { generateBarcode } from '@/utils/barcodeUtils';
+import { generateUniqueBarcode } from '@/utils/barcodeUtils';
 
 // Schema for product form validation
 const formSchema = z.object({
@@ -125,7 +126,7 @@ const ProductForm = () => {
     try {
       // Generate barcode if not provided
       if (!values.barcode) {
-        values.barcode = generateBarcode();
+        values.barcode = generateUniqueBarcode();
       }
 
       if (isEditing) {
@@ -422,7 +423,7 @@ const ProductForm = () => {
                               type="button"
                               variant="outline"
                               onClick={() => {
-                                const barcode = generateBarcode();
+                                const barcode = generateUniqueBarcode();
                                 form.setValue('barcode', barcode);
                               }}
                               className="shrink-0"
