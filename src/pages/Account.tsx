@@ -1,240 +1,179 @@
 
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { OrderHistory } from "@/components/account/OrderHistory";
-import { User, Package, Heart, LogOut, Settings } from "lucide-react";
+import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User as UserIcon, LogOut, Settings, ShoppingBag, Heart } from 'lucide-react';
+import { formatDate } from '@/utils/dateUtils';
+import { OrderHistory } from '@/components/account/OrderHistory';
 
 const Account = () => {
-  const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState("profile");
-  
-  // Redirect to auth page if not logged in
-  if (!user) {
-    return <Navigate to="/auth" />;
-  }
-  
-  // Get user initials for avatar
-  const getInitials = () => {
-    if (user.displayName) {
-      return user.displayName
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase();
+  const { user, signOut, updateProfile } = useAuth();
+  const navigate = useNavigate();
+  const [name, setName] = useState(user?.name || '');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    
+    setIsUpdating(true);
+    try {
+      await updateProfile({ name });
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error('Failed to update profile');
+      console.error(error);
+    } finally {
+      setIsUpdating(false);
     }
-    return user.email?.substring(0, 2).toUpperCase() || "U";
   };
-  
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  if (!user) {
+    return null;
+  }
+
+  // Get user's initials for avatar fallback
+  const getInitials = () => {
+    if (!user.name) return 'U';
+    return user.name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8 flex-grow">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">My Account</h1>
-            <p className="text-muted-foreground">Manage your account settings and view orders</p>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Sidebar */}
-            <div className="md:w-64 flex-shrink-0">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex flex-col items-center text-center mb-6">
-                    <Avatar className="h-20 w-20 mb-2">
-                      <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
-                      <AvatarFallback>{getInitials()}</AvatarFallback>
-                    </Avatar>
-                    <h2 className="font-semibold text-lg">{user.displayName || user.email}</h2>
-                    <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
-                  </div>
-                  
-                  <Separator className="mb-6" />
-                  
-                  <div className="space-y-1">
-                    <Button 
-                      variant={activeTab === "profile" ? "default" : "ghost"} 
-                      className="w-full justify-start" 
-                      onClick={() => setActiveTab("profile")}
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
-                    </Button>
-                    <Button 
-                      variant={activeTab === "orders" ? "default" : "ghost"} 
-                      className="w-full justify-start" 
-                      onClick={() => setActiveTab("orders")}
-                    >
-                      <Package className="mr-2 h-4 w-4" />
-                      Orders
-                    </Button>
-                    <Button 
-                      variant={activeTab === "wishlist" ? "default" : "ghost"} 
-                      className="w-full justify-start" 
-                      onClick={() => setActiveTab("wishlist")}
-                    >
-                      <Heart className="mr-2 h-4 w-4" />
-                      Wishlist
-                    </Button>
-                    <Button 
-                      variant={activeTab === "settings" ? "default" : "ghost"} 
-                      className="w-full justify-start" 
-                      onClick={() => setActiveTab("settings")}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </Button>
-                    <Separator className="my-2" />
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start text-destructive" 
-                      onClick={signOut}
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sign Out
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Main Content */}
-            <div className="flex-grow">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="mb-6 hidden">
-                  <TabsTrigger value="profile">Profile</TabsTrigger>
-                  <TabsTrigger value="orders">Orders</TabsTrigger>
-                  <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
-                  <TabsTrigger value="settings">Settings</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="profile">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Profile</CardTitle>
-                      <CardDescription>Manage your profile information</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input 
-                          id="name" 
-                          value={user.displayName || ""} 
-                          disabled 
-                          className="max-w-md"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input 
-                          id="email" 
-                          value={user.email || ""} 
-                          disabled 
-                          className="max-w-md"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="joined">Member Since</Label>
-                        <Input 
-                          id="joined" 
-                          value={user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'} 
-                          disabled 
-                          className="max-w-md"
-                        />
-                      </div>
-                      
-                      <Button>Update Profile</Button>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="orders">
-                  <OrderHistory />
-                </TabsContent>
-                
-                <TabsContent value="wishlist">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Wishlist</CardTitle>
-                      <CardDescription>Items you've saved for later</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Wishlist content here */}
-                      <p>Your wishlist items will appear here.</p>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="settings">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Settings</CardTitle>
-                      <CardDescription>Manage your account settings</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="password">Change Password</Label>
-                        <div className="flex gap-2">
-                          <Input 
-                            id="password" 
-                            type="password" 
-                            placeholder="New password" 
-                            className="max-w-md"
-                          />
-                          <Button>Change</Button>
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <h3 className="font-medium mb-2">Communication Preferences</h3>
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox" 
-                            id="emailOffers" 
-                            className="h-4 w-4 rounded border-gray-300 text-primary"
-                          />
-                          <Label htmlFor="emailOffers">Receive email offers and updates</Label>
-                        </div>
-                        <div className="flex items-center space-x-2 mt-2">
-                          <input 
-                            type="checkbox" 
-                            id="orderUpdates" 
-                            className="h-4 w-4 rounded border-gray-300 text-primary"
-                            defaultChecked
-                          />
-                          <Label htmlFor="orderUpdates">Receive order status updates</Label>
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <h3 className="font-medium text-destructive mb-2">Danger Zone</h3>
-                        <Button variant="destructive">Delete Account</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+    <div className="container py-10">
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-3xl font-bold">{user.name || 'User'}</h1>
+              <p className="text-muted-foreground">{user.email}</p>
             </div>
           </div>
+          <Button variant="outline" onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
         </div>
+
+        <Tabs defaultValue="orders">
+          <TabsList className="grid grid-cols-4 w-full max-w-md">
+            <TabsTrigger value="orders">
+              <ShoppingBag className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Orders</span>
+            </TabsTrigger>
+            <TabsTrigger value="wishlist">
+              <Heart className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Wishlist</span>
+            </TabsTrigger>
+            <TabsTrigger value="profile">
+              <UserIcon className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings">
+              <Settings className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Settings</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="orders" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Your Orders</h2>
+            <OrderHistory />
+          </TabsContent>
+          
+          <TabsContent value="wishlist" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Your Wishlist</h2>
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">Your wishlist is empty.</p>
+              <Button className="mt-4" onClick={() => navigate('/shop')}>
+                Continue Shopping
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="profile" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>
+                  Update your account information
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      value={user.email}
+                      disabled
+                    />
+                  </div>
+                  <Button type="submit" disabled={isUpdating}>
+                    Save Changes
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="settings" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Settings</CardTitle>
+                <CardDescription>
+                  Manage your account settings and preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1">
+                  <p className="font-medium">Account Created</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatDate(new Date())}
+                  </p>
+                </div>
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-lg font-medium">Danger Zone</h3>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Permanently delete your account and all associated data.
+                    </p>
+                    <Button variant="destructive">
+                      Delete Account
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-      <Footer />
     </div>
   );
 };

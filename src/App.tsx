@@ -1,8 +1,9 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -29,7 +30,7 @@ import ProductForm from "./pages/admin/ProductForm";
 import Categories from "./pages/admin/Categories";
 import Users from "./pages/admin/Users";
 import Orders from "./pages/admin/Orders";
-import PrintingPage from "./pages/admin/PrintingPage";
+import PrintingPage from "./pages/admin/Printing"; // Fixed import path
 
 function App() {
   const [queryClient] = useState(() => new QueryClient());
@@ -56,13 +57,17 @@ function App() {
                 <Route path="/auth" element={<Auth />} />
                 
                 {/* Protected Customer Routes */}
-                <Route element={<ProtectedRoute allowedRoles={['customer', 'admin']} />}>
+                <Route element={<ProtectedRoute allowedRoles={['customer', 'admin']}>
+                  <Outlet />
+                </ProtectedRoute>}>
                   <Route path="/account" element={<Account />} />
                   <Route path="/order/:id" element={<OrderDetail />} />
                 </Route>
                 
                 {/* Protected Admin Routes */}
-                <Route element={<ProtectedRoute allowedRoles={['admin', 'productManager', 'orderPreparer', 'deliveryStaff']} />}>
+                <Route element={<ProtectedRoute allowedRoles={['admin', 'productManager', 'orderPreparer', 'deliveryStaff']}>
+                  <Outlet />
+                </ProtectedRoute>}>
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/products" element={<Products />} />
                   <Route path="/admin/products/new" element={<ProductForm />} />
