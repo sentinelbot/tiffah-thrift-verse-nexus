@@ -6,31 +6,31 @@ export type ProductStatus = 'available' | 'reserved' | 'sold';
 export interface Product {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
-  original_price?: number;
+  original_price?: number | null;
   category: string;
-  sub_category?: string;
-  tags?: string[];
-  size?: string;
-  color?: string;
-  brand?: string;
-  condition: 'new' | 'likeNew' | 'good' | 'fair';
+  sub_category?: string | null;
+  tags?: string[] | null;
+  size?: string | null;
+  color?: string | null;
+  brand?: string | null;
+  condition: ProductCondition;
   barcode: string;
-  status: 'available' | 'reserved' | 'sold';
+  status: ProductStatus;
   featured: boolean;
-  added_by?: string;
+  added_by?: string | null;
   date_added: string;
   last_updated: string;
-  measurements?: Record<string, any>;
-  inventory_tracking?: Record<string, any>;
+  measurements?: Record<string, any> | null;
+  inventory_tracking?: Record<string, any> | null;
 }
 
 export interface ProductImage {
   id: string;
   product_id: string;
   url: string;
-  alt?: string;
+  alt?: string | null;
   is_main: boolean;
   display_order: number;
   created_at: string;
@@ -39,8 +39,8 @@ export interface ProductImage {
 export interface ProductCategory {
   id: string;
   name: string;
-  description?: string;
-  parent_id?: string;
+  description?: string | null;
+  parent_id?: string | null;
   created_at: string;
 }
 
@@ -65,4 +65,59 @@ export interface CartItem {
   total_amount: number;
   status: string;
   updated_at: string;
+}
+
+// Analytics interfaces
+export interface SalesData {
+  period: string;
+  revenue: number;
+  orders: number;
+  averageOrderValue: number;
+  previousPeriodChange?: number;
+}
+
+export interface SalesByCategory {
+  category: string;
+  sales: number;
+  percentage: number;
+}
+
+export interface InventoryStatus {
+  category: string;
+  inStock: number;
+  lowStock: number;
+  totalValue: number;
+}
+
+export interface StaffPerformanceData {
+  name: string;
+  role: string;
+  processed?: number;
+  fulfilled?: number;
+  completed?: number;
+  target: number;
+  efficiency: number;
+}
+
+export interface CustomerBehavior {
+  segment: string;
+  count: number;
+  averageSpend: number;
+  repeatRate: number;
+  averageItemsPerOrder: number;
+}
+
+export interface MarketingEffectiveness {
+  campaign: string;
+  clicks: number;
+  conversions: number;
+  revenue: number;
+  roi: number;
+}
+
+export interface SystemPerformance {
+  pageLoadTime: number;
+  serverResponseTime: number;
+  errorRate: number;
+  userSatisfaction: number;
 }

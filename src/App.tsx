@@ -32,6 +32,7 @@ import Scanning from '@/pages/admin/Scanning';
 import Marketing from '@/pages/admin/Marketing';
 import Users from '@/pages/admin/Users';
 import AiDashboard from '@/pages/admin/AiDashboard';
+import Analytics from '@/pages/admin/Analytics';
 
 // Components
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -39,6 +40,7 @@ import { ConnectivityIndicator } from '@/components/ui/connectivity-indicator';
 
 // Initialize offline service
 import { initializeOfflineService } from '@/services/offlineService';
+import { recordPageLoadTime } from '@/services/analyticsService';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -56,6 +58,9 @@ function App() {
   useEffect(() => {
     // Initialize offline capabilities
     initializeOfflineService().catch(console.error);
+    
+    // Record initial page load time
+    recordPageLoadTime();
     
     // Add meta theme-color for PWA
     const meta = document.createElement('meta');
@@ -109,6 +114,7 @@ function App() {
                   <Route path="/admin/categories" element={<Categories />} />
                   <Route path="/admin/printing" element={<Printing />} />
                   <Route path="/admin/scanning" element={<Scanning />} />
+                  <Route path="/admin/analytics" element={<Analytics />} />
                   <Route path="/admin/marketing" element={<Marketing />} />
                   <Route path="/admin/users" element={<Users />} />
                   <Route path="/admin/ai" element={<AiDashboard />} />
