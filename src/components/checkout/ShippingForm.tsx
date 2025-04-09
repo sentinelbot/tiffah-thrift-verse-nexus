@@ -1,8 +1,17 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { kenyaCounties, calculateEstimatedDeliveryDate, getDeliveryPricing } from "@/utils/kenyaUtils";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface ShippingFormProps {
   data: {
@@ -17,26 +26,47 @@ interface ShippingFormProps {
     shippingMethod: string;
   };
   updateData: (data: Partial<ShippingFormProps["data"]>) => void;
+  updateShippingCost: (cost: number) => void;
 }
 
-export function ShippingForm({ data, updateData }: ShippingFormProps) {
+export function ShippingForm({ data, updateData, updateShippingCost }: ShippingFormProps) {
+  const { t, formatCurrency } = useI18n();
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [estimatedDelivery, setEstimatedDelivery] = useState<Date | null>(null);
+  
+  // Update estimated delivery date when county or shipping method changes
+  useEffect(() => {
+    if (data.state && data.shippingMethod) {
+      const deliveryDate = calculateEstimatedDeliveryDate(
+        data.state,
+        data.shippingMethod as 'standard' | 'express'
+      );
+      setEstimatedDelivery(deliveryDate);
+      
+      // Update shipping cost
+      const cost = getDeliveryPricing(
+        data.state,
+        data.shippingMethod as 'standard' | 'express'
+      );
+      updateShippingCost(cost);
+    }
+  }, [data.state, data.shippingMethod, updateShippingCost]);
   
   const validateField = (field: string, value: string) => {
     if (!value.trim()) {
-      return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
+      return t('common.errors.required_field');
     }
     
     if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      return "Please enter a valid email address";
+      return t('common.errors.invalid_email');
     }
     
-    if (field === "phone" && !/^\+?[0-9]{10,15}$/.test(value)) {
-      return "Please enter a valid phone number";
+    if (field === "phone" && !/^(?:\+254|0)[1-9][0-9]{8}$/.test(value)) {
+      return t('common.errors.invalid_phone');
     }
     
     if (field === "postalCode" && !/^[0-9]{5,10}$/.test(value)) {
-      return "Please enter a valid postal code";
+      return t('common.errors.invalid_postal_code');
     }
     
     return "";
@@ -60,7 +90,7 @@ export function ShippingForm({ data, updateData }: ShippingFormProps) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="fullName">Full Name</Label>
+          <Label htmlFor="fullName">{t('common.checkout.full_name')}</Label>
           <Input
             id="fullName"
             name="fullName"
@@ -73,7 +103,7 @@ export function ShippingForm({ data, updateData }: ShippingFormProps) {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="email">{t('common.checkout.email')}</Label>
           <Input
             id="email"
             name="email"
@@ -87,20 +117,23 @@ export function ShippingForm({ data, updateData }: ShippingFormProps) {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
+          <Label htmlFor="phone">{t('common.checkout.phone')}</Label>
           <Input
             id="phone"
             name="phone"
-            placeholder="+254 XXX XXX XXX"
+            placeholder="+254 7XX XXX XXX"
             value={data.phone}
             onChange={handleChange}
             className={errors.phone ? "border-destructive" : ""}
           />
           {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+          <p className="text-xs text-muted-foreground">
+            {t('common.payment.mpesa_instructions')}
+          </p>
         </div>
         
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="address">Address</Label>
+          <Label htmlFor="address">{t('common.checkout.address')}</Label>
           <Input
             id="address"
             name="address"
@@ -113,7 +146,7 @@ export function ShippingForm({ data, updateData }: ShippingFormProps) {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="city">City</Label>
+          <Label htmlFor="city">{t('common.checkout.city')}</Label>
           <Input
             id="city"
             name="city"
@@ -126,20 +159,27 @@ export function ShippingForm({ data, updateData }: ShippingFormProps) {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="state">State/Province</Label>
-          <Input
-            id="state"
-            name="state"
-            placeholder="Nairobi"
-            value={data.state}
-            onChange={handleChange}
-            className={errors.state ? "border-destructive" : ""}
-          />
+          <Label htmlFor="state">{t('common.checkout.state')}</Label>
+          <Select 
+            value={data.state} 
+            onValueChange={(value) => updateData({ state: value })}
+          >
+            <SelectTrigger id="state" className={errors.state ? "border-destructive" : ""}>
+              <SelectValue placeholder={t('common.checkout.state')} />
+            </SelectTrigger>
+            <SelectContent>
+              {kenyaCounties.map((county) => (
+                <SelectItem key={county.name} value={county.name}>
+                  {county.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {errors.state && <p className="text-xs text-destructive">{errors.state}</p>}
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="postalCode">Postal Code</Label>
+          <Label htmlFor="postalCode">{t('common.checkout.postal_code')}</Label>
           <Input
             id="postalCode"
             name="postalCode"
@@ -152,20 +192,21 @@ export function ShippingForm({ data, updateData }: ShippingFormProps) {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="country">Country</Label>
+          <Label htmlFor="country">{t('common.checkout.country')}</Label>
           <Input
             id="country"
             name="country"
             value={data.country}
             onChange={handleChange}
             className={errors.country ? "border-destructive" : ""}
+            disabled // Force Kenya for now as per requirements
           />
           {errors.country && <p className="text-xs text-destructive">{errors.country}</p>}
         </div>
       </div>
       
       <div className="space-y-3">
-        <Label>Shipping Method</Label>
+        <Label>{t('common.checkout.shipping_method')}</Label>
         <RadioGroup
           value={data.shippingMethod}
           onValueChange={(value) => updateData({ shippingMethod: value })}
@@ -173,34 +214,64 @@ export function ShippingForm({ data, updateData }: ShippingFormProps) {
         >
           <div className="flex items-start space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
             <RadioGroupItem value="standard" id="standard" className="mt-1" />
-            <div className="grid gap-1.5">
+            <div className="grid gap-1.5 flex-1">
               <Label htmlFor="standard" className="font-medium cursor-pointer">
-                Standard Shipping
+                {t('common.checkout.standard_shipping')}
               </Label>
               <div className="flex justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Delivery in 3-7 business days
+                  {data.state ? 
+                    `${t('common.checkout.standard_shipping')} (${kenyaCounties.find(c => c.name === data.state)?.standardDelivery.days || '3-7'} ${t('common.checkout.business_days')})` :
+                    t('common.checkout.standard_shipping')
+                  }
                 </p>
-                <p className="text-sm font-medium">$5.99</p>
+                <p className="text-sm font-medium">
+                  {data.state ? 
+                    formatCurrency(kenyaCounties.find(c => c.name === data.state)?.standardDelivery.price || 500) :
+                    formatCurrency(500)
+                  }
+                </p>
               </div>
             </div>
           </div>
           
           <div className="flex items-start space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
             <RadioGroupItem value="express" id="express" className="mt-1" />
-            <div className="grid gap-1.5">
+            <div className="grid gap-1.5 flex-1">
               <Label htmlFor="express" className="font-medium cursor-pointer">
-                Express Shipping
+                {t('common.checkout.express_shipping')}
               </Label>
               <div className="flex justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Delivery in 1-3 business days
+                  {data.state ? 
+                    `${t('common.checkout.express_shipping')} (${kenyaCounties.find(c => c.name === data.state)?.expressDelivery.days || '1-3'} ${t('common.checkout.business_days')})` :
+                    t('common.checkout.express_shipping')
+                  }
                 </p>
-                <p className="text-sm font-medium">$9.99</p>
+                <p className="text-sm font-medium">
+                  {data.state ? 
+                    formatCurrency(kenyaCounties.find(c => c.name === data.state)?.expressDelivery.price || 800) :
+                    formatCurrency(800)
+                  }
+                </p>
               </div>
             </div>
           </div>
         </RadioGroup>
+        
+        {estimatedDelivery && (
+          <div className="mt-4 p-3 bg-muted/50 rounded-md">
+            <p className="text-sm">
+              <span className="font-medium">{t('common.checkout.estimated_delivery')}: </span>
+              {estimatedDelivery.toLocaleDateString('en-KE', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

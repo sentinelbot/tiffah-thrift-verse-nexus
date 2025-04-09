@@ -1,6 +1,7 @@
 
 import { PaymentMethod, PaymentStatus } from '@/types/order';
 import { toast } from 'sonner';
+import { formatMpesaPhone } from '@/utils/kenyaUtils';
 
 interface PaymentResult {
   success: boolean;
@@ -20,6 +21,9 @@ export const processMpesaPayment = async (
   console.log(`Processing Mpesa payment of ${amount} to ${phone} for order ${orderNumber}`);
   
   try {
+    // Format phone number to ensure it's in the correct format for M-Pesa
+    const formattedPhone = formatMpesaPhone(phone);
+    
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
     

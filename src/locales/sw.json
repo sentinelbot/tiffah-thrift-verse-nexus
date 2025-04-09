@@ -1,0 +1,200 @@
+
+{
+  "common": {
+    "header": {
+      "home": "Nyumbani",
+      "shop": "Duka",
+      "cart": "Kikapu",
+      "wishlist": "Mapendeleo",
+      "account": "Akaunti",
+      "login": "Ingia",
+      "logout": "Toka",
+      "search": "Tafuta bidhaa..."
+    },
+    "footer": {
+      "about": "Kuhusu Sisi",
+      "contact": "Wasiliana",
+      "terms": "Sheria na Masharti",
+      "privacy": "Sera ya Faragha",
+      "shipping": "Sera ya Usafirishaji",
+      "returns": "Marejesho na Fidia"
+    },
+    "buttons": {
+      "add_to_cart": "Ongeza Kikapuni",
+      "buy_now": "Nunua Sasa",
+      "checkout": "Lipa",
+      "continue_shopping": "Endelea Kununua",
+      "apply": "Tumia",
+      "save": "Hifadhi",
+      "cancel": "Ghairi",
+      "submit": "Wasilisha",
+      "back": "Rudi Nyuma",
+      "next": "Endelea",
+      "filter": "Chuja",
+      "sort": "Panga",
+      "clear": "Futa",
+      "view_details": "Angalia Maelezo",
+      "edit": "Hariri",
+      "delete": "Futa"
+    },
+    "product": {
+      "price": "Bei",
+      "original_price": "Bei ya Awali",
+      "condition": "Hali",
+      "brand": "Chapa",
+      "size": "Ukubwa",
+      "color": "Rangi",
+      "category": "Kategoria",
+      "description": "Maelezo",
+      "in_stock": "Inapatikana",
+      "out_of_stock": "Haipatikani",
+      "reserved": "Imehifadhiwa",
+      "add_to_wishlist": "Ongeza kwa Mapendeleo",
+      "remove_from_wishlist": "Ondoa kwa Mapendeleo",
+      "similar_products": "Bidhaa Zinazofanana",
+      "recently_viewed": "Zilizotazamwa Hivi Karibuni"
+    },
+    "cart": {
+      "your_cart": "Kikapu Chako",
+      "empty_cart": "Kikapu chako ni tupu",
+      "subtotal": "Jumla ndogo",
+      "shipping": "Usafirishaji",
+      "tax": "Ushuru (16%)",
+      "total": "Jumla",
+      "proceed_to_checkout": "Endelea kwa Malipo",
+      "continue_shopping": "Endelea Kununua",
+      "remove": "Ondoa",
+      "quantity": "Idadi"
+    },
+    "checkout": {
+      "checkout": "Lipa",
+      "shipping_address": "Anwani ya Usafirishaji",
+      "payment_method": "Njia ya Malipo",
+      "order_summary": "Muhtasari wa Agizo",
+      "confirmation": "Uthibitisho",
+      "billing_address": "Anwani ya Malipo",
+      "full_name": "Jina Kamili",
+      "email": "Barua Pepe",
+      "phone": "Nambari ya Simu",
+      "address": "Anwani",
+      "city": "Mji",
+      "state": "Kaunti",
+      "postal_code": "Msimbo wa Posta",
+      "country": "Nchi",
+      "shipping_method": "Njia ya Usafirishaji",
+      "standard_shipping": "Usafirishaji wa Kawaida",
+      "express_shipping": "Usafirishaji wa Haraka",
+      "place_order": "Weka Agizo",
+      "processing": "Inasindika..."
+    },
+    "account": {
+      "my_account": "Akaunti Yangu",
+      "orders": "Maagizo",
+      "address_book": "Kitabu cha Anwani",
+      "wishlist": "Mapendeleo",
+      "profile": "Wasifu",
+      "my_orders": "Maagizo Yangu",
+      "order_id": "Kitambulisho cha Agizo",
+      "order_date": "Tarehe ya Agizo",
+      "order_status": "Hali ya Agizo",
+      "order_total": "Jumla ya Agizo",
+      "view_order": "Angalia Agizo"
+    },
+    "order_status": {
+      "pending": "Inasubiri",
+      "processing": "Inasindika",
+      "ready": "Tayari",
+      "outForDelivery": "Inapelekwa",
+      "delivered": "Imepokelewa",
+      "cancelled": "Imeghairiwa"
+    },
+    "payment": {
+      "mpesa": "M-Pesa",
+      "card": "Kadi ya Mkopo/Debit",
+      "paypal": "PayPal",
+      "cash": "Pesa Taslimu Wakati wa Upokeaji",
+      "mpesa_instructions": "Utapokea STK push kukamilisha malipo",
+      "card_details": "Maelezo ya Kadi",
+      "name_on_card": "Jina kwenye Kadi",
+      "card_number": "Nambari ya Kadi",
+      "expiry_date": "Tarehe ya Kuisha",
+      "cvv": "CVV",
+      "cash_instructions": "Lipa kwa pesa taslimu wakati wa kupokea agizo lako"
+    },
+    "errors": {
+      "required_field": "Sehemu hii inahitajika",
+      "invalid_email": "Tafadhali weka anwani halali ya barua pepe",
+      "invalid_phone": "Tafadhali weka nambari halali ya simu",
+      "invalid_card": "Tafadhali weka nambari halali ya kadi",
+      "connection_error": "Hitilafu ya muunganisho, tafadhali jaribu tena",
+      "payment_failed": "Malipo yameshindwa, tafadhali jaribu tena"
+    }
+  },
+  "pages": {
+    "home": {
+      "hero_title": "Gundua Mitindo ya Kipekee kwa Bei Nafuu",
+      "hero_subtitle": "Nguo na Vifaa vya Mtindo wa Hali ya Juu za Pili",
+      "shop_now": "Nunua Sasa",
+      "featured_categories": "Kategoria Maarufu",
+      "new_arrivals": "Bidhaa Mpya",
+      "view_all": "Angalia Zote",
+      "testimonials": "Wateja Wetu Wanasema Nini",
+      "features": {
+        "title": "Kwa Nini Uchague Tiffah Thrift Store",
+        "quality": "Uchaguzi wa Ubora",
+        "quality_desc": "Bidhaa zilizotumika zinazochaguliwa kwa makini katika hali bora",
+        "sustainable": "Mtindo Endelevu",
+        "sustainable_desc": "Punguza takataka za mitindo kwa kuwapa nguo maisha ya pili",
+        "affordable": "Bei Nafuu",
+        "affordable_desc": "Chapa za wabunifu na ubora kwa sehemu ndogo ya bei ya awali",
+        "delivery": "Uwasilishaji wa Haraka",
+        "delivery_desc": "Uwasilishaji wa haraka na wa kuaminika katika Kenya nzima"
+      },
+      "newsletter": {
+        "title": "Jiandikishe kwa Jarida Letu",
+        "subtitle": "Pata habari kuhusu bidhaa mpya na matoleo maalum",
+        "placeholder": "Anwani yako ya barua pepe",
+        "button": "Jiandikishe",
+        "success": "Asante kwa kujiandikisha!"
+      }
+    },
+    "shop": {
+      "title": "Duka",
+      "filter_by": "Chuja Kwa",
+      "sort_by": "Panga Kwa",
+      "price_range": "Kipimo cha Bei",
+      "categories": "Kategoria",
+      "conditions": "Hali",
+      "brands": "Chapa",
+      "sizes": "Ukubwa",
+      "colors": "Rangi",
+      "no_products": "Hakuna bidhaa zilizopatikana",
+      "showing": "Kuonyesha bidhaa {{count}}",
+      "search_results": "Matokeo ya Utafutaji ya '{{query}}'",
+      "search_placeholder": "Tafuta bidhaa..."
+    }
+  },
+  "admin": {
+    "dashboard": "Dashibodi",
+    "products": "Bidhaa",
+    "orders": "Maagizo",
+    "categories": "Kategoria",
+    "users": "Watumiaji",
+    "printing": "Uchapishaji",
+    "scanning": "Uchanganuzi",
+    "analytics": "Uchambuzi",
+    "marketing": "Masoko",
+    "ai_dashboard": "Dashibodi ya AI",
+    "settings": "Mipangilio"
+  },
+  "notifications": {
+    "online": "Uko mtandaoni tena!",
+    "offline": "Uko nje ya mtandao. Baadhi ya huduma zinaweza kuwa na vikwazo.",
+    "order_placed": "Agizo lako limewekwa kwa mafanikio!",
+    "payment_successful": "Malipo yamekamilika kwa mafanikio",
+    "item_added_to_cart": "Bidhaa imeongezwa kikapuni",
+    "item_removed_from_cart": "Bidhaa imeondolewa kikapuni",
+    "cart_updated": "Kikapu kimesasishwa",
+    "wishlist_updated": "Mapendeleo yamesasishwa"
+  }
+}

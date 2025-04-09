@@ -4,6 +4,7 @@ import App from './App.tsx'
 import './index.css'
 import './styles/animations.css'
 import { toast } from 'sonner';
+import { I18nProvider } from './contexts/I18nContext';
 
 // Measure initial page load performance
 if (typeof window !== 'undefined' && window.performance) {
@@ -60,4 +61,8 @@ window.addEventListener('online', () => {
 });
 
 // Initialize the app
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <I18nProvider>
+    <App />
+  </I18nProvider>
+);

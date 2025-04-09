@@ -1,200 +1,204 @@
 
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Heart, ShoppingBag, UserCircle2, LogOut, LayoutDashboard, FolderClosed } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import EnhancedSearch from "../shop/EnhancedSearch";
-import NotificationCenter from '../notifications/NotificationCenter';
-import { useMobile } from "@/hooks/use-mobile";
+import { Input } from "@/components/ui/input";
+import { LanguageSelector } from "@/components/ui/language-selector";
+import { useI18n } from "@/contexts/I18nContext";
+import {
+  ShoppingCart,
+  Heart,
+  User,
+  Menu,
+  Search,
+  X
+} from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 const Navbar = () => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isMobile = useMobile();
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const { cartItems } = useCart(); // Use the cart context
+  const { user } = useAuth();
+  const { t } = useI18n();
   
-  // Fix the cart reference error by getting items length safely
-  const { cart } = useCart();
-  const cartCount = cart && cart.items ? cart.items.length : 0;
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <div className="flex gap-6 md:gap-10">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="inline-block font-bold text-2xl text-primary">Tiffah</span>
+    <header className="border-b sticky top-0 z-50 bg-background">
+      <div className="container mx-auto px-4 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Mobile menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[280px] sm:w-[350px]">
+              <div className="flex flex-col gap-6 py-4">
+                <SheetClose asChild>
+                  <Link to="/" className="flex items-center gap-2">
+                    <span className="text-xl font-bold text-primary">Tiffah</span>
+                  </Link>
+                </SheetClose>
+                <div className="space-y-3">
+                  <SheetClose asChild>
+                    <Link 
+                      to="/" 
+                      className="block py-2 px-3 rounded-md hover:bg-muted"
+                    >
+                      {t('common.header.home')}
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link 
+                      to="/shop" 
+                      className="block py-2 px-3 rounded-md hover:bg-muted"
+                    >
+                      {t('common.header.shop')}
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link 
+                      to="/cart" 
+                      className="block py-2 px-3 rounded-md hover:bg-muted"
+                    >
+                      {t('common.header.cart')}
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link 
+                      to="/wishlist" 
+                      className="block py-2 px-3 rounded-md hover:bg-muted"
+                    >
+                      {t('common.header.wishlist')}
+                    </Link>
+                  </SheetClose>
+                  {user ? (
+                    <SheetClose asChild>
+                      <Link 
+                        to="/account" 
+                        className="block py-2 px-3 rounded-md hover:bg-muted"
+                      >
+                        {t('common.header.account')}
+                      </Link>
+                    </SheetClose>
+                  ) : (
+                    <SheetClose asChild>
+                      <Link 
+                        to="/auth" 
+                        className="block py-2 px-3 rounded-md hover:bg-muted"
+                      >
+                        {t('common.header.login')}
+                      </Link>
+                    </SheetClose>
+                  )}
+                </div>
+                <div className="mt-auto pt-4 border-t">
+                  <LanguageSelector />
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+          
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2">
+            <span className="text-xl font-bold text-primary">Tiffah</span>
           </Link>
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <Link to="/shop" className="hover:text-primary">
-              Shop
+          
+          {/* Desktop nav links */}
+          <nav className="hidden lg:flex items-center space-x-6">
+            <Link 
+              to="/" 
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              {t('common.header.home')}
             </Link>
-            <Link to="/new-arrivals" className="hover:text-primary">
-              New Arrivals
-            </Link>
-            <Link to="/category/dresses" className="hover:text-primary">
-              Dresses
-            </Link>
-            <Link to="/category/shirts" className="hover:text-primary">
-              Shirts
-            </Link>
-            <Link to="/category/jeans" className="hover:text-primary">
-              Jeans
-            </Link>
-            <Link to="/category/shoes" className="hover:text-primary">
-              Shoes
+            <Link 
+              to="/shop" 
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              {t('common.header.shop')}
             </Link>
           </nav>
-        </div>
-
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <nav className="flex items-center space-x-2">
-            <EnhancedSearch 
-              onSearch={(query, enhancedResults) => {
-                if (!query) return;
-                navigate(`/shop?q=${encodeURIComponent(query)}`);
-              }}
+          
+          {/* Search bar (conditionally shown on mobile) */}
+          <div className={cn(
+            "absolute inset-x-0 top-0 bg-background h-16 px-4 flex items-center transition-transform duration-300 lg:static lg:inset-auto lg:h-auto lg:px-0 lg:w-full lg:max-w-sm lg:mx-4 lg:translate-y-0 lg:opacity-100",
+            showSearchBar 
+              ? "translate-y-0 opacity-100" 
+              : "-translate-y-full opacity-0 lg:translate-y-0 lg:opacity-100"
+          )}>
+            <Input 
+              placeholder={t('common.header.search')}
+              className="flex-1"
             />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="lg:hidden"
+              onClick={() => setShowSearchBar(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          
+          {/* Right-side items */}
+          <div className="flex items-center space-x-4">
+            {/* Search button (mobile only) */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="lg:hidden"
+              onClick={() => setShowSearchBar(true)}
+            >
+              <Search className="h-5 w-5" />
+              <span className="sr-only">{t('common.header.search')}</span>
+            </Button>
+            
+            {/* Language selector (desktop only) */}
+            <div className="hidden lg:block">
+              <LanguageSelector />
+            </div>
+            
+            {/* User account */}
+            <Link to={user ? "/account" : "/auth"}>
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5" />
+                <span className="sr-only">
+                  {user ? t('common.header.account') : t('common.header.login')}
+                </span>
+              </Button>
+            </Link>
+            
+            {/* Wishlist */}
             <Link to="/wishlist">
               <Button variant="ghost" size="icon">
                 <Heart className="h-5 w-5" />
-                <span className="sr-only">Wishlist</span>
+                <span className="sr-only">{t('common.header.wishlist')}</span>
               </Button>
             </Link>
+            
+            {/* Cart with item count */}
             <Link to="/cart">
               <Button variant="ghost" size="icon" className="relative">
-                <ShoppingBag className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center translate-x-1/4 -translate-y-1/4">
-                    {cartCount}
+                <ShoppingCart className="h-5 w-5" />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartItems.reduce((total, item) => total + item.quantity, 0)}
                   </span>
                 )}
-                <span className="sr-only">Cart</span>
+                <span className="sr-only">{t('common.header.cart')}</span>
               </Button>
             </Link>
-            
-            {user && <NotificationCenter />}
-            
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <UserCircle2 className="h-5 w-5" />
-                    <span className="sr-only">User menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span>{user.name || 'User'}</span>
-                      <span className="text-xs font-normal text-muted-foreground">
-                        {user.email}
-                      </span>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/account">
-                      <UserCircle2 className="mr-2 h-4 w-4" />
-                      <span>Account</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/account?tab=orders">
-                      <ShoppingBag className="mr-2 h-4 w-4" />
-                      <span>Orders</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  {/* Admin links for admin users */}
-                  {user.role === 'admin' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          <span>Dashboard</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/auth">Sign in</Link>
-              </Button>
-            )}
-            
-            {isMobile ? (
-              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left">
-                  <Link to="/" className="flex items-center" onClick={() => setIsMenuOpen(false)}>
-                    <span className="font-bold text-2xl text-primary">Tiffah</span>
-                  </Link>
-                  <div className="mt-8 space-y-4">
-                    <Link to="/shop" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Shop
-                    </Link>
-                    <Link to="/new-arrivals" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      New Arrivals
-                    </Link>
-                    <Link to="/category/dresses" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Dresses
-                    </Link>
-                    <Link to="/category/shirts" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Shirts
-                    </Link>
-                    <Link to="/category/jeans" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Jeans
-                    </Link>
-                    <Link to="/category/shoes" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Shoes
-                    </Link>
-                    {user ? (
-                      <>
-                        <Link to="/account" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                          Account
-                        </Link>
-                        {user.role === 'admin' && (
-                          <Link to="/admin" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                            Admin
-                          </Link>
-                        )}
-                        <Button variant="link" size="sm" className="block p-0" onClick={handleSignOut}>
-                          Sign out
-                        </Button>
-                      </>
-                    ) : (
-                      <Link to="/auth" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                        Sign in
-                      </Link>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            ) : null}
-          </nav>
+          </div>
         </div>
       </div>
     </header>
