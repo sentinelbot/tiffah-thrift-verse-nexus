@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,10 +35,30 @@ type LoginValues = z.infer<typeof loginSchema>;
 type RegisterValues = z.infer<typeof registerSchema>;
 
 const Auth: React.FC = () => {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('login');
+  
+  // Get the return URL from query params
+  const searchParams = new URLSearchParams(location.search);
+  const fromPath = searchParams.get('from') || '/';
+  
+  // If user is already logged in, redirect to the appropriate dashboard or homepage
+  useEffect(() => {
+    if (user) {
+      // Redirect based on role
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else if (['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role)) {
+        navigate('/staff');
+      } else {
+        // Redirect to the original requested page or default to home
+        navigate(fromPath);
+      }
+    }
+  }, [user, navigate, fromPath]);
 
   // Login form
   const loginForm = useForm<LoginValues>({
@@ -65,10 +85,10 @@ const Auth: React.FC = () => {
     try {
       await signIn(values.email, values.password);
       toast.success('Login successful');
-      navigate('/');
-    } catch (error) {
+      // The redirect will be handled by the useEffect
+    } catch (error: any) {
       console.error('Login error:', error);
-      toast.error('Login failed. Please check your credentials and try again.');
+      toast.error(error.message || 'Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -78,11 +98,11 @@ const Auth: React.FC = () => {
     setIsLoading(true);
     try {
       await signUp(values.email, values.password, values.name);
-      toast.success('Registration successful');
+      toast.success('Registration successful! Please verify your email if required.');
       setActiveTab('login');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
+      toast.error(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -148,8 +168,9 @@ const Auth: React.FC = () => {
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="animate-spin">⏳</span> Signing in...
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div> 
+                        Signing in...
                       </span>
                     ) : (
                       <span className="flex items-center gap-2">
@@ -243,8 +264,9 @@ const Auth: React.FC = () => {
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="animate-spin">⏳</span> Creating account...
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div> 
+                        Creating account...
                       </span>
                     ) : (
                       <span className="flex items-center gap-2">

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 // Define which routes each staff role can access
 const roleAccessMap: Record<string, string[]> = {
@@ -12,7 +13,7 @@ const roleAccessMap: Record<string, string[]> = {
 };
 
 // Routes that all staff can access
-const commonStaffRoutes = ['/staff/profile', '/staff/schedule', '/staff/training'];
+const commonStaffRoutes = ['/staff', '/staff/profile', '/staff/schedule', '/staff/training'];
 
 const StaffRoutes = () => {
   const { user, isLoading } = useAuth();
@@ -31,15 +32,22 @@ const StaffRoutes = () => {
     );
   }
   
-  // If user is not logged in or not a staff member, redirect to login
-  if (!user || !['admin', 'productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role)) {
-    // Save the attempted URL for redirecting after login
+  // If user is not logged in, redirect to login
+  if (!user) {
+    toast.error("Please sign in to access the staff dashboard");
     return <Navigate to={`/auth?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
   
-  // If admin, allow them to view staff routes but point them to admin dashboard if they try to access staff home
+  // If user is not a staff member, redirect to unauthorized
+  if (!['admin', 'productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role)) {
+    toast.error("You don't have permission to access the staff dashboard");
+    return <Navigate to="/unauthorized" replace />;
+  }
+  
+  // If admin, allow them to view staff routes but redirect to admin dashboard if they try to access staff home
   if (user.role === 'admin') {
     if (currentPath === '/staff') {
+      toast.info("Redirecting to admin dashboard");
       return <Navigate to="/admin" replace />;
     }
     return <Outlet />;
@@ -54,17 +62,23 @@ const StaffRoutes = () => {
   
   // If not allowed, redirect to appropriate dashboard
   if (!hasAccess) {
-    // Redirect to their role-specific dashboard or main admin page
+    let redirectPath = '/unauthorized';
+    
+    // Redirect to their role-specific dashboard
     switch (user.role) {
       case 'productManager':
-        return <Navigate to="/staff/products" replace />;
+        redirectPath = '/staff/products';
+        break;
       case 'orderPreparer':
-        return <Navigate to="/staff/orders" replace />;
+        redirectPath = '/staff/orders';
+        break;
       case 'deliveryStaff':
-        return <Navigate to="/staff/deliveries" replace />;
-      default:
-        return <Navigate to="/unauthorized" replace />;
+        redirectPath = '/staff/deliveries';
+        break;
     }
+    
+    toast.info("Redirecting to your authorized dashboard");
+    return <Navigate to={redirectPath} replace />;
   }
   
   // Return outlet for nested routes
