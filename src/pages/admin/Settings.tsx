@@ -9,6 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import ShippingZonesSettings from '@/components/admin/settings/ShippingZonesSettings';
+import PaymentSettings from '@/components/admin/settings/PaymentSettings';
+import TaxSettings from '@/components/admin/settings/TaxSettings';
+import NotificationSettings from '@/components/admin/settings/NotificationSettings';
+import CategoriesSettings from '@/components/admin/settings/CategoriesSettings';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -35,14 +40,14 @@ const Settings = () => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6 grid grid-cols-4 md:grid-cols-7">
+          <TabsList className="mb-6 grid grid-cols-2 md:grid-cols-7 overflow-auto">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="store">Store</TabsTrigger>
             <TabsTrigger value="shipping">Shipping</TabsTrigger>
             <TabsTrigger value="payment">Payment</TabsTrigger>
             <TabsTrigger value="tax">Tax</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
           </TabsList>
           
           <TabsContent value="general">
@@ -110,73 +115,23 @@ const Settings = () => {
           </TabsContent>
           
           <TabsContent value="shipping">
-            <Card>
-              <CardHeader>
-                <CardTitle>Shipping Settings</CardTitle>
-                <CardDescription>
-                  Configure shipping zones, rates, and methods
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Shipping settings content will go here</p>
-              </CardContent>
-            </Card>
+            <ShippingZonesSettings />
           </TabsContent>
           
           <TabsContent value="payment">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Settings</CardTitle>
-                <CardDescription>
-                  Configure payment gateways and methods
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Payment settings content will go here</p>
-              </CardContent>
-            </Card>
+            <PaymentSettings />
           </TabsContent>
           
           <TabsContent value="tax">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tax Settings</CardTitle>
-                <CardDescription>
-                  Configure tax rates and rules
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Tax settings content will go here</p>
-              </CardContent>
-            </Card>
+            <TaxSettings />
           </TabsContent>
           
           <TabsContent value="notifications">
-            <Card>
-              <CardHeader>
-                <CardTitle>Notification Settings</CardTitle>
-                <CardDescription>
-                  Configure email, SMS, and in-app notifications
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Notification settings content will go here</p>
-              </CardContent>
-            </Card>
+            <NotificationSettings />
           </TabsContent>
           
-          <TabsContent value="advanced">
-            <Card>
-              <CardHeader>
-                <CardTitle>Advanced Settings</CardTitle>
-                <CardDescription>
-                  Configure advanced system settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Advanced settings content will go here</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="categories">
+            <CategoriesSettings />
           </TabsContent>
         </Tabs>
       </div>

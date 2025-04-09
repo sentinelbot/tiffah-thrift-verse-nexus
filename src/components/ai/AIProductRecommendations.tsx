@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/products/ProductCard';
-import { ProductType } from '@/components/products/ProductCard';
+import { ProductType } from '@/context/CartContext';
 
 interface AIProductRecommendationsProps {
   productId: string;

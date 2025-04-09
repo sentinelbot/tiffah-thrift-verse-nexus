@@ -1,7 +1,18 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from 'sonner';
-import { ProductType } from '@/components/products/ProductCard';
+
+export interface ProductType {
+  id: string;
+  title: string;
+  price: number;
+  imageUrl: string;
+  condition: string;
+  category: string;
+  size?: string;
+  color?: string;
+  brand?: string;
+}
 
 export interface CartItem {
   id: string;
@@ -223,7 +234,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       imageUrl: item.image,
       size: item.size,
       color: item.color,
-      condition: ''
+      condition: '',
+      category: '' // Required field from ProductType
     },
     quantity: item.quantity,
     reservedUntil: item.reservedUntil || new Date(Date.now() + 15 * 60000)
