@@ -33,6 +33,21 @@ import Marketing from '@/pages/admin/Marketing';
 import Users from '@/pages/admin/Users';
 import AiDashboard from '@/pages/admin/AiDashboard';
 import Analytics from '@/pages/admin/Analytics';
+import Settings from '@/pages/admin/Settings';
+import StaffManagement from '@/pages/admin/StaffManagement';
+import FeatureToggles from '@/pages/admin/FeatureToggles';
+import Communications from '@/pages/admin/Communications';
+import ContentManagement from '@/pages/admin/ContentManagement';
+
+// Staff pages
+import StaffDashboard from '@/pages/staff/Dashboard';
+import ProductManager from '@/pages/staff/ProductManager';
+import OrderPreparer from '@/pages/staff/OrderPreparer';
+import DeliveryStaff from '@/pages/staff/DeliveryStaff';
+import StaffProfile from '@/pages/staff/Profile';
+import StaffCommunications from '@/pages/staff/Communications';
+import StaffSchedule from '@/pages/staff/Schedule';
+import StaffTraining from '@/pages/staff/Training';
 
 // Components
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -118,6 +133,39 @@ function App() {
                   <Route path="/admin/marketing" element={<Marketing />} />
                   <Route path="/admin/users" element={<Users />} />
                   <Route path="/admin/ai" element={<AiDashboard />} />
+                  <Route path="/admin/settings" element={<Settings />} />
+                  <Route path="/admin/staff" element={<StaffManagement />} />
+                  <Route path="/admin/features" element={<FeatureToggles />} />
+                  <Route path="/admin/communications" element={<Communications />} />
+                  <Route path="/admin/content" element={<ContentManagement />} />
+                </Route>
+                
+                {/* Protected staff routes */}
+                <Route element={<ProtectedRoute allowedRoles={['productManager', 'orderPreparer', 'deliveryStaff']} />}>
+                  <Route path="/staff" element={<StaffDashboard />} />
+                  
+                  {/* Product Manager Routes */}
+                  <Route element={<ProtectedRoute allowedRoles={['productManager']} />}>
+                    <Route path="/staff/products" element={<ProductManager />} />
+                    <Route path="/staff/products/new" element={<ProductManager />} />
+                    <Route path="/staff/products/:id" element={<ProductManager />} />
+                  </Route>
+                  
+                  {/* Order Preparer Routes */}
+                  <Route element={<ProtectedRoute allowedRoles={['orderPreparer']} />}>
+                    <Route path="/staff/orders" element={<OrderPreparer />} />
+                  </Route>
+                  
+                  {/* Delivery Staff Routes */}
+                  <Route element={<ProtectedRoute allowedRoles={['deliveryStaff']} />}>
+                    <Route path="/staff/deliveries" element={<DeliveryStaff />} />
+                  </Route>
+                  
+                  {/* Common Staff Routes */}
+                  <Route path="/staff/profile" element={<StaffProfile />} />
+                  <Route path="/staff/communications" element={<StaffCommunications />} />
+                  <Route path="/staff/schedule" element={<StaffSchedule />} />
+                  <Route path="/staff/training" element={<StaffTraining />} />
                 </Route>
                 
                 {/* Error routes */}

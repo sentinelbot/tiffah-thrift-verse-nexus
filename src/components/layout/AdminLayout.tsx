@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -13,7 +14,11 @@ import {
   X, 
   Users,
   BarChart2,
-  Megaphone
+  Megaphone,
+  UserCog,
+  ToggleLeft,
+  MessageSquare,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -62,20 +67,6 @@ const Sidebar = ({ className }: { className?: string }) => {
       allowedRoles: ['admin', 'productManager']
     },
     {
-      label: 'Printing',
-      icon: Printer,
-      href: '/admin/printing',
-      active: pathname === '/admin/printing',
-      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
-    },
-    {
-      label: 'Scanning',
-      icon: Barcode,
-      href: '/admin/scanning',
-      active: pathname === '/admin/scanning',
-      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
-    },
-    {
       label: 'Analytics',
       icon: BarChart2,
       href: '/admin/analytics',
@@ -90,6 +81,41 @@ const Sidebar = ({ className }: { className?: string }) => {
       allowedRoles: ['admin']
     },
     {
+      label: 'AI Dashboard',
+      icon: BrainCircuit,
+      href: '/admin/ai',
+      active: pathname === '/admin/ai',
+      allowedRoles: ['admin', 'productManager']
+    },
+    {
+      label: 'Staff Management',
+      icon: UserCog,
+      href: '/admin/staff',
+      active: pathname === '/admin/staff',
+      allowedRoles: ['admin']
+    },
+    {
+      label: 'Communications',
+      icon: MessageSquare,
+      href: '/admin/communications',
+      active: pathname === '/admin/communications',
+      allowedRoles: ['admin']
+    },
+    {
+      label: 'Content Management',
+      icon: Globe,
+      href: '/admin/content',
+      active: pathname === '/admin/content',
+      allowedRoles: ['admin']
+    },
+    {
+      label: 'Feature Toggles',
+      icon: ToggleLeft,
+      href: '/admin/features',
+      active: pathname === '/admin/features',
+      allowedRoles: ['admin']
+    },
+    {
       label: 'Users',
       icon: Users,
       href: '/admin/users',
@@ -97,11 +123,18 @@ const Sidebar = ({ className }: { className?: string }) => {
       allowedRoles: ['admin']
     },
     {
-      label: 'AI Dashboard',
-      icon: BrainCircuit,
-      href: '/admin/ai',
-      active: pathname === '/admin/ai',
-      allowedRoles: ['admin', 'productManager']
+      label: 'Printing',
+      icon: Printer,
+      href: '/admin/printing',
+      active: pathname === '/admin/printing',
+      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
+    },
+    {
+      label: 'Scanning',
+      icon: Barcode,
+      href: '/admin/scanning',
+      active: pathname === '/admin/scanning',
+      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
     },
     {
       label: 'Settings',

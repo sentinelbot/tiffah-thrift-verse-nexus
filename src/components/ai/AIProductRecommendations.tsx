@@ -1,234 +1,161 @@
 
 import { useState, useEffect } from 'react';
-import { Product } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import ProductCard from '@/components/products/ProductCard';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Product } from '@/types';
+import { ProductCard } from '@/components/products/ProductCard';
+import { Sparkles } from 'lucide-react';
 
 interface AIProductRecommendationsProps {
-  productId?: string;
-  userId?: string;
+  productId: string;
   category?: string;
-  recommendationType?: 'similar' | 'complete' | 'personalized' | 'trending';
-  limit?: number;
+  title?: string;
 }
 
-const AIProductRecommendations = ({
-  productId,
-  userId,
-  category,
-  recommendationType = 'similar',
-  limit = 4,
-}: AIProductRecommendationsProps) => {
-  const [recommendations, setRecommendations] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
+export function AIProductRecommendations({ 
+  productId, 
+  category, 
+  title = "You May Also Like"
+}: AIProductRecommendationsProps) {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [recommendationType, setRecommendationType] = useState<'similar' | 'complete-look'>('similar');
+  
+  const { data: product, isLoading: isLoadingProduct } = useQuery({
+    queryKey: ['product', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', productId)
+        .single();
+      
+      if (error) throw error;
+      return data as Product;
+    },
+    enabled: !!productId,
+  });
+  
+  const { data: recommendations, isLoading, refetch } = useQuery({
+    queryKey: ['recommendations', productId, recommendationType],
+    queryFn: async () => {
+      // In a real app, we would call an AI service to get recommendations
+      // For demo purposes, we'll just fetch products from the same category
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', category || (product?.category || ''))
+        .neq('id', productId)
+        .eq('status', 'available')
+        .limit(4);
+      
+      if (error) throw error;
+      return data as Product[];
+    },
+    enabled: !!productId && (!!category || !!product?.category),
+  });
+  
+  const generateRecommendations = async (type: 'similar' | 'complete-look') => {
+    setIsGenerating(true);
+    setRecommendationType(type);
+    
+    try {
+      await refetch();
+    } catch (error) {
+      console.error("Error generating recommendations:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      setLoading(true);
-      try {
-        // In a real app, we would call a real AI service here
-        // This is a mock implementation that returns products from the same category
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .eq('status', 'available')
-          .order('date_added', { ascending: false })
-          .limit(limit);
-
-        if (error) throw error;
-
-        // Ensure data conforms to the Product type
-        const typedData = data.map(item => ({
-          ...item,
-          status: item.status as 'available' | 'reserved' | 'sold',
-          condition: item.condition as 'new' | 'likeNew' | 'good' | 'fair'
-        }));
-
-        setRecommendations(typedData);
-      } catch (error) {
-        console.error('Error fetching recommendations:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch recommendations',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (recommendationType === 'similar' && (productId || category)) {
-      fetchSimilarProducts();
-    } else if (recommendationType === 'complete' && productId) {
-      fetchCompleteTheLook();
-    } else if (recommendationType === 'personalized' && userId) {
-      fetchPersonalizedRecommendations();
-    } else if (recommendationType === 'trending') {
-      fetchTrendingProducts();
+    if (product) {
+      generateRecommendations('similar');
     }
-  }, [productId, userId, category, recommendationType, limit]);
-
-  const fetchSimilarProducts = async () => {
-    setLoading(true);
-    try {
-      // In a real implementation, we would use AI to find similar products
-      // This is a simplified mock that just gets products from the same category
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('category', category)
-        .eq('status', 'available')
-        .not('id', 'eq', productId)
-        .limit(limit);
-
-      if (error) throw error;
-
-      // Ensure data conforms to the Product type
-      const typedData = data.map(item => ({
-        ...item,
-        status: item.status as 'available' | 'reserved' | 'sold',
-        condition: item.condition as 'new' | 'likeNew' | 'good' | 'fair'
-      }));
-
-      setRecommendations(typedData);
-    } catch (error) {
-      console.error('Error fetching similar products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCompleteTheLook = async () => {
-    setLoading(true);
-    try {
-      // In a real implementation, we would use AI to suggest complementary items
-      // This is a simplified mock that just gets random products
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('status', 'available')
-        .not('id', 'eq', productId)
-        .limit(limit);
-
-      if (error) throw error;
-
-      // Ensure data conforms to the Product type
-      const typedData = data.map(item => ({
-        ...item,
-        status: item.status as 'available' | 'reserved' | 'sold',
-        condition: item.condition as 'new' | 'likeNew' | 'good' | 'fair'
-      }));
-
-      setRecommendations(typedData);
-    } catch (error) {
-      console.error('Error fetching complete the look:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPersonalizedRecommendations = async () => {
-    setLoading(true);
-    try {
-      // In a real implementation, we would use AI and user history for personalization
-      // This is a simplified mock that just gets recent products
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('status', 'available')
-        .order('date_added', { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-
-      // Ensure data conforms to the Product type
-      const typedData = data.map(item => ({
-        ...item,
-        status: item.status as 'available' | 'reserved' | 'sold',
-        condition: item.condition as 'new' | 'likeNew' | 'good' | 'fair'
-      }));
-
-      setRecommendations(typedData);
-    } catch (error) {
-      console.error('Error fetching personalized recommendations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTrendingProducts = async () => {
-    setLoading(true);
-    try {
-      // In a real implementation, we would use analytics data to determine trending items
-      // This is a simplified mock that just gets featured products
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('status', 'available')
-        .eq('featured', true)
-        .limit(limit);
-
-      if (error) throw error;
-
-      // Ensure data conforms to the Product type
-      const typedData = data.map(item => ({
-        ...item,
-        status: item.status as 'available' | 'reserved' | 'sold',
-        condition: item.condition as 'new' | 'likeNew' | 'good' | 'fair'
-      }));
-
-      setRecommendations(typedData);
-    } catch (error) {
-      console.error('Error fetching trending products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getTitle = () => {
-    switch (recommendationType) {
-      case 'similar':
-        return 'Similar Products';
-      case 'complete':
-        return 'Complete the Look';
-      case 'personalized':
-        return 'Recommended for You';
-      case 'trending':
-        return 'Trending Products';
-      default:
-        return 'Recommendations';
-    }
-  };
-
-  if (loading) {
+  }, [product]);
+  
+  if (isLoadingProduct) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <Card className="mt-8">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-8 w-1/4" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="h-40 w-full rounded-lg" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
-
-  if (recommendations.length === 0) {
+  
+  if (!product || (!recommendations && !isLoading)) {
     return null;
   }
-
+  
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">{getTitle()}</h2>
-        <Button variant="link">View All</Button>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {recommendations.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    </div>
+    <Card className="mt-8">
+      <CardContent className="p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <h2 className="text-xl font-semibold">{title}</h2>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={recommendationType === 'similar' ? 'default' : 'outline'}
+              onClick={() => generateRecommendations('similar')}
+              disabled={isGenerating}
+              className="flex items-center gap-1"
+            >
+              <Sparkles className="h-4 w-4" />
+              Similar Items
+            </Button>
+            <Button
+              size="sm"
+              variant={recommendationType === 'complete-look' ? 'default' : 'outline'}
+              onClick={() => generateRecommendations('complete-look')}
+              disabled={isGenerating}
+              className="flex items-center gap-1"
+            >
+              <Sparkles className="h-4 w-4" />
+              Complete the Look
+            </Button>
+          </div>
+        </div>
+        
+        {isLoading || isGenerating ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="h-40 w-full rounded-lg" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : recommendations && recommendations.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {recommendations.map((recommendation) => (
+              <ProductCard key={recommendation.id} product={recommendation} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No recommendations found. Try a different option.</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
-};
-
-export default AIProductRecommendations;
+}
