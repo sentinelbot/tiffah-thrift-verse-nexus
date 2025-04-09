@@ -20,11 +20,11 @@ const AdminRoutes = () => {
     );
   }
   
-  // If user is not logged in, redirect to login
+  // If user is not logged in, redirect to admin login
   if (!user) {
     // Save the attempted URL for redirecting after login
     toast.error("Please sign in to access the admin panel");
-    return <Navigate to={`/auth?from=${encodeURIComponent(location.pathname)}`} replace />;
+    return <Navigate to={`/admin/auth?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
   
   // If user is not admin, handle appropriately

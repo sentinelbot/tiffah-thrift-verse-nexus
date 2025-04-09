@@ -1,283 +1,187 @@
 
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/context/CartContext";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Heart, ShoppingBag, UserCircle2, LogOut, LayoutDashboard, FolderClosed, HelpCircle, Search as SearchIcon } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import EnhancedSearch from "../shop/EnhancedSearch";
-import NotificationCenter from '../notifications/NotificationCenter';
-import { useMobile } from "@/hooks/use-mobile";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { 
+  ShoppingBag, 
+  User, 
+  Menu, 
+  X, 
+  Heart, 
+  LogOut, 
+  LogIn,
+  ShieldCheck
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isMobile = useMobile();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
-  // Fix the cart reference error by safely accessing the items
-  const { items } = useCart();
-  const cartCount = items ? items.length : 0;
-
+  // Mock cart item count - would come from a cart context in a real app
+  const cartItemCount = 3;
+  
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    try {
+      await signOut();
+      toast.success("Successfully signed out");
+      navigate('/');
+    } catch (error) {
+      toast.error("Failed to sign out");
+      console.error(error);
+    }
   };
   
-  // Function to convert price to Kenyan Shillings format
-  const formatKES = (amount: number) => {
-    return `KSh ${amount.toLocaleString()}`;
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
-
+  
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <div className="flex gap-6 md:gap-10">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="inline-block font-bold text-2xl text-primary">Tiffah</span>
-          </Link>
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <Link to="/shop" className="hover:text-primary">
+    <nav className="bg-background border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          {/* Logo and brand */}
+          <div className="flex-shrink-0 flex items-center">
+            <Link to="/" className="text-2xl font-bold text-primary">
+              Tiffah<span className="text-muted-foreground">Thrift</span>
+            </Link>
+          </div>
+          
+          {/* Desktop nav links */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Link to="/shop" className="text-foreground hover:text-primary px-3 py-2 rounded-md">
               Shop
             </Link>
-            <Link to="/new-arrivals" className="hover:text-primary">
+            <Link to="/category/new-arrivals" className="text-foreground hover:text-primary px-3 py-2 rounded-md">
               New Arrivals
             </Link>
-            <Link to="/category/dresses" className="hover:text-primary">
-              Dresses
+            <Link to="/category/sale" className="text-foreground hover:text-primary px-3 py-2 rounded-md">
+              Sale
             </Link>
-            <Link to="/category/shirts" className="hover:text-primary">
-              Shirts
+            <Link to="/help" className="text-foreground hover:text-primary px-3 py-2 rounded-md">
+              Help
             </Link>
-            <Link to="/category/jeans" className="hover:text-primary">
-              Jeans
-            </Link>
-            <Link to="/category/shoes" className="hover:text-primary">
-              Shoes
-            </Link>
-          </nav>
-        </div>
-
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <nav className="flex items-center space-x-2">
-            <div className="hidden md:block">
-              <EnhancedSearch 
-                onSearch={(query, enhancedResults) => {
-                  if (!query) return;
-                  navigate(`/shop?q=${encodeURIComponent(query)}`);
-                }}
-              />
-            </div>
-            
-            {isMobile && (
-              <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
-                <SearchIcon className="h-5 w-5" />
-                <span className="sr-only">Search</span>
-              </Button>
-            )}
-            
-            <Link to="/help" className="hidden md:flex">
-              <Button variant="ghost" size="icon" className="relative">
-                <HelpCircle className="h-5 w-5" />
-                <span className="sr-only">Help</span>
-              </Button>
+          </div>
+          
+          {/* Right side icons */}
+          <div className="flex items-center space-x-4">
+            {/* Cart */}
+            <Link to="/cart" className="relative text-foreground hover:text-primary p-2">
+              <ShoppingBag size={24} />
+              {cartItemCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 bg-primary h-5 w-5 flex items-center justify-center p-0">
+                  {cartItemCount}
+                </Badge>
+              )}
             </Link>
             
-            <Link to="/wishlist" className="hidden sm:flex">
-              <Button variant="ghost" size="icon">
-                <Heart className="h-5 w-5" />
-                <span className="sr-only">Wishlist</span>
-              </Button>
+            {/* Admin link for quick access */}
+            <Link to="/admin/auth" className="hidden md:flex text-foreground hover:text-primary p-2">
+              <ShieldCheck size={24} />
             </Link>
             
-            <Link to="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingBag className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center translate-x-1/4 -translate-y-1/4">
-                    {cartCount}
-                  </span>
-                )}
-                <span className="sr-only">Cart</span>
-              </Button>
-            </Link>
-            
-            {user && <NotificationCenter />}
-            
+            {/* User dropdown */}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <UserCircle2 className="h-5 w-5" />
-                    <span className="sr-only">User menu</span>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <User size={24} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span>{user.name || 'User'}</span>
-                      <span className="text-xs font-normal text-muted-foreground">
-                        {user.email}
-                      </span>
-                    </div>
-                  </DropdownMenuLabel>
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/account">
-                      <UserCircle2 className="mr-2 h-4 w-4" />
-                      <span>My Account</span>
-                    </Link>
+                  <DropdownMenuItem onSelect={() => navigate('/account')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/account?tab=orders">
-                      <ShoppingBag className="mr-2 h-4 w-4" />
-                      <span>My Orders</span>
-                    </Link>
+                  <DropdownMenuItem onSelect={() => navigate('/wishlist')}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>Wishlist</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/help">
-                      <HelpCircle className="mr-2 h-4 w-4" />
-                      <span>Help Center</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  {/* Admin links for admin users */}
                   {user.role === 'admin' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          <span>Admin Dashboard</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem onSelect={() => navigate('/admin')}>
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </DropdownMenuItem>
                   )}
-
-                  {/* Staff links based on role */}
-                  {['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role) && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/staff">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          <span>Staff Dashboard</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
+                  <DropdownMenuItem onSelect={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sign out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/auth">Sign in</Link>
+              <Button variant="ghost" size="icon" onClick={() => navigate('/auth')}>
+                <LogIn size={24} />
               </Button>
             )}
             
-            {isMobile ? (
-              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left">
-                  <Link to="/" className="flex items-center" onClick={() => setIsMenuOpen(false)}>
-                    <span className="font-bold text-2xl text-primary">Tiffah</span>
-                  </Link>
-                  <div className="mt-4">
-                    <EnhancedSearch 
-                      onSearch={(query, enhancedResults) => {
-                        if (!query) return;
-                        navigate(`/shop?q=${encodeURIComponent(query)}`);
-                        setIsMenuOpen(false);
-                      }}
-                    />
-                  </div>
-                  <div className="mt-8 space-y-4">
-                    <Link to="/shop" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Shop
-                    </Link>
-                    <Link to="/new-arrivals" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      New Arrivals
-                    </Link>
-                    <Link to="/category/dresses" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Dresses
-                    </Link>
-                    <Link to="/category/shirts" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Shirts
-                    </Link>
-                    <Link to="/category/jeans" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Jeans
-                    </Link>
-                    <Link to="/category/shoes" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Shoes
-                    </Link>
-                    <Link to="/help" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Help Center
-                    </Link>
-                    <Link to="/wishlist" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                      Wishlist
-                    </Link>
-                    {user ? (
-                      <>
-                        <Link to="/account" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                          My Account
-                        </Link>
-                        {user.role === 'admin' && (
-                          <Link to="/admin" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                            Admin Dashboard
-                          </Link>
-                        )}
-                        {['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role) && (
-                          <Link to="/staff" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                            Staff Dashboard
-                          </Link>
-                        )}
-                        <Button variant="link" size="sm" className="block p-0" onClick={handleSignOut}>
-                          Sign out
-                        </Button>
-                      </>
-                    ) : (
-                      <Link to="/auth" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                        Sign in
-                      </Link>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            ) : null}
-          </nav>
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <Button variant="ghost" size="icon" onClick={toggleMenu}>
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
       
-      {/* Mobile search modal */}
-      {isMobile && (
-        <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-          <SheetContent side="top" className="h-auto">
-            <div className="py-4">
-              <EnhancedSearch 
-                onSearch={(query, enhancedResults) => {
-                  if (!query) return;
-                  navigate(`/shop?q=${encodeURIComponent(query)}`);
-                  setIsSearchOpen(false);
-                }}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
+            <Link 
+              to="/shop" 
+              className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
+              onClick={toggleMenu}
+            >
+              Shop
+            </Link>
+            <Link 
+              to="/category/new-arrivals" 
+              className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
+              onClick={toggleMenu}
+            >
+              New Arrivals
+            </Link>
+            <Link 
+              to="/category/sale" 
+              className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
+              onClick={toggleMenu}
+            >
+              Sale
+            </Link>
+            <Link 
+              to="/help" 
+              className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
+              onClick={toggleMenu}
+            >
+              Help
+            </Link>
+            <Link 
+              to="/admin/auth" 
+              className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
+              onClick={toggleMenu}
+            >
+              Admin Portal
+            </Link>
+          </div>
+        </div>
       )}
-    </header>
+    </nav>
   );
 };
 

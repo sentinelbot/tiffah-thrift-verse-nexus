@@ -18,6 +18,7 @@ import Account from '@/pages/Account';
 import OrderDetail from '@/pages/OrderDetail';
 import Wishlist from '@/pages/Wishlist';
 import Auth from '@/pages/Auth';
+import AdminAuth from '@/pages/AdminAuth';
 import NotFound from '@/pages/NotFound';
 import Unauthorized from '@/pages/Unauthorized';
 import HelpCenter from '@/pages/HelpCenter';
@@ -118,6 +119,7 @@ function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/admin/auth" element={<AdminAuth />} />
                 <Route path="/help" element={<HelpCenter />} />
                 
                 {/* Protected customer routes */}
