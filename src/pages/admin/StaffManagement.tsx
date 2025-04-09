@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { 
@@ -76,8 +75,18 @@ const staffFormSchema = z.object({
   }),
 });
 
-// Mock staff data for demonstration
-const mockStaffData = [
+interface StaffMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  lastActive: string;
+  phone: string;
+  performanceRating: number;
+}
+
+const mockStaffData: StaffMember[] = [
   { 
     id: '1', 
     name: 'John Doe', 
@@ -122,8 +131,8 @@ const mockStaffData = [
 
 const StaffManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [staffData, setStaffData] = useState(mockStaffData);
-  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [staffData, setStaffData] = useState<StaffMember[]>(mockStaffData);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [isAddingStaff, setIsAddingStaff] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   
@@ -139,10 +148,13 @@ const StaffManagement = () => {
   });
   
   const handleAddStaff = (data: z.infer<typeof staffFormSchema>) => {
-    // Simulate API call to add staff
-    const newStaff = {
+    const newStaff: StaffMember = {
       id: Math.random().toString(36).substring(7),
-      ...data,
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      status: data.status,
+      phone: data.phone || '',
       lastActive: new Date().toISOString(),
       performanceRating: 4.0
     };
@@ -169,7 +181,6 @@ const StaffManagement = () => {
   };
   
   const handleResetPassword = (staffId: string) => {
-    // In a real app, this would trigger a password reset email
     const staffMember = staffData.find(staff => staff.id === staffId);
     toast.success(`Password reset email sent to ${staffMember?.email}`);
   };

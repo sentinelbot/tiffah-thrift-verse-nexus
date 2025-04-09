@@ -2,7 +2,7 @@
 import { Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Staff Pages
+// Staff Pages imports
 import StaffDashboard from '@/pages/staff/Dashboard';
 import ProductManager from '@/pages/staff/ProductManager';
 import OrderPreparer from '@/pages/staff/OrderPreparer';

@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Product } from '@/types';
-import { ProductCard } from '@/components/products/ProductCard';
+import ProductCard from '@/components/products/ProductCard';
 import { Sparkles } from 'lucide-react';
 
 interface AIProductRecommendationsProps {
