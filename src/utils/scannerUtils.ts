@@ -1,5 +1,4 @@
-
-import Quagga from 'quagga';
+import Quagga from '@ericblade/quagga2';
 import { generateUniqueBarcode } from './barcodeUtils';
 import { toast } from 'sonner';
 import { openDB, DBSchema } from 'idb';

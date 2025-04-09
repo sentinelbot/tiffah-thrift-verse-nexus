@@ -10,6 +10,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
   isLoading: boolean;
+  updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -135,12 +136,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Add updateProfile method to update user profile data
+  const updateProfile = async (data: Partial<User>) => {
+    try {
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // In a real app, you would update the user profile in your database
+      // For this demo, we'll just update the local state
+      setUser({ ...user, ...data });
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
+      throw error;
+    }
+  };
+
   const value = {
     user,
     signIn,
     signUp,
     signOut,
     isLoading,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

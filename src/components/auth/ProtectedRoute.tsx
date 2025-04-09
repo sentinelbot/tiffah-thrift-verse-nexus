@@ -9,10 +9,10 @@ export interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   
   // Show a loading state while authentication status is being determined
-  if (loading) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
   
