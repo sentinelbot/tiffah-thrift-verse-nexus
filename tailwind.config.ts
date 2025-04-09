@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -52,6 +53,32 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				thrift: {
+					50: '#f9f5f0',
+					100: '#f0e6da',
+					200: '#e2cebc',
+					300: '#d1b196',
+					400: '#bd8f6e',
+					500: '#ac7652',
+					600: '#9a6445',
+					700: '#80503a',
+					800: '#6a4333',
+					900: '#5a392e',
+					950: '#301b17',
+				},
+				sage: {
+					50: '#f6f8f2',
+					100: '#ebede2',
+					200: '#d8e1c8',
+					300: '#bfd09f',
+					400: '#a1ba75',
+					500: '#88a256',
+					600: '#6c8342',
+					700: '#556836',
+					800: '#465430',
+					900: '#3b462a',
+					950: '#1d2612',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -84,11 +111,43 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'fade-out': {
+					'0%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					},
+					'100%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					}
+				},
+				'scale-in': {
+					'0%': {
+						transform: 'scale(0.95)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'scale(1)',
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'scale-in': 'scale-in 0.2s ease-out'
 			}
 		}
 	},
