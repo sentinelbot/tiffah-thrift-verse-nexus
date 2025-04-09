@@ -9,7 +9,8 @@ import { Heart, Share2, ShoppingBag, Plus, Minus } from "lucide-react";
 import { ProductType } from "@/components/products/ProductCard";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
+import { useCart } from "@/context/CartContext";
+import RelatedProducts from "@/components/products/RelatedProducts";
 
 // Mock product data
 const products: Record<string, ProductType> = {
@@ -47,7 +48,7 @@ const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const { toast } = useToast();
+  const { addToCart, addToWishlist, isInCart, isInWishlist } = useCart();
   
   const product = id ? products[id] : null;
   
@@ -77,18 +78,12 @@ const ProductDetails = () => {
   const incrementQuantity = () => setQuantity(q => Math.min(q + 1, 10));
   const decrementQuantity = () => setQuantity(q => Math.max(q - 1, 1));
   
-  const addToCart = () => {
-    toast({
-      title: "Added to cart",
-      description: `${quantity} × ${product.title} added to your cart.`,
-    });
+  const handleAddToCart = () => {
+    addToCart(product, quantity);
   };
   
-  const addToWishlist = () => {
-    toast({
-      title: "Added to wishlist",
-      description: `${product.title} added to your wishlist.`,
-    });
+  const handleAddToWishlist = () => {
+    addToWishlist(product);
   };
   
   const shareProduct = () => {
@@ -100,10 +95,7 @@ const ProductDetails = () => {
       });
     } else {
       // Fallback for browsers that don't support navigator.share
-      toast({
-        title: "Share this product",
-        description: "Link copied to clipboard!",
-      });
+      navigator.clipboard.writeText(window.location.href);
     }
   };
 
@@ -228,14 +220,25 @@ const ProductDetails = () => {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                <Button className="flex-1" onClick={addToCart}>
-                  <ShoppingBag className="mr-2 h-4 w-4" /> Add to Cart
+                <Button 
+                  className="flex-1" 
+                  onClick={handleAddToCart}
+                  disabled={isInCart(product.id)}
+                >
+                  <ShoppingBag className="mr-2 h-4 w-4" /> 
+                  {isInCart(product.id) ? 'In Cart' : 'Add to Cart'}
                 </Button>
               </div>
               
               <div className="flex space-x-2">
-                <Button variant="outline" className="flex-1" onClick={addToWishlist}>
-                  <Heart className="mr-2 h-4 w-4" /> Add to Wishlist
+                <Button 
+                  variant={isInWishlist(product.id) ? "default" : "outline"} 
+                  className="flex-1" 
+                  onClick={handleAddToWishlist}
+                  disabled={isInWishlist(product.id)}
+                >
+                  <Heart className="mr-2 h-4 w-4" /> 
+                  {isInWishlist(product.id) ? 'In Wishlist' : 'Add to Wishlist'}
                 </Button>
                 <Button variant="outline" size="icon" onClick={shareProduct}>
                   <Share2 className="h-4 w-4" />
@@ -339,6 +342,14 @@ const ProductDetails = () => {
             </div>
           </TabsContent>
         </Tabs>
+        
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold mb-6">You Might Also Like</h2>
+          <RelatedProducts 
+            currentProductId={product.id} 
+            category={product.category} 
+          />
+        </div>
       </main>
       <Footer />
     </div>
