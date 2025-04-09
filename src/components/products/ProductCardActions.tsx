@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Plus, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";

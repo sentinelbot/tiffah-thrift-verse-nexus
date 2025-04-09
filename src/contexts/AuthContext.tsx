@@ -37,15 +37,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Error getting session:', error);
           setUser(null);
         } else if (data?.session) {
-          // Here we'd typically fetch the user profile from our database
-          // This is a mock user for demonstration
-          const mockUser: User = {
-            id: data.session.user.id,
-            email: data.session.user.email || '',
-            name: 'Demo User',
-            role: 'admin', // For demo purposes, we set as admin
-          };
-          setUser(mockUser);
+          // In production, fetch the user profile from our database
+          try {
+            // Fetch the user's profile from our database
+            const { data: userData, error: userError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.session.user.id)
+              .single();
+              
+            if (userError) {
+              console.error('Error fetching user profile:', userError);
+              // Fall back to basic user data from auth
+              setUser({
+                id: data.session.user.id,
+                email: data.session.user.email || '',
+                name: data.session.user.user_metadata?.name || 'User',
+                role: data.session.user.user_metadata?.role || 'customer',
+              });
+            } else if (userData) {
+              // Set user with data from our profile table
+              setUser({
+                id: data.session.user.id,
+                email: data.session.user.email || '',
+                name: userData.name || data.session.user.user_metadata?.name || 'User',
+                role: userData.role || data.session.user.user_metadata?.role || 'customer',
+              });
+            }
+          } catch (profileError) {
+            console.error('Error in profile fetch:', profileError);
+            // Fall back to basic user data
+            setUser({
+              id: data.session.user.id,
+              email: data.session.user.email || '',
+              name: data.session.user.user_metadata?.name || 'User',
+              role: data.session.user.user_metadata?.role || 'customer',
+            });
+          }
         }
       } catch (error) {
         console.error('Unexpected error checking auth:', error);
@@ -61,14 +89,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session) {
-          // Mock user data - in a real app, you'd fetch this from your database
-          const mockUser: User = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: 'Demo User',
-            role: 'admin', // For testing, we set as admin
-          };
-          setUser(mockUser);
+          try {
+            // Fetch the user's profile from our database when auth state changes
+            const { data: userData, error: userError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+              
+            if (userError) {
+              console.error('Error fetching user profile on auth change:', userError);
+              // Fall back to basic user data from auth
+              setUser({
+                id: session.user.id,
+                email: session.user.email || '',
+                name: session.user.user_metadata?.name || 'User',
+                role: session.user.user_metadata?.role || 'customer',
+              });
+            } else if (userData) {
+              // Set user with data from our profile table
+              setUser({
+                id: session.user.id,
+                email: session.user.email || '',
+                name: userData.name || session.user.user_metadata?.name || 'User',
+                role: userData.role || session.user.user_metadata?.role || 'customer',
+              });
+            }
+          } catch (profileError) {
+            console.error('Error in profile fetch on auth change:', profileError);
+            // Fall back to basic user data
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              name: session.user.user_metadata?.name || 'User',
+              role: session.user.user_metadata?.role || 'customer',
+            });
+          }
         } else {
           setUser(null);
         }
@@ -91,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing in:', error);
       toast.error('Failed to sign in. Please check your credentials.');
       throw error;
@@ -116,7 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast.success('Registration successful! Please check your email to confirm your account.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing up:', error);
       toast.error('Failed to create account. Please try again.');
       throw error;
@@ -130,7 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       setUser(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out. Please try again.');
       throw error;
@@ -144,11 +200,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not authenticated');
       }
 
-      // In a real app, you would update the user profile in your database
-      // For this demo, we'll just update the local state
+      // Update in Supabase profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: data.name,
+          // Add other fields you want to update
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
       setUser({ ...user, ...data });
       toast.success('Profile updated successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
       throw error;

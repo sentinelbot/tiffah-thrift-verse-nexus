@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,7 +20,12 @@ const AdminRoutes = () => {
   
   // If user is not admin, redirect to unauthorized
   if (!user || user.role !== 'admin') {
-    // Save the attempted URL for redirecting after login
+    // If user has staff role, redirect to staff dashboard
+    if (user && ['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role)) {
+      return <Navigate to="/staff" replace />;
+    }
+    
+    // Otherwise, redirect to login
     return <Navigate to={`/auth?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
   

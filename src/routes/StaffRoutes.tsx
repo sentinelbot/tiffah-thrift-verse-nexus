@@ -8,8 +8,11 @@ const roleAccessMap: Record<string, string[]> = {
   'admin': ['*'], // Admin can access all routes
   'productManager': ['/staff/products', '/staff/categories', '/staff/ai', '/staff/printing', '/staff/scanning', '/staff/communications'],
   'orderPreparer': ['/staff/orders', '/staff/printing', '/staff/scanning', '/staff/communications'],
-  'deliveryStaff': ['/staff/orders', '/staff/printing', '/staff/scanning', '/staff/communications'],
+  'deliveryStaff': ['/staff/deliveries', '/staff/printing', '/staff/scanning', '/staff/communications'],
 };
+
+// Routes that all staff can access
+const commonStaffRoutes = ['/staff/profile', '/staff/schedule', '/staff/training'];
 
 const StaffRoutes = () => {
   const { user, isLoading } = useAuth();
@@ -34,13 +37,16 @@ const StaffRoutes = () => {
     return <Navigate to={`/auth?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
   
-  // If admin, allow access to all routes
+  // If admin, allow them to view staff routes but point them to admin dashboard if they try to access staff home
   if (user.role === 'admin') {
+    if (currentPath === '/staff') {
+      return <Navigate to="/admin" replace />;
+    }
     return <Outlet />;
   }
   
   // Check if current path is allowed for user's role
-  const allowedPaths = roleAccessMap[user.role] || [];
+  const allowedPaths = [...(roleAccessMap[user.role] || []), ...commonStaffRoutes];
   const hasAccess = allowedPaths.some(path => {
     if (path === '*') return true;
     return currentPath.startsWith(path);
@@ -55,7 +61,7 @@ const StaffRoutes = () => {
       case 'orderPreparer':
         return <Navigate to="/staff/orders" replace />;
       case 'deliveryStaff':
-        return <Navigate to="/staff/orders" replace />;
+        return <Navigate to="/staff/deliveries" replace />;
       default:
         return <Navigate to="/unauthorized" replace />;
     }

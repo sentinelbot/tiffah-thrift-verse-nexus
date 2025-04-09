@@ -20,6 +20,7 @@ import Wishlist from '@/pages/Wishlist';
 import Auth from '@/pages/Auth';
 import NotFound from '@/pages/NotFound';
 import Unauthorized from '@/pages/Unauthorized';
+import HelpCenter from '@/pages/HelpCenter';
 
 // Admin pages
 import Dashboard from '@/pages/admin/Dashboard';
@@ -40,7 +41,7 @@ import Communications from '@/pages/admin/Communications';
 import ContentManagement from '@/pages/admin/ContentManagement';
 import StaffCommunications from '@/pages/admin/StaffCommunications';
 import CustomerFeedback from '@/pages/admin/CustomerFeedback';
-import HelpCenter from '@/pages/HelpCenter';
+import UserManagement from '@/pages/admin/UserManagement';
 
 // Staff pages
 import StaffDashboard from '@/pages/staff/Dashboard';
@@ -57,6 +58,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AdminRoutes from '@/routes/AdminRoutes';
 import StaffRoutes from '@/routes/StaffRoutes';
 import { ConnectivityIndicator } from '@/components/ui/connectivity-indicator';
+import HelpButton from '@/components/help/HelpButton';
 
 // Initialize offline service
 import { initializeOfflineService } from '@/services/offlineService';
@@ -137,7 +139,7 @@ function App() {
                   <Route path="scanning" element={<Scanning />} />
                   <Route path="analytics" element={<Analytics />} />
                   <Route path="marketing" element={<Marketing />} />
-                  <Route path="users" element={<Users />} />
+                  <Route path="users" element={<UserManagement />} />
                   <Route path="customer-feedback" element={<CustomerFeedback />} />
                   <Route path="ai" element={<AiDashboard />} />
                   <Route path="settings" element={<Settings />} />
@@ -173,6 +175,9 @@ function App() {
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              
+              {/* Help Button */}
+              <HelpButton />
               
               {/* Connectivity indicator */}
               <ConnectivityIndicator />

@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Heart, ShoppingBag, UserCircle2, LogOut, LayoutDashboard, FolderClosed, HelpCircle } from "lucide-react";
+import { Menu, Heart, ShoppingBag, UserCircle2, LogOut, LayoutDashboard, FolderClosed, HelpCircle, Search as SearchIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import EnhancedSearch from "../shop/EnhancedSearch";
 import NotificationCenter from '../notifications/NotificationCenter';
@@ -16,6 +16,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMobile = useMobile();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   // Fix the cart reference error by safely accessing the items
   const { items } = useCart();
@@ -71,6 +72,13 @@ const Navbar = () => {
               />
             </div>
             
+            {isMobile && (
+              <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
+                <SearchIcon className="h-5 w-5" />
+                <span className="sr-only">Search</span>
+              </Button>
+            )}
+            
             <Link to="/help" className="hidden md:flex">
               <Button variant="ghost" size="icon" className="relative">
                 <HelpCircle className="h-5 w-5" />
@@ -120,13 +128,13 @@ const Navbar = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/account">
                       <UserCircle2 className="mr-2 h-4 w-4" />
-                      <span>Account</span>
+                      <span>My Account</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/account?tab=orders">
                       <ShoppingBag className="mr-2 h-4 w-4" />
-                      <span>Orders</span>
+                      <span>My Orders</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -224,7 +232,7 @@ const Navbar = () => {
                     {user ? (
                       <>
                         <Link to="/account" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
-                          Account
+                          My Account
                         </Link>
                         {user.role === 'admin' && (
                           <Link to="/admin" className="hover:text-primary block" onClick={() => setIsMenuOpen(false)}>
@@ -252,6 +260,23 @@ const Navbar = () => {
           </nav>
         </div>
       </div>
+      
+      {/* Mobile search modal */}
+      {isMobile && (
+        <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+          <SheetContent side="top" className="h-auto">
+            <div className="py-4">
+              <EnhancedSearch 
+                onSearch={(query, enhancedResults) => {
+                  if (!query) return;
+                  navigate(`/shop?q=${encodeURIComponent(query)}`);
+                  setIsSearchOpen(false);
+                }}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </header>
   );
 };
