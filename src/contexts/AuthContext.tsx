@@ -31,6 +31,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        
         if (session) {
           try {
             // Use setTimeout to avoid potential deadlocks with Supabase client
@@ -52,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   role: session.user.user_metadata?.role || 'customer',
                 });
               } else if (profileData) {
+                console.log('Profile data fetched:', profileData);
                 // Set user with data from our profile table
                 setUser({
                   id: session.user.id,
@@ -60,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   role: profileData.role || session.user.user_metadata?.role || 'customer',
                 });
               }
+              setIsLoading(false);
             }, 0);
           } catch (profileError) {
             console.error('Error in profile fetch on auth change:', profileError);
@@ -70,23 +74,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               name: session.user.user_metadata?.name || 'User',
               role: session.user.user_metadata?.role || 'customer',
             });
+            setIsLoading(false);
           }
         } else {
           setUser(null);
+          setIsLoading(false);
         }
-        setIsLoading(false);
       }
     );
 
     // Check for existing session
     const checkSession = async () => {
       try {
+        console.log('Checking for existing session...');
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
           setUser(null);
+          setIsLoading(false);
         } else if (data?.session) {
+          console.log('Found existing session:', data.session.user.id);
           // Use setTimeout to avoid potential deadlocks
           setTimeout(async () => {
             try {
@@ -107,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   role: data.session.user.user_metadata?.role || 'customer',
                 });
               } else if (profileData) {
+                console.log('Profile data loaded:', profileData);
                 // Set user with data from our profile table
                 setUser({
                   id: data.session.user.id,
@@ -125,12 +134,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 role: data.session.user.user_metadata?.role || 'customer',
               });
             }
+            setIsLoading(false);
           }, 0);
+        } else {
+          console.log('No session found');
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('Unexpected error checking auth:', error);
         setUser(null);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -144,15 +156,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Attempting to sign in with email:', email);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Sign-in error:', error.message);
         throw error;
       }
       
+      console.log('Sign-in successful');
       // Don't set the user here as the onAuthStateChange listener will do that
     } catch (error: any) {
       console.error('Error signing in:', error);

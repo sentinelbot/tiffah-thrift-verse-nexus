@@ -50,6 +50,7 @@ const Auth: React.FC = () => {
   // If user is already logged in, redirect to the appropriate dashboard or homepage
   useEffect(() => {
     if (user) {
+      console.log("User is logged in:", user);
       // Redirect based on role
       if (user.role === 'admin') {
         navigate('/admin');
@@ -86,12 +87,14 @@ const Auth: React.FC = () => {
     setIsLoading(true);
     setLoginError(null);
     try {
+      console.log("Attempting to sign in with:", values.email);
       await signIn(values.email, values.password);
       toast.success('Login successful');
       // The redirect will be handled by the useEffect
     } catch (error: any) {
       console.error('Login error:', error);
-      setLoginError(error.message || 'Login failed. Please check your credentials and try again.');
+      // More user-friendly error message
+      setLoginError('Login failed. Please check your credentials and try again.');
       toast.error('Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
@@ -123,6 +126,11 @@ const Auth: React.FC = () => {
   const fillDemoAccount = (email: string, password: string) => {
     loginForm.setValue('email', email);
     loginForm.setValue('password', password);
+  };
+
+  const loginWithDemoAccount = (email: string, password: string) => {
+    fillDemoAccount(email, password);
+    onLoginSubmit({ email, password });
   };
 
   return (
@@ -223,16 +231,16 @@ const Auth: React.FC = () => {
                       key={index}
                       variant="outline"
                       size="sm"
-                      className="text-xs justify-between"
-                      onClick={() => fillDemoAccount(account.email, account.password)}
+                      className="text-xs justify-start"
+                      onClick={() => loginWithDemoAccount(account.email, account.password)}
                     >
-                      <span>{account.role}</span>
-                      <span className="text-muted-foreground">{account.email}</span>
+                      <span className="font-medium">{account.role}:</span>
+                      <span className="ml-2 text-muted-foreground">{account.email}</span>
                     </Button>
                   ))}
                 </div>
                 <p className="text-center text-xs text-muted-foreground">
-                  Click on an account to fill the login form
+                  Click on an account button to login immediately
                 </p>
               </div>
             </CardContent>
