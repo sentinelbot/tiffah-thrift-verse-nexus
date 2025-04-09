@@ -5,10 +5,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export type Language = 'en' | 'sw';
 
 // Define localization data structure
+interface NestedTranslations {
+  [key: string]: string | NestedTranslations;
+}
+
 export interface LocalizationData {
-  [key: string]: {
-    [key: string]: string;
-  };
+  [key: string]: NestedTranslations;
 }
 
 // Define context interface
@@ -59,8 +61,8 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
         const swTranslations = await import('../locales/sw.json');
         
         setTranslations({
-          en: enTranslations,
-          sw: swTranslations
+          en: enTranslations.default,
+          sw: swTranslations.default
         });
       } catch (error) {
         console.error('Failed to load translations:', error);
@@ -78,25 +80,25 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     if (isLoading) return key;
     
     const keys = key.split('.');
-    let value = translations[language];
+    let value: any = translations[language];
     
     // Navigate through the nested keys
     for (const k of keys) {
-      if (!value) return key;
+      if (!value || typeof value !== 'object') return key;
       value = value[k];
     }
     
     // Return the key if translation not found
-    if (!value) return key;
+    if (!value || typeof value !== 'string') return key;
     
     // Replace parameters if provided
     if (params) {
       return Object.entries(params).reduce((acc, [param, replacement]) => {
         return acc.replace(new RegExp(`{{${param}}}`, 'g'), String(replacement));
-      }, value as string);
+      }, value);
     }
     
-    return value as string;
+    return value;
   };
 
   // Format currency in Kenyan Shillings (KSh X,XXX)

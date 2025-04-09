@@ -14,9 +14,10 @@ if (typeof window !== 'undefined' && window.performance) {
       // Create an observer for CLS (Cumulative Layout Shift)
       const clsObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          if (entry.hadRecentInput) return;
-          console.log('CLS:', entry);
+        entries.forEach((entry) => {
+          if ('hadRecentInput' in entry && !(entry as any).hadRecentInput) {
+            console.log('CLS:', entry);
+          }
         });
       });
       clsObserver.observe({ type: 'layout-shift', buffered: true });
@@ -33,8 +34,11 @@ if (typeof window !== 'undefined' && window.performance) {
       // Create an observer for FID (First Input Delay)
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          console.log('FID:', entry.processingStart - entry.startTime, 'ms');
+        entries.forEach((entry) => {
+          if ('processingStart' in entry && 'startTime' in entry) {
+            const processingTime = (entry as any).processingStart - entry.startTime;
+            console.log('FID:', processingTime, 'ms');
+          }
         });
       });
       fidObserver.observe({ type: 'first-input', buffered: true });
