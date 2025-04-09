@@ -28,99 +28,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check active session and set user
-    const getSession = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          setUser(null);
-        } else if (data?.session) {
-          // In production, fetch the user profile from our database
-          try {
-            // Fetch the user's profile from our database
-            // Use a type assertion to resolve the TypeScript error
-            const { data: profileData, error: profileError } = await (supabase
-              .from('profiles') as any)
-              .select('*')
-              .eq('id', data.session.user.id)
-              .single();
-              
-            if (profileError) {
-              console.error('Error fetching user profile:', profileError);
-              // Fall back to basic user data from auth
-              setUser({
-                id: data.session.user.id,
-                email: data.session.user.email || '',
-                name: data.session.user.user_metadata?.name || 'User',
-                role: data.session.user.user_metadata?.role || 'customer',
-              });
-            } else if (profileData) {
-              // Set user with data from our profile table
-              // Use a type assertion to tell TypeScript we know the shape
-              const profile = profileData as any;
-              setUser({
-                id: data.session.user.id,
-                email: data.session.user.email || '',
-                name: profile.name || data.session.user.user_metadata?.name || 'User',
-                role: profile.role || data.session.user.user_metadata?.role || 'customer',
-              });
-            }
-          } catch (profileError) {
-            console.error('Error in profile fetch:', profileError);
-            // Fall back to basic user data
-            setUser({
-              id: data.session.user.id,
-              email: data.session.user.email || '',
-              name: data.session.user.user_metadata?.name || 'User',
-              role: data.session.user.user_metadata?.role || 'customer',
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Unexpected error checking auth:', error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getSession();
-
-    // Subscribe to auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session) {
           try {
-            // Fetch the user's profile from our database when auth state changes
-            // Use a type assertion to resolve the TypeScript error
-            const { data: profileData, error: profileError } = await (supabase
-              .from('profiles') as any)
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-              
-            if (profileError) {
-              console.error('Error fetching user profile on auth change:', profileError);
-              // Fall back to basic user data from auth
-              setUser({
-                id: session.user.id,
-                email: session.user.email || '',
-                name: session.user.user_metadata?.name || 'User',
-                role: session.user.user_metadata?.role || 'customer',
-              });
-            } else if (profileData) {
-              // Set user with data from our profile table
-              // Use a type assertion to tell TypeScript we know the shape
-              const profile = profileData as any;
-              setUser({
-                id: session.user.id,
-                email: session.user.email || '',
-                name: profile.name || session.user.user_metadata?.name || 'User',
-                role: profile.role || session.user.user_metadata?.role || 'customer',
-              });
-            }
+            // Use setTimeout to avoid potential deadlocks with Supabase client
+            setTimeout(async () => {
+              // Fetch the user's profile from our database
+              const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+                
+              if (profileError) {
+                console.error('Error fetching user profile on auth change:', profileError);
+                // Fall back to basic user data from auth
+                setUser({
+                  id: session.user.id,
+                  email: session.user.email || '',
+                  name: session.user.user_metadata?.name || 'User',
+                  role: session.user.user_metadata?.role || 'customer',
+                });
+              } else if (profileData) {
+                // Set user with data from our profile table
+                setUser({
+                  id: session.user.id,
+                  email: session.user.email || '',
+                  name: profileData.name || session.user.user_metadata?.name || 'User',
+                  role: profileData.role || session.user.user_metadata?.role || 'customer',
+                });
+              }
+            }, 0);
           } catch (profileError) {
             console.error('Error in profile fetch on auth change:', profileError);
             // Fall back to basic user data
@@ -138,8 +78,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
+    // Check for existing session
+    const checkSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setUser(null);
+        } else if (data?.session) {
+          // Use setTimeout to avoid potential deadlocks
+          setTimeout(async () => {
+            try {
+              // Fetch the user's profile from our database
+              const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.session.user.id)
+                .single();
+                
+              if (profileError) {
+                console.error('Error fetching user profile:', profileError);
+                // Fall back to basic user data from auth
+                setUser({
+                  id: data.session.user.id,
+                  email: data.session.user.email || '',
+                  name: data.session.user.user_metadata?.name || 'User',
+                  role: data.session.user.user_metadata?.role || 'customer',
+                });
+              } else if (profileData) {
+                // Set user with data from our profile table
+                setUser({
+                  id: data.session.user.id,
+                  email: data.session.user.email || '',
+                  name: profileData.name || data.session.user.user_metadata?.name || 'User',
+                  role: profileData.role || data.session.user.user_metadata?.role || 'customer',
+                });
+              }
+            } catch (profileError) {
+              console.error('Error in profile fetch:', profileError);
+              // Fall back to basic user data
+              setUser({
+                id: data.session.user.id,
+                email: data.session.user.email || '',
+                name: data.session.user.user_metadata?.name || 'User',
+                role: data.session.user.user_metadata?.role || 'customer',
+              });
+            }
+          }, 0);
+        }
+      } catch (error) {
+        console.error('Unexpected error checking auth:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -153,9 +152,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         throw error;
       }
+      
+      // Don't set the user here as the onAuthStateChange listener will do that
     } catch (error: any) {
       console.error('Error signing in:', error);
-      toast.error('Failed to sign in. Please check your credentials.');
       throw error;
     }
   };
@@ -180,7 +180,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Registration successful! Please check your email to confirm your account.');
     } catch (error: any) {
       console.error('Error signing up:', error);
-      toast.error('Failed to create account. Please try again.');
       throw error;
     }
   };
@@ -194,7 +193,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
     } catch (error: any) {
       console.error('Error signing out:', error);
-      toast.error('Failed to sign out. Please try again.');
       throw error;
     }
   };
@@ -206,9 +204,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not authenticated');
       }
 
-      // Use type assertion to tell TypeScript we know what we're doing
-      const { error } = await (supabase
-        .from('profiles') as any)
+      const { error } = await supabase
+        .from('profiles')
         .update({
           name: data.name,
           // Add other fields you want to update
@@ -224,7 +221,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Profile updated successfully');
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
       throw error;
     }
   };

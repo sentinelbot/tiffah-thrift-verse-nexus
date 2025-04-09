@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Form schema for login
 const loginSchema = z.object({
@@ -40,6 +41,7 @@ const Auth: React.FC = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('login');
+  const [loginError, setLoginError] = useState<string | null>(null);
   
   // Get the return URL from query params
   const searchParams = new URLSearchParams(location.search);
@@ -82,13 +84,15 @@ const Auth: React.FC = () => {
 
   const onLoginSubmit = async (values: LoginValues) => {
     setIsLoading(true);
+    setLoginError(null);
     try {
       await signIn(values.email, values.password);
       toast.success('Login successful');
       // The redirect will be handled by the useEffect
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(error.message || 'Login failed. Please check your credentials and try again.');
+      setLoginError(error.message || 'Login failed. Please check your credentials and try again.');
+      toast.error('Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +102,7 @@ const Auth: React.FC = () => {
     setIsLoading(true);
     try {
       await signUp(values.email, values.password, values.name);
-      toast.success('Registration successful! Please verify your email if required.');
+      toast.success('Registration successful! Please check your email for verification.');
       setActiveTab('login');
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -106,6 +110,19 @@ const Auth: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // This adds some sample account details to help with testing
+  const demoAccounts = [
+    { email: 'admin@tiffahthrift.com', password: 'Admin123!', role: 'Admin' },
+    { email: 'product@tiffahthrift.com', password: 'Staff123!', role: 'Product Manager' },
+    { email: 'order@tiffahthrift.com', password: 'Staff123!', role: 'Order Preparer' },
+    { email: 'delivery@tiffahthrift.com', password: 'Staff123!', role: 'Delivery Staff' }
+  ];
+
+  const fillDemoAccount = (email: string, password: string) => {
+    loginForm.setValue('email', email);
+    loginForm.setValue('password', password);
   };
 
   return (
@@ -124,6 +141,14 @@ const Auth: React.FC = () => {
 
           <TabsContent value="login">
             <CardContent className="space-y-4 pt-4">
+              {loginError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{loginError}</AlertDescription>
+                </Alert>
+              )}
+
               <Form {...loginForm}>
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                   <FormField
@@ -180,6 +205,36 @@ const Auth: React.FC = () => {
                   </Button>
                 </form>
               </Form>
+
+              <div className="mt-6 space-y-4">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t"></span>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Demo Accounts
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {demoAccounts.map((account, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs justify-between"
+                      onClick={() => fillDemoAccount(account.email, account.password)}
+                    >
+                      <span>{account.role}</span>
+                      <span className="text-muted-foreground">{account.email}</span>
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-center text-xs text-muted-foreground">
+                  Click on an account to fill the login form
+                </p>
+              </div>
             </CardContent>
           </TabsContent>
 
