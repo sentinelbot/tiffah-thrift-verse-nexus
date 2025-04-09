@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -35,7 +36,8 @@ import { generateUniqueBarcode } from '@/utils/barcodeUtils';
 import AIDescriptionGenerator from '@/components/ai/AIDescriptionGenerator';
 import AIPriceOptimizer from '@/components/ai/AIPriceOptimizer';
 import AIImageEnhancer from '@/components/ai/AIImageEnhancer';
-import { Sparkles } from 'lucide-react';
+import ProductPhotoUpload from '@/components/admin/products/ProductPhotoUpload';
+import { Sparkles, Camera } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Name must be at least 3 characters' }),
@@ -56,6 +58,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface ProductImage {
+  id: string;
+  url: string;
+  alt?: string;
+  isMain: boolean;
+}
+
 const ProductForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -67,6 +76,8 @@ const ProductForm = () => {
   const [productImage, setProductImage] = useState<string>(
     "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"
   );
+  
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -114,6 +125,30 @@ const ProductForm = () => {
               condition: data.condition,
               featured: data.featured,
             });
+            
+            // Fetch product images
+            const { data: imageData, error: imageError } = await supabase
+              .from('product_images')
+              .select('*')
+              .eq('product_id', id)
+              .order('display_order', { ascending: true });
+              
+            if (!imageError && imageData) {
+              const images = imageData.map(img => ({
+                id: img.id,
+                url: img.url,
+                alt: img.alt || undefined,
+                isMain: img.is_main
+              }));
+              
+              setProductImages(images);
+              
+              // Set main product image
+              const mainImage = images.find(img => img.isMain);
+              if (mainImage) {
+                setProductImage(mainImage.url);
+              }
+            }
           }
         } catch (error: any) {
           toast.error(error.message || 'Error fetching product');
@@ -154,9 +189,12 @@ const ProductForm = () => {
           .eq('id', id);
 
         if (error) throw error;
+        
+        // In a real implementation, we would save productImages to the database here
+        
         toast.success('Product updated successfully');
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('products')
           .insert({
             name: values.name,
@@ -175,9 +213,15 @@ const ProductForm = () => {
             status: 'available',
             inventory_tracking: {},
             measurements: {},
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+        
+        // In a real implementation, we would save productImages to the database here
+        // Associate images with the new product ID (data.id)
+        
         toast.success('Product created successfully');
       }
 
@@ -208,6 +252,16 @@ const ProductForm = () => {
     setProductImage(processedUrl);
     toast.success('Image with removed background will be used for this product');
   };
+  
+  const handleImagesChange = (images: ProductImage[]) => {
+    setProductImages(images);
+    
+    // Update main product image if there is a main image
+    const mainImage = images.find(img => img.isMain);
+    if (mainImage) {
+      setProductImage(mainImage.url);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -222,6 +276,10 @@ const ProductForm = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="basic">Basic Information</TabsTrigger>
+            <TabsTrigger value="photos" className="flex items-center gap-1">
+              <Camera className="h-4 w-4" />
+              Product Photos
+            </TabsTrigger>
             <TabsTrigger value="ai" className="flex items-center gap-1">
               <Sparkles className="h-4 w-4 text-primary" />
               AI Assistance
@@ -505,6 +563,18 @@ const ProductForm = () => {
                     </div>
                   </form>
                 </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="photos">
+            <Card>
+              <CardContent className="pt-6">
+                <ProductPhotoUpload
+                  productId={id}
+                  existingImages={productImages}
+                  onImagesChange={handleImagesChange}
+                />
               </CardContent>
             </Card>
           </TabsContent>

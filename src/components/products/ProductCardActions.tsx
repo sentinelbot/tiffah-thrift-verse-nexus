@@ -20,7 +20,8 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
       condition: product.condition || 'good', // Provide default if missing
     };
     
-    addToCart(contextProduct);
+    // Pass the product and quantity 1 as arguments
+    addToCart(contextProduct, 1);
     toast.success(`${product.title} added to cart`);
   };
   
