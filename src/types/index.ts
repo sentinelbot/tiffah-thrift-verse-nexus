@@ -19,21 +19,25 @@ export interface AuthContextType {
 // Product types
 export interface Product {
   id: string;
-  title: string;
+  name: string;
+  title?: string; // For backward compatibility
   description: string;
   price: number;
   originalPrice?: number;
+  original_price?: number; // For backward compatibility
   category: string;
   subCategory?: string;
+  sub_category?: string; // For backward compatibility
   size?: string;
   color?: string;
   brand?: string;
   condition: 'new' | 'likeNew' | 'good' | 'fair';
-  imageUrl: string;
+  imageUrl?: string;
   images: { url: string; alt: string; isMain: boolean }[];
   barcode: string;
   status: 'available' | 'reserved' | 'sold';
-  dateAdded: Date;
+  dateAdded?: Date;
+  date_added?: string; // For backward compatibility
   featured: boolean;
   measurements?: {
     chest?: number;
@@ -44,10 +48,14 @@ export interface Product {
 
 // Analytics types
 export interface SalesData {
-  date: string;
-  amount: number;
-  orders: number;
-  avgOrderValue: number;
+  period?: string;
+  date?: string;
+  revenue?: number;
+  amount?: number;
+  orders?: number;
+  averageOrderValue?: number;
+  avgOrderValue?: number;
+  previousPeriodChange?: number;
 }
 
 export interface SalesByCategory {
@@ -59,38 +67,58 @@ export interface SalesByCategory {
 export interface InventoryStatus {
   category: string;
   inStock: number;
-  reserved: number;
-  sold: number;
+  lowStock?: number;
+  reserved?: number;
+  sold?: number;
+  totalValue?: number;
 }
 
 export interface StaffPerformanceData {
   name: string;
   role: string;
-  productivity: number;
-  accuracy: number;
-  customerRating: number;
+  productivity?: number;
+  accuracy?: number;
+  customerRating?: number;
+  processed?: number;
+  fulfilled?: number;
+  completed?: number;
+  target?: number;
+  efficiency?: number;
 }
 
 export interface CustomerBehavior {
-  metric: string;
-  value: number;
-  previousValue: number;
-  change: number;
+  metric?: string;
+  value?: number;
+  previousValue?: number;
+  change?: number;
+  segment?: string;
+  count?: number;
+  averageSpend?: number;
+  repeatRate?: number;
+  averageItemsPerOrder?: number;
 }
 
 export interface MarketingEffectiveness {
-  channel: string;
-  visitors: number;
-  conversion: number;
-  cost: number;
-  roi: number;
+  channel?: string;
+  visitors?: number;
+  conversion?: number;
+  cost?: number;
+  roi?: number;
+  campaign?: string;
+  clicks?: number;
+  conversions?: number;
+  revenue?: number;
 }
 
 export interface SystemPerformance {
-  metric: string;
-  value: number;
-  target: number;
-  status: 'good' | 'warning' | 'critical';
+  metric?: string;
+  value?: number;
+  target?: number;
+  status?: 'good' | 'warning' | 'critical';
+  pageLoadTime?: number;
+  serverResponseTime?: number;
+  errorRate?: number;
+  userSatisfaction?: number;
 }
 
 // Export existing Order types from order.ts

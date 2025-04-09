@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -38,7 +39,15 @@ const ProductDetails = () => {
         .single();
       
       if (error) throw error;
-      return data as Product;
+      
+      // Convert database fields to match our Product interface
+      return {
+        ...data,
+        name: data.name,
+        imageUrl: data.images?.[0]?.url,
+        dateAdded: new Date(data.date_added),
+        images: data.images || [],
+      } as Product;
     },
   });
   
@@ -62,7 +71,7 @@ const ProductDetails = () => {
         {/* Product Image */}
         <div>
           <img
-            src="https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"
+            src={product.imageUrl || "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"}
             alt={product.name}
             className="w-full h-auto rounded-lg"
           />
@@ -84,16 +93,16 @@ const ProductDetails = () => {
           
           <div className="flex items-center mb-4">
             <span className="text-2xl font-semibold">KSh {product.price.toFixed(2)}</span>
-            {product.original_price && (
+            {product.originalPrice && (
               <span className="text-lg text-muted-foreground ml-2 line-through">
-                KSh {product.original_price.toFixed(2)}
+                KSh {product.originalPrice.toFixed(2)}
               </span>
             )}
           </div>
           
           <div className="mb-4">
             <Badge>{product.category}</Badge>
-            {product.sub_category && <Badge className="ml-2">{product.sub_category}</Badge>}
+            {product.subCategory && <Badge className="ml-2">{product.subCategory}</Badge>}
             {product.condition && <Badge className="ml-2">{product.condition}</Badge>}
           </div>
           
