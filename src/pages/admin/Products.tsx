@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -57,14 +58,24 @@ const Products = () => {
 
       if (error) throw error;
 
+      // Transform data to match Product interface
       return data.map(product => ({
         ...product,
-        originalPrice: product.original_price,
+        id: product.id,
+        name: product.name,
+        description: product.description || '',
+        price: Number(product.price),
+        originalPrice: product.original_price ? Number(product.original_price) : undefined,
+        category: product.category,
         subCategory: product.sub_category,
+        condition: product.condition as 'new' | 'likeNew' | 'good' | 'fair',
+        barcode: product.barcode,
         status: product.status as 'available' | 'reserved' | 'sold',
+        dateAdded: product.date_added ? new Date(product.date_added) : undefined,
+        featured: Boolean(product.featured),
         imageUrl: '', // We'll set this externally if needed
-        images: [],   // Initialize as empty array
-      }));
+        images: []    // Initialize as empty array
+      })) as Product[];
     },
   });
 
@@ -152,7 +163,7 @@ const Products = () => {
                 Loading products...
               </div>
             ) : error ? (
-              <div className="text-red-500">Error: {error.message}</div>
+              <div className="text-red-500">Error: {(error as Error).message}</div>
             ) : (
               <div className="rounded-md border">
                 <Table>

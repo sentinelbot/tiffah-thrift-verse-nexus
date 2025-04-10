@@ -40,8 +40,8 @@ export interface Product {
     waist?: number;
     length?: number;
   };
-  // For backward compatibility
-  title?: string;
+  // For backward compatibility with database structure
+  title?: string; // Alias for name
   original_price?: number;
   sub_category?: string;
   date_added?: string;

@@ -91,3 +91,17 @@ export const generateUniqueBarcode = (): string => {
   const randomDigits = Math.floor(10000 + Math.random() * 90000);
   return `TTS-${randomDigits}`;
 };
+
+/**
+ * Normalize product data to ensure consistent property naming
+ * This is useful when dealing with data from different sources (API, database, etc.)
+ */
+export const normalizeProductData = (product: any) => {
+  return {
+    ...product,
+    name: product.name || product.title, // Support both name and title
+    price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+    originalPrice: product.originalPrice || product.original_price,
+    subCategory: product.subCategory || product.sub_category,
+  };
+};
