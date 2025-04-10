@@ -2,10 +2,29 @@
 import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
-// Import App component first
+// Import all page components first
 import App from "./App";
+import Index from "./pages/Index";
+import ProductDetails from "./pages/ProductDetails"; 
+import TrackOrderPage from "./pages/TrackOrderPage";
+import Products from "./pages/admin/Products";
+import ProductForm from "./pages/admin/ProductForm";
+import AdminDashboard from "./pages/admin/Dashboard";
+import ProductManager from "./pages/staff/ProductManager";
+import InventoryManagement from "./pages/admin/InventoryManagement";
+import Orders from "./pages/admin/Orders";
+import Printing from "./pages/admin/Printing";
+import StaffCommunications from "./pages/admin/StaffCommunications";
+import OrderPreparer from "./pages/staff/OrderPreparer";
+import DeliveryStaff from "./pages/staff/DeliveryStaff";
+import StaffDashboard from "./pages/staff/Dashboard";
+import Marketing from "./pages/admin/Marketing";
+import Communications from "./pages/staff/Communications";
+import AdminRoutes from "./routes/AdminRoutes";
+import StaffRoutes from "./routes/StaffRoutes";
+import DeliveryReports from "./pages/staff/DeliveryReports";
 
-// Then define routes that use App
+// Then define routes that use the imported components
 const router = createBrowserRouter([
   {
     path: "/",
@@ -98,26 +117,5 @@ const router = createBrowserRouter([
     ],
   },
 ]);
-
-// Import all other page components after the router definition
-import Index from "./pages/Index";
-import ProductDetails from "./pages/ProductDetails"; 
-import TrackOrderPage from "./pages/TrackOrderPage";
-import Products from "./pages/admin/Products";
-import ProductForm from "./pages/admin/ProductForm";
-import AdminDashboard from "./pages/admin/Dashboard";
-import ProductManager from "./pages/staff/ProductManager";
-import InventoryManagement from "./pages/admin/InventoryManagement";
-import Orders from "./pages/admin/Orders";
-import Printing from "./pages/admin/Printing";
-import StaffCommunications from "./pages/admin/StaffCommunications";
-import OrderPreparer from "./pages/staff/OrderPreparer";
-import DeliveryStaff from "./pages/staff/DeliveryStaff";
-import StaffDashboard from "./pages/staff/Dashboard";
-import Marketing from "./pages/admin/Marketing";
-import Communications from "./pages/staff/Communications";
-import AdminRoutes from "./routes/AdminRoutes";
-import StaffRoutes from "./routes/StaffRoutes";
-import DeliveryReports from "./pages/staff/DeliveryReports";
 
 export { router };

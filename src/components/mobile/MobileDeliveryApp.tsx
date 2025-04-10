@@ -157,7 +157,7 @@ const MobileDeliveryApp = () => {
           <h1 className="text-lg font-medium ml-2">Scan Barcode</h1>
         </div>
         <div className="flex-1">
-          <DeliveryScanner onScanSuccess={handleScan} />
+          <DeliveryScanner onScan={handleScan} />
         </div>
       </div>
     );
