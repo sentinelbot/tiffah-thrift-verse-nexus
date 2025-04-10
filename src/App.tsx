@@ -16,6 +16,8 @@ import Checkout from '@/pages/Checkout';
 import OrderConfirmation from '@/pages/OrderConfirmation';
 import Account from '@/pages/Account';
 import OrderDetail from '@/pages/OrderDetail';
+import OrderTracking from '@/pages/OrderTracking';
+import TrackOrderPage from '@/pages/TrackOrderPage';
 import Wishlist from '@/pages/Wishlist';
 import Auth from '@/pages/Auth';
 import AdminAuth from '@/pages/AdminAuth';
@@ -118,6 +120,8 @@ function App() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
+                <Route path="/track" element={<TrackOrderPage />} />
+                <Route path="/track/:orderNumber" element={<OrderTracking />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin/auth" element={<AdminAuth />} />
                 <Route path="/help" element={<HelpCenter />} />

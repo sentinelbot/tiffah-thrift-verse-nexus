@@ -1,6 +1,4 @@
 
-// Since Footer.tsx is in read-only files, we'll create a new component to add to the page
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
