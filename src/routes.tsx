@@ -19,6 +19,7 @@ import Marketing from "./pages/admin/Marketing";
 import Communications from "./pages/staff/Communications";
 import AdminRoutes from "./routes/AdminRoutes";
 import StaffRoutes from "./routes/StaffRoutes";
+import DeliveryReports from "./pages/staff/DeliveryReports";
 
 export const router = createBrowserRouter([
   {
@@ -98,6 +99,10 @@ export const router = createBrowserRouter([
           {
             path: "delivery",
             element: <DeliveryStaff />,
+          },
+          {
+            path: "delivery/reports",
+            element: <DeliveryReports />,
           },
           {
             path: "communications",

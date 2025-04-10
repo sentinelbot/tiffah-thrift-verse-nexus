@@ -1,178 +1,162 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Printer, AlertCircle, Settings } from 'lucide-react';
 import PrinterStatus from '@/components/admin/printing/PrinterStatus';
 import PrintJobHistory from '@/components/admin/printing/PrintJobHistory';
-import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Printer, Package, FileText, Truck } from 'lucide-react';
+import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
+import { useConnectivity } from '@/hooks/use-connectivity';
 
-const PrintingPage = () => {
-  const { user } = useAuth();
+// Mock order for demo purposes
+const mockOrder = {
+  id: 'ORD-123456',
+  orderNumber: 'TTS-20240410-0001',
+  customer: {
+    id: 'cust-001',
+    name: 'Jane Smith',
+    email: 'jane@example.com',
+    phone: '+254712345678'
+  },
+  items: [
+    {
+      product: {
+        id: 'prod-001',
+        name: 'Vintage Denim Jacket',
+        price: 2500,
+        images: [{ url: '/placeholder.svg', alt: 'Vintage Denim Jacket' }]
+      },
+      price: 2500,
+      quantity: 1
+    },
+    {
+      product: {
+        id: 'prod-002',
+        name: 'Floral Summer Dress',
+        price: 1800,
+        images: [{ url: '/placeholder.svg', alt: 'Floral Summer Dress' }]
+      },
+      price: 1800,
+      quantity: 1
+    }
+  ],
+  totalAmount: 4300,
+  status: 'processing',
+  paymentInfo: {
+    method: 'mpesa',
+    transactionId: 'MP123456789',
+    status: 'paid'
+  },
+  shippingAddress: {
+    street: '123 Kimathi Street',
+    city: 'Nairobi',
+    zipCode: '00100'
+  },
+  orderDate: new Date('2024-04-10T10:30:00')
+};
+
+const Printing = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  
-  // Only certain roles should access this page
-  const allowedRoles = ['admin', 'productManager', 'orderPreparer', 'deliveryStaff'];
-  const isAuthorized = user && allowedRoles.includes(user.role);
-  
-  if (!isAuthorized) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-          <Alert variant="destructive" className="max-w-md">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Unauthorized Access</AlertTitle>
-            <AlertDescription>
-              You don't have permission to access the printing system.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </AdminLayout>
-    );
-  }
+  const { isOffline } = useConnectivity();
   
   return (
     <AdminLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Cloud Printing</h1>
-            <p className="text-muted-foreground">
-              Manage printers and print jobs for your store
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <Settings className="h-4 w-4 mr-2" />
-              Printer Settings
-            </Button>
-            <Button>
-              <Printer className="h-4 w-4 mr-2" />
-              Print Test Page
-            </Button>
-          </div>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Cloud Printing</h1>
+          <p className="text-muted-foreground">
+            Manage printers, view print jobs, and print various documents
+          </p>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="jobs">Print Jobs</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
+        {isOffline && (
+          <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 p-4 rounded-md">
+            <p className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              You are currently offline. Print jobs will be queued and processed when you're back online.
+            </p>
+          </div>
+        )}
+        
+        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="overview" className="flex items-center gap-1">
+              <Printer className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="printers" className="flex items-center gap-1">
+              <Printer className="h-4 w-4" />
+              Printers
+            </TabsTrigger>
+            <TabsTrigger value="jobs" className="flex items-center gap-1">
+              <FileText className="h-4 w-4" />
+              Print Jobs
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="col-span-1 md:col-span-2">
+          <TabsContent value="overview">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <PrinterStatus />
+              
+              <Card>
                 <CardHeader>
-                  <CardTitle>PrintNode Integration</CardTitle>
-                  <CardDescription>
-                    Cloud printing for your thrift store operations
-                  </CardDescription>
+                  <CardTitle>Print Documents</CardTitle>
+                  <CardDescription>Select document type to print</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <p>
-                      The PrintNode integration enables cloud printing for various operations:
-                    </p>
-                    <ul className="list-disc ml-6 space-y-2">
-                      <li>
-                        <span className="font-medium">Product Labels:</span> Generate and print barcode 
-                        labels for new inventory items
-                      </li>
-                      <li>
-                        <span className="font-medium">Order Receipts:</span> Print order details for 
-                        order preparation
-                      </li>
-                      <li>
-                        <span className="font-medium">Shipping Labels:</span> Print shipping labels for 
-                        deliveries with customer information
-                      </li>
-                    </ul>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Card className="border border-dashed">
+                      <CardContent className="pt-6 text-center">
+                        <div className="rounded-full bg-primary/10 p-3 w-12 h-12 mx-auto flex items-center justify-center mb-4">
+                          <Package className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="font-medium mb-1">Product Label</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Print barcode for products</p>
+                        <Button variant="outline" size="sm" className="w-full" disabled={isOffline}>
+                          Print Product Label
+                        </Button>
+                      </CardContent>
+                    </Card>
                     
-                    <div className="bg-blue-500/10 border border-blue-500/20 text-blue-500 p-3 rounded-md mt-4">
-                      <p className="text-sm">
-                        <strong>Note:</strong> This is a simulated implementation for demonstration purposes.
-                        In a production environment, this would connect to the actual PrintNode API.
-                      </p>
-                    </div>
+                    <Card className="border border-dashed">
+                      <CardContent className="pt-6 text-center">
+                        <div className="rounded-full bg-primary/10 p-3 w-12 h-12 mx-auto flex items-center justify-center mb-4">
+                          <FileText className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="font-medium mb-1">Order Receipt</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Print receipt for orders</p>
+                        <OrderReceiptPrint order={mockOrder} variant="outline" size="sm" />
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border border-dashed sm:col-span-2">
+                      <CardContent className="pt-6 text-center">
+                        <div className="rounded-full bg-primary/10 p-3 w-12 h-12 mx-auto flex items-center justify-center mb-4">
+                          <Truck className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="font-medium mb-1">Shipping Label</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Print shipping labels for delivery</p>
+                        <Button variant="outline" size="sm" className="w-full" disabled={isOffline}>
+                          Print Shipping Label
+                        </Button>
+                      </CardContent>
+                    </Card>
                   </div>
                 </CardContent>
               </Card>
-              
-              <PrinterStatus />
             </div>
-            
-            <PrintJobHistory />
           </TabsContent>
           
-          <TabsContent value="jobs" className="space-y-6">
-            <PrintJobHistory />
+          <TabsContent value="printers">
+            <PrinterStatus />
           </TabsContent>
           
-          <TabsContent value="templates" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Print Templates</CardTitle>
-                <CardDescription>
-                  Manage your printing templates
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    This section will allow you to manage and customize your print templates for 
-                    various document types.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Product Label</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">
-                          Standard product label with barcode, price, and product details.
-                        </p>
-                        <Button variant="outline" size="sm" className="mt-4 w-full">
-                          Edit Template
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Order Receipt</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">
-                          Detailed order receipt with customer information and item list.
-                        </p>
-                        <Button variant="outline" size="sm" className="mt-4 w-full">
-                          Edit Template
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Shipping Label</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">
-                          Shipping label with customer address and order details.
-                        </p>
-                        <Button variant="outline" size="sm" className="mt-4 w-full">
-                          Edit Template
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="jobs">
+            <PrintJobHistory />
           </TabsContent>
         </Tabs>
       </div>
@@ -180,4 +164,4 @@ const PrintingPage = () => {
   );
 };
 
-export default PrintingPage;
+export default Printing;
