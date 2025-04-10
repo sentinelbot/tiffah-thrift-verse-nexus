@@ -42,6 +42,7 @@ const Products = () => {
       return data.map(item => ({
         id: item.id,
         name: item.name,
+        title: item.name,
         description: item.description,
         price: item.price,
         originalPrice: item.original_price,

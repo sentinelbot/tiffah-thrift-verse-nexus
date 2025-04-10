@@ -1,10 +1,12 @@
 
 import { Link } from "react-router-dom";
 import ProductCardActions from "./ProductCardActions";
+import { Product } from "@/types";
 
 export interface ProductType {
   id: string;
   title: string;
+  name: string;
   price: number;
   originalPrice?: number;
   category: string;
@@ -16,11 +18,23 @@ export interface ProductType {
 }
 
 interface ProductCardProps {
-  product: ProductType;
+  product: ProductType | Product;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const { id, title, price, originalPrice, category, condition, size, imageUrl } = product;
+  // Handle both Product and ProductType
+  const id = product.id;
+  const title = 'title' in product ? product.title : product.name;
+  const price = product.price;
+  const originalPrice = product.originalPrice;
+  const category = product.category;
+  const condition = product.condition;
+  const size = product.size;
+  const imageUrl = 'imageUrl' in product ? 
+    product.imageUrl : 
+    (product.images && product.images.length > 0 ? 
+      product.images[0].url : 
+      '/placeholder.svg');
   
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border hover:border-primary transition-colors">

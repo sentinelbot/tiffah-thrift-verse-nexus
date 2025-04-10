@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/accordion"
 import { Separator } from '@/components/ui/separator';
 import { ShoppingBag, Heart, Share2, CheckCircle, Truck, RotateCcw, ShieldCheck, Star, StarHalf } from 'lucide-react';
-import { AIProductRecommendations } from '@/components/ai/AIProductRecommendations';
+import AIProductRecommendations from '@/components/ai/AIProductRecommendations';
 import { useCart } from '@/context/CartContext';
 
 const ProductDetails = () => {

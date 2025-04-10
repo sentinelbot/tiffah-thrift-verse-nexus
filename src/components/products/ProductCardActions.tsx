@@ -5,22 +5,49 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { Product } from "@/types";
 import { toast } from "sonner";
+import { ProductType } from "./ProductCard";
 
 interface ProductCardActionsProps {
-  product: Product;
+  product: Product | ProductType;
 }
 
 const ProductCardActions = ({ product }: ProductCardActionsProps) => {
   const { addToCart, addToWishlist } = useCart();
   
   const handleAddToCart = () => {
-    addToCart(product, 1);
-    toast.success(`${product.name} added to cart`);
+    // Convert to a format that works with both Product and ProductType
+    const cartProduct = {
+      id: product.id,
+      name: 'name' in product ? product.name : product.title,
+      price: product.price,
+      imageUrl: 'imageUrl' in product ? 
+        product.imageUrl : 
+        (('images' in product && product.images && product.images.length > 0) ? 
+          product.images[0].url : 
+          '/placeholder.svg'),
+      size: product.size
+    };
+    
+    addToCart(cartProduct, 1);
+    toast.success(`${cartProduct.name} added to cart`);
   };
   
   const handleAddToWishlist = () => {
-    addToWishlist(product);
-    toast.success(`${product.name} added to wishlist`);
+    // Convert to a format that works with both Product and ProductType
+    const wishlistProduct = {
+      id: product.id,
+      name: 'name' in product ? product.name : product.title,
+      price: product.price,
+      imageUrl: 'imageUrl' in product ? 
+        product.imageUrl : 
+        (('images' in product && product.images && product.images.length > 0) ? 
+          product.images[0].url : 
+          '/placeholder.svg'),
+      size: product.size
+    };
+    
+    addToWishlist(wishlistProduct);
+    toast.success(`${wishlistProduct.name} added to wishlist`);
   };
   
   return (

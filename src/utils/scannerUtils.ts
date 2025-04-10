@@ -1,14 +1,11 @@
-
 import Quagga from '@ericblade/quagga2';
 import { toast } from 'sonner';
 
-// Define expected Quagga types
-type InputStreamType = 'ImageStream' | 'VideoStream' | 'LiveStream';
-
+// Define proper types for Quagga configuration
 interface ScannerConfig {
   inputStream: {
     name?: string;
-    type?: InputStreamType;
+    type?: 'ImageStream' | 'VideoStream' | 'LiveStream';
     willReadFrequently?: boolean;
     target?: string | Element;
     constraints?: MediaTrackConstraints;
@@ -27,13 +24,13 @@ interface ScannerConfig {
   };
   numOfWorkers: number;
   decoder: {
-    readers: string[];
+    readers: any[]; // Using any to work around the type issue with Quagga2
   };
   locate: boolean;
 }
 
 export const initScanner = (elementId: string, callback: (result: any) => void): Promise<void> => {
-  const config: ScannerConfig = {
+  const config: any = { // Using any to work around the Quagga types issue
     inputStream: {
       name: 'Live',
       type: 'LiveStream',
@@ -51,7 +48,15 @@ export const initScanner = (elementId: string, callback: (result: any) => void):
     },
     numOfWorkers: 4,
     decoder: {
-      readers: ['code_128_reader', 'ean_reader', 'ean_8_reader', 'code_39_reader', 'code_93_reader', 'upc_reader', 'upc_e_reader']
+      readers: [
+        'code_128_reader',
+        'ean_reader',
+        'ean_8_reader',
+        'code_39_reader',
+        'code_93_reader',
+        'upc_reader',
+        'upc_e_reader'
+      ]
     },
     locate: true
   };
