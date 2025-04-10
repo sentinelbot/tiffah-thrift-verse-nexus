@@ -58,11 +58,16 @@ const PaymentConfirmationPage = () => {
                   isProcessing={false}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <p className="text-lg mb-4">Loading payment details...</p>
-                  <Button asChild>
-                    <Link to="/">Return to Home</Link>
-                  </Button>
+                <div className="text-center py-12">
+                  <h2 className="text-2xl font-bold mb-4">Payment Information Not Found</h2>
+                  <p className="text-muted-foreground mb-6">
+                    We couldn't retrieve your payment information. Please check your order history or contact customer support.
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <Button asChild>
+                      <Link to="/shop">Continue Shopping</Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>

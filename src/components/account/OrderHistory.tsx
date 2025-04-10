@@ -1,13 +1,23 @@
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { getCustomerOrders } from '@/services/orderService';
-import { Order } from '@/types/order';
-import { formatDateTime } from '@/utils/dateUtils';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { Loader2, Package, Truck, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Eye } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { getCustomerOrders } from "@/services/orderService";
+import { Order, OrderStatus } from "@/types/order";
+import { formatDate } from "@/utils/dateUtils";
 
 export function OrderHistory() {
   const { user } = useAuth();
@@ -15,115 +25,128 @@ export function OrderHistory() {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
+    if (!user?.id) return;
+    
     const fetchOrders = async () => {
-      if (!user) return;
-      
-      setLoading(true);
       try {
-        const customerOrders = await getCustomerOrders(user.id);
-        setOrders(customerOrders);
+        const data = await getCustomerOrders(user.id);
+        setOrders(data);
       } catch (error) {
-        console.error('Failed to fetch orders', error);
+        console.error("Error fetching orders:", error);
       } finally {
         setLoading(false);
       }
     };
     
     fetchOrders();
-  }, [user]);
+  }, [user?.id]);
+  
+  // Function to get the appropriate badge color for each order status
+  const getStatusColor = (status: OrderStatus) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-500";
+      case "processing":
+        return "bg-blue-500";
+      case "ready":
+        return "bg-indigo-500";
+      case "outForDelivery":
+        return "bg-purple-500";
+      case "delivered":
+        return "bg-green-500";
+      case "cancelled":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
   
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-full max-w-md" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Array(3).fill(0).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
   
   if (orders.length === 0) {
     return (
-      <div className="text-center py-12 border rounded-lg border-dashed">
-        <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium mb-2">No orders yet</h3>
-        <p className="text-muted-foreground mb-6">
-          When you place orders, they will appear here.
-        </p>
-        <Button asChild>
-          <Link to="/shop">Start Shopping</Link>
-        </Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Orders</CardTitle>
+          <CardDescription>Track and manage your orders</CardDescription>
+        </CardHeader>
+        <CardContent className="text-center py-10">
+          <p className="text-muted-foreground mb-4">You haven't placed any orders yet.</p>
+          <Button asChild>
+            <Link to="/shop">Start Shopping</Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
   
-  const getStatusIcon = (status: Order['status']) => {
-    switch (status) {
-      case 'pending':
-        return <Clock className="h-5 w-5 text-yellow-500" />;
-      case 'processing':
-        return <Package className="h-5 w-5 text-blue-500" />;
-      case 'ready':
-        return <Package className="h-5 w-5 text-green-500" />;
-      case 'outForDelivery':
-        return <Truck className="h-5 w-5 text-primary" />;
-      case 'delivered':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'cancelled':
-        return <AlertCircle className="h-5 w-5 text-destructive" />;
-      default:
-        return <Clock className="h-5 w-5 text-muted-foreground" />;
-    }
-  };
-  
   return (
-    <div className="space-y-6">
-      {orders.map((order) => (
-        <div key={order.id} className="border rounded-lg p-4">
-          <div className="flex flex-col md:flex-row justify-between mb-4">
-            <div>
-              <h3 className="font-medium">Order #{order.orderNumber}</h3>
-              <p className="text-sm text-muted-foreground">
-                Placed on {formatDateTime(new Date(order.orderDate))}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 mt-2 md:mt-0">
-              {getStatusIcon(order.status)}
-              <span className="capitalize">{order.status}</span>
-            </div>
-          </div>
-          
-          <div className="grid gap-4 mb-4">
-            {order.items.map((item) => (
-              <div key={item.productId} className="flex items-center gap-3">
-                <div className="h-16 w-16 rounded overflow-hidden border">
-                  <img 
-                    src={item.product.imageUrl} 
-                    alt={item.product.title} 
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium">{item.product.title}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Qty: {item.quantity} × {formatCurrency(item.price)}
+    <Card>
+      <CardHeader>
+        <CardTitle>Your Orders</CardTitle>
+        <CardDescription>Track and manage your orders</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Order Number</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {orders.map((order) => (
+              <TableRow key={order.id}>
+                <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                <TableCell>{formatDate(order.orderDate)}</TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(order.status)}>
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">KSh {order.totalAmount.toLocaleString()}</TableCell>
+                <TableCell>
+                  <div className="flex justify-center space-x-2">
+                    <Button size="sm" variant="outline" asChild>
+                      <Link to={`/order/${order.id}`}>
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Link>
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => window.open(`/api/receipts/${order.id}`, '_blank')}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      Receipt
+                    </Button>
                   </div>
-                </div>
-                <div className="font-medium">
-                  {formatCurrency(item.price * item.quantity)}
-                </div>
-              </div>
+                </TableCell>
+              </TableRow>
             ))}
-          </div>
-          
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="font-medium">Total: {formatCurrency(order.totalAmount)}</div>
-            <Button variant="outline" asChild>
-              <Link to={`/order-confirmation/${order.id}`}>
-                View Order
-              </Link>
-            </Button>
-          </div>
-        </div>
-      ))}
-    </div>
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

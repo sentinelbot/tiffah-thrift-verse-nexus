@@ -1,37 +1,20 @@
 
+export type OrderStatus = 
+  | 'pending' 
+  | 'processing' 
+  | 'ready' 
+  | 'outForDelivery' 
+  | 'delivered' 
+  | 'cancelled';
+
 export type PaymentMethod = 'mpesa' | 'card' | 'paypal' | 'cash';
 
-export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
-
-export type OrderStatus = 'pending' | 'processing' | 'ready' | 'outForDelivery' | 'delivered' | 'cancelled';
-
-export interface ShippingInfo {
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  shippingMethod: 'standard' | 'express';
-}
-
-export interface PaymentInfo {
-  method: PaymentMethod;
-  status: PaymentStatus;
-  transactionId?: string;
-  amount: number;
-}
-
-export interface DeliveryInfo {
-  method?: string;
-  cost?: number;
-  estimatedDelivery: Date;
-  actualDelivery?: Date;
-  trackingId?: string;
-  deliveryStaff?: string;
-}
+export type PaymentStatus = 
+  | 'pending' 
+  | 'processing' 
+  | 'completed' 
+  | 'failed' 
+  | 'refunded';
 
 export interface OrderItem {
   productId: string;
@@ -43,6 +26,33 @@ export interface OrderItem {
   };
   quantity: number;
   price: number;
+}
+
+export interface ShippingInfo {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  shippingMethod: 'standard' | 'express';
+  specialInstructions?: string;
+}
+
+export interface PaymentInfo {
+  method: PaymentMethod;
+  status: PaymentStatus;
+  transactionId?: string;
+  amount: number;
+}
+
+export interface DeliveryInfo {
+  estimatedDelivery?: Date;
+  actualDelivery?: Date;
+  trackingId?: string;
+  deliveryStaff?: string;
 }
 
 export interface Order {
@@ -61,19 +71,10 @@ export interface Order {
   deliveryInfo: DeliveryInfo;
   orderDate: Date;
   notes?: string;
-}
-
-export interface OrderCreateInput {
-  customer: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  items: OrderItem[];
-  totalAmount: number;
-  paymentInfo: Omit<PaymentInfo, 'transactionId'>;
-  shippingInfo: ShippingInfo;
-  deliveryInfo: {
-    estimatedDelivery: Date;
-  };
+  history: {
+    timestamp: Date;
+    status: OrderStatus;
+    note?: string;
+    updatedBy?: string;
+  }[];
 }

@@ -1,6 +1,6 @@
 
 import { PaymentMethod, PaymentStatus } from '@/types/order';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface PaymentResult {
   success: boolean;
@@ -161,10 +161,7 @@ export const processPayment = async (
   paymentDetails: any
 ): Promise<PaymentResult> => {
   // Show toast notification
-  const toastId = toast({
-    title: `Processing ${method} payment...`,
-    variant: "default",
-  });
+  const toastId = toast.loading(`Processing ${method} payment...`);
   
   try {
     let result: PaymentResult;
@@ -209,28 +206,16 @@ export const processPayment = async (
     
     // Update toast based on result
     if (result.success) {
-      toast({
-        title: "Success",
-        description: result.message,
-        variant: "default",
-      });
+      toast.success(result.message, { id: toastId });
     } else {
-      toast({
-        title: "Error",
-        description: result.message,
-        variant: "destructive",
-      });
+      toast.error(result.message, { id: toastId });
     }
     
     return result;
   } catch (error) {
     // Handle unexpected errors
     console.error('Payment processing error:', error);
-    toast({
-      title: "Error",
-      description: 'An unexpected error occurred during payment processing',
-      variant: "destructive",
-    });
+    toast.error('An unexpected error occurred during payment processing', { id: toastId });
     
     return {
       success: false,

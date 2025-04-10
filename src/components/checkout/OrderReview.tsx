@@ -4,7 +4,6 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ShippingInfo, PaymentInfo } from "@/types/order";
-import { formatCurrency } from "@/lib/utils";
 
 interface OrderReviewProps {
   shippingInfo: ShippingInfo;
@@ -95,12 +94,12 @@ export function OrderReview({
                 <div>
                   <p className="text-sm font-medium">{item.product.title || item.product.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    Qty: {item.quantity} × {formatCurrency(item.product.price)}
+                    Qty: {item.quantity} × KSh {item.product.price.toFixed(2)}
                   </p>
                 </div>
               </div>
               <span className="text-sm">
-                {formatCurrency(item.product.price * item.quantity)}
+                KSh {(item.product.price * item.quantity).toFixed(2)}
               </span>
             </div>
           ))}
@@ -110,20 +109,20 @@ export function OrderReview({
       <div className="mt-6 ml-auto w-full max-w-[240px]">
         <div className="flex justify-between text-sm mb-1">
           <span>Subtotal:</span>
-          <span>{formatCurrency(subtotal)}</span>
+          <span>KSh {subtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-sm mb-1">
           <span>VAT (16%):</span>
-          <span>{formatCurrency(vatAmount)}</span>
+          <span>KSh {vatAmount.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-sm mb-1">
           <span>Shipping:</span>
-          <span>{formatCurrency(shippingCost)}</span>
+          <span>KSh {shippingCost.toFixed(2)}</span>
         </div>
         <Separator className="my-2" />
         <div className="flex justify-between font-bold">
           <span>Total:</span>
-          <span>{formatCurrency(total)}</span>
+          <span>KSh {total.toFixed(2)}</span>
         </div>
       </div>
       

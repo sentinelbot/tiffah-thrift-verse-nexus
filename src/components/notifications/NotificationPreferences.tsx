@@ -1,138 +1,216 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Mail, MessageSquare, Phone, Bell } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface NotificationPreferencesState {
+  email: {
+    orderUpdates: boolean;
+    promotions: boolean;
+    priceDrops: boolean;
+    backInStock: boolean;
+    loyaltyUpdates: boolean;
+  };
+  sms: {
+    orderUpdates: boolean;
+    promotions: boolean;
+  };
+  whatsapp: {
+    orderUpdates: boolean;
+    promotions: boolean;
+  };
+  inApp: {
+    orderUpdates: boolean;
+    promotions: boolean;
+    priceDrops: boolean;
+    backInStock: boolean;
+    loyaltyUpdates: boolean;
+  };
+}
 
 const NotificationPreferences = () => {
-  const [preferences, setPreferences] = useState({
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [preferences, setPreferences] = useState<NotificationPreferencesState>({
     email: {
       orderUpdates: true,
       promotions: true,
-      newArrivals: false,
+      priceDrops: true,
+      backInStock: true,
+      loyaltyUpdates: true,
     },
     sms: {
-      orderUpdates: true,
+      orderUpdates: false,
       promotions: false,
-      newArrivals: false,
     },
     whatsapp: {
       orderUpdates: false,
       promotions: false,
-      newArrivals: false,
-    }
+    },
+    inApp: {
+      orderUpdates: true,
+      promotions: true,
+      priceDrops: true,
+      backInStock: true,
+      loyaltyUpdates: true,
+    },
   });
-  
-  const handleToggle = (channel: 'email' | 'sms' | 'whatsapp', type: 'orderUpdates' | 'promotions' | 'newArrivals') => {
+
+  useEffect(() => {
+    if (!user) return;
+
+    // In a real app, you would fetch the user's notification preferences from the database
+    const fetchPreferences = async () => {
+      setLoading(true);
+      try {
+        // This is mock data - in production you would fetch from a database
+        // const { data, error } = await supabase
+        //   .from('notification_preferences')
+        //   .select('*')
+        //   .eq('user_id', user.id)
+        //   .single();
+        //
+        // if (error) throw error;
+        // if (data) setPreferences(data.preferences);
+
+        // Mock delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching notification preferences:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchPreferences();
+  }, [user]);
+
+  const updatePreference = (
+    channel: keyof NotificationPreferencesState,
+    type: string,
+    value: boolean
+  ) => {
     setPreferences(prev => ({
       ...prev,
       [channel]: {
         ...prev[channel],
-        [type]: !prev[channel][type]
-      }
+        [type]: value,
+      },
     }));
-    
-    // In a real app, this would save to a database
-    toast.success('Notification preferences updated');
   };
-  
+
+  const savePreferences = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      // In a real app, you would save the preferences to the database
+      // const { error } = await supabase
+      //   .from('notification_preferences')
+      //   .upsert({
+      //     user_id: user.id,
+      //     preferences: preferences,
+      //     updated_at: new Date()
+      //   });
+      //
+      // if (error) throw error;
+
+      // Mock delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      toast.success('Notification preferences saved');
+      setLoading(false);
+    } catch (error) {
+      console.error('Error saving notification preferences:', error);
+      toast.error('Failed to save preferences');
+      setLoading(false);
+    }
+  };
+
+  const PreferenceSection = ({
+    title,
+    icon,
+    channel,
+  }: {
+    title: string;
+    icon: React.ReactNode;
+    channel: keyof NotificationPreferencesState;
+  }) => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        {icon}
+        <h3 className="font-medium">{title}</h3>
+      </div>
+      <div className="grid gap-3">
+        {Object.entries(preferences[channel]).map(([type, enabled]) => (
+          <div key={`${channel}-${type}`} className="flex items-center justify-between">
+            <Label htmlFor={`${channel}-${type}`} className="text-sm">
+              {type === 'orderUpdates'
+                ? 'Order Updates'
+                : type === 'priceDrops'
+                ? 'Price Drop Alerts'
+                : type === 'backInStock'
+                ? 'Back in Stock Alerts'
+                : type === 'loyaltyUpdates'
+                ? 'Loyalty Program Updates'
+                : 'Promotions & Sales'}
+            </Label>
+            <Switch
+              id={`${channel}-${type}`}
+              checked={enabled}
+              onCheckedChange={(value) => updatePreference(channel, type, value)}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Notification Preferences</CardTitle>
-        <CardDescription>Manage how you receive updates from us</CardDescription>
+        <CardDescription>
+          Choose how and when you'd like to be notified
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium">Email Notifications</h3>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="email-order-updates" className="flex-1 text-sm">Order updates</Label>
-              <Switch 
-                id="email-order-updates"
-                checked={preferences.email.orderUpdates}
-                onCheckedChange={() => handleToggle('email', 'orderUpdates')}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="email-promotions" className="flex-1 text-sm">Promotions and sales</Label>
-              <Switch 
-                id="email-promotions"
-                checked={preferences.email.promotions}
-                onCheckedChange={() => handleToggle('email', 'promotions')}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="email-new-arrivals" className="flex-1 text-sm">New arrivals</Label>
-              <Switch 
-                id="email-new-arrivals"
-                checked={preferences.email.newArrivals}
-                onCheckedChange={() => handleToggle('email', 'newArrivals')}
-              />
-            </div>
-          </div>
-        </div>
+        <PreferenceSection
+          title="Email Notifications"
+          icon={<Mail className="h-5 w-5" />}
+          channel="email"
+        />
         
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium">SMS Notifications</h3>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="sms-order-updates" className="flex-1 text-sm">Order updates</Label>
-              <Switch 
-                id="sms-order-updates"
-                checked={preferences.sms.orderUpdates}
-                onCheckedChange={() => handleToggle('sms', 'orderUpdates')}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="sms-promotions" className="flex-1 text-sm">Promotions and sales</Label>
-              <Switch 
-                id="sms-promotions"
-                checked={preferences.sms.promotions}
-                onCheckedChange={() => handleToggle('sms', 'promotions')}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="sms-new-arrivals" className="flex-1 text-sm">New arrivals</Label>
-              <Switch 
-                id="sms-new-arrivals"
-                checked={preferences.sms.newArrivals}
-                onCheckedChange={() => handleToggle('sms', 'newArrivals')}
-              />
-            </div>
-          </div>
-        </div>
+        <PreferenceSection
+          title="SMS Notifications"
+          icon={<Phone className="h-5 w-5" />}
+          channel="sms"
+        />
         
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium">WhatsApp Notifications</h3>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="whatsapp-order-updates" className="flex-1 text-sm">Order updates</Label>
-              <Switch 
-                id="whatsapp-order-updates"
-                checked={preferences.whatsapp.orderUpdates}
-                onCheckedChange={() => handleToggle('whatsapp', 'orderUpdates')}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="whatsapp-promotions" className="flex-1 text-sm">Promotions and sales</Label>
-              <Switch 
-                id="whatsapp-promotions"
-                checked={preferences.whatsapp.promotions}
-                onCheckedChange={() => handleToggle('whatsapp', 'promotions')}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="whatsapp-new-arrivals" className="flex-1 text-sm">New arrivals</Label>
-              <Switch 
-                id="whatsapp-new-arrivals"
-                checked={preferences.whatsapp.newArrivals}
-                onCheckedChange={() => handleToggle('whatsapp', 'newArrivals')}
-              />
-            </div>
-          </div>
-        </div>
+        <PreferenceSection
+          title="WhatsApp Notifications"
+          icon={<MessageSquare className="h-5 w-5" />}
+          channel="whatsapp"
+        />
+        
+        <PreferenceSection
+          title="In-App Notifications"
+          icon={<Bell className="h-5 w-5" />}
+          channel="inApp"
+        />
+        
+        <Button 
+          className="w-full mt-4" 
+          onClick={savePreferences}
+          disabled={loading}
+        >
+          {loading ? 'Saving...' : 'Save Preferences'}
+        </Button>
       </CardContent>
     </Card>
   );

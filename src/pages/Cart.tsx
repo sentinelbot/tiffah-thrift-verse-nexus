@@ -8,7 +8,6 @@ import { Link } from "react-router-dom";
 import { ShoppingBag, ArrowLeft, Plus, Minus, Trash2, Clock } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { formatDistanceToNow } from "date-fns";
-import { formatCurrency } from "@/lib/utils";
 
 const Cart = () => {
   const { 
@@ -19,7 +18,7 @@ const Cart = () => {
   } = useCart();
   
   // Shipping cost - in a real app, this would be calculated based on location, weight, etc.
-  const shippingCost = cartItems.length > 0 ? 200 : 0;
+  const shippingCost = cartItems.length > 0 ? 5.99 : 0;
   const subtotal = calculateCartTotal();
   const total = subtotal + shippingCost;
   
@@ -115,10 +114,10 @@ const Cart = () => {
                               </div>
                             </td>
                             <td className="px-4 py-4 text-right">
-                              {formatCurrency(product.price)}
+                              ${product.price.toFixed(2)}
                             </td>
                             <td className="px-4 py-4 text-right font-medium">
-                              {formatCurrency(product.price * quantity)}
+                              ${(product.price * quantity).toFixed(2)}
                             </td>
                             <td className="px-4 py-4 text-right">
                               <Button 
@@ -145,16 +144,16 @@ const Cart = () => {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>{formatCurrency(subtotal)}</span>
+                    <span>${subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span>{formatCurrency(shippingCost)}</span>
+                    <span>${shippingCost.toFixed(2)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span>{formatCurrency(total)}</span>
+                    <span>${total.toFixed(2)}</span>
                   </div>
                 </div>
                 <Button className="w-full bg-primary hover:bg-primary/90 mb-3" asChild>

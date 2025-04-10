@@ -1,160 +1,269 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'customer' | 'admin' | 'staff' | 'productManager' | 'orderPreparer' | 'deliveryStaff';
-}
+import { User } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
-  isLoading: boolean; // Added for consistency with references
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  signIn: (email: string, password: string) => Promise<boolean>; // Alias for login
-  signOut: () => void; // Alias for logout
-  signUp: (email: string, password: string, name: string) => Promise<boolean>;
-  updateProfile: (data: Partial<User>) => Promise<boolean>;
-  isAuthenticated: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name?: string, role?: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  isLoading: boolean;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check for saved user in localStorage
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('user');
-      }
-    }
-    setLoading(false);
-  }, []);
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      // In a real app, this would be an API call
-      setLoading(true);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock different user roles for testing purposes
-      let role: User['role'] = 'customer';
-      
-      if (email.includes('admin')) {
-        role = 'admin';
-      } else if (email.includes('product')) {
-        role = 'productManager';
-      } else if (email.includes('order')) {
-        role = 'orderPreparer';
-      } else if (email.includes('delivery')) {
-        role = 'deliveryStaff';
-      } else if (email.includes('staff')) {
-        role = 'staff';
-      }
-      
-      // Mock user for demo purposes
-      const mockUser: User = {
-        id: '1',
-        name: email.split('@')[0],
-        email: email,
-        role: role
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      return true;
-    } catch (error) {
-      console.error('Login failed:', error);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
-  
-  const signUp = async (email: string, password: string, name: string): Promise<boolean> => {
-    try {
-      setLoading(true);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real app, this would call an API to create a user
-      const mockUser: User = {
-        id: Math.random().toString(36).substring(2, 9),
-        name: name,
-        email: email,
-        role: 'customer'
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      return true;
-    } catch (error) {
-      console.error('Signup failed:', error);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const updateProfile = async (data: Partial<User>): Promise<boolean> => {
-    try {
-      setLoading(true);
-      
-      if (!user) return false;
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const updatedUser = { ...user, ...data };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      return true;
-    } catch (error) {
-      console.error('Profile update failed:', error);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const value = {
-    user,
-    loading,
-    isLoading: loading, // Alias for consistent naming
-    login,
-    logout,
-    signIn: login, // Alias for consistent naming
-    signOut: logout, // Alias for consistent naming
-    signUp,
-    updateProfile,
-    isAuthenticated: !!user
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        return null;
+      }
+      
+      return profileData;
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        
+        if (session) {
+          try {
+            setTimeout(async () => {
+              const profileData = await fetchUserProfile(session.user.id);
+                
+              if (profileData) {
+                console.log('Profile data fetched:', profileData);
+                setUser({
+                  id: session.user.id,
+                  email: session.user.email || '',
+                  name: profileData.name || session.user.user_metadata?.name || 'User',
+                  role: profileData.role || session.user.user_metadata?.role || 'customer',
+                });
+              } else {
+                setUser({
+                  id: session.user.id,
+                  email: session.user.email || '',
+                  name: session.user.user_metadata?.name || 'User',
+                  role: session.user.user_metadata?.role || 'customer',
+                });
+              }
+              setIsLoading(false);
+            }, 0);
+          } catch (profileError) {
+            console.error('Error in profile fetch on auth change:', profileError);
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              name: session.user.user_metadata?.name || 'User',
+              role: session.user.user_metadata?.role || 'customer',
+            });
+            setIsLoading(false);
+          }
+        } else {
+          setUser(null);
+          setIsLoading(false);
+        }
+      }
+    );
+
+    const checkSession = async () => {
+      try {
+        console.log('Checking for existing session...');
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setUser(null);
+          setIsLoading(false);
+        } else if (data?.session) {
+          console.log('Found existing session:', data.session.user.id);
+          setTimeout(async () => {
+            try {
+              const profileData = await fetchUserProfile(data.session.user.id);
+                
+              if (profileData) {
+                console.log('Profile data loaded:', profileData);
+                setUser({
+                  id: data.session.user.id,
+                  email: data.session.user.email || '',
+                  name: profileData.name || data.session.user.user_metadata?.name || 'User',
+                  role: profileData.role || data.session.user.user_metadata?.role || 'customer',
+                });
+              } else {
+                setUser({
+                  id: data.session.user.id,
+                  email: data.session.user.email || '',
+                  name: data.session.user.user_metadata?.name || 'User',
+                  role: data.session.user.user_metadata?.role || 'customer',
+                });
+              }
+            } catch (profileError) {
+              console.error('Error in profile fetch:', profileError);
+              setUser({
+                id: data.session.user.id,
+                email: data.session.user.email || '',
+                name: data.session.user.user_metadata?.name || 'User',
+                role: data.session.user.user_metadata?.role || 'customer',
+              });
+            }
+            setIsLoading(false);
+          }, 0);
+        } else {
+          console.log('No session found');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Unexpected error checking auth:', error);
+        setUser(null);
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      console.log('Attempting to sign in with email:', email);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Sign-in error:', error.message);
+        throw error;
+      }
+      
+      console.log('Sign-in successful');
+    } catch (error: any) {
+      console.error('Error signing in:', error);
+      throw error;
+    }
+  };
+
+  const signUp = async (email: string, password: string, name?: string, role?: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name || '',
+            role: role || 'customer',
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('Registration successful! Please check your email to confirm your account.');
+    } catch (error: any) {
+      console.error('Error signing up:', error);
+      throw error;
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+      setUser(null);
+    } catch (error: any) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
+  };
+
+  const updateProfile = async (data: Partial<User>) => {
+    try {
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: data.name,
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      setUser({ ...user, ...data });
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  };
+
+  const refreshUserData = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      const profileData = await fetchUserProfile(user.id);
+      
+      if (profileData) {
+        setUser({
+          ...user,
+          name: profileData.name || user.name,
+          role: profileData.role || user.role,
+        });
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const value = {
+    user,
+    signIn,
+    signUp,
+    signOut,
+    isLoading,
+    updateProfile,
+    refreshUserData,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
