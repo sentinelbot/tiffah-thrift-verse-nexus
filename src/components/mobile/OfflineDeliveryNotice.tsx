@@ -28,7 +28,7 @@ const OfflineDeliveryNotice = ({ className }: OfflineDeliveryNoticeProps) => {
           </h3>
           <p className="text-sm mt-1">
             {isOffline 
-              ? 'You can continue making deliveries. Changes will sync when you're back online.'
+              ? "You can continue making deliveries. Changes will sync when you're back online."
               : 'You have pending delivery updates to sync.'}
           </p>
           
