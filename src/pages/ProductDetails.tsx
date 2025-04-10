@@ -1,9 +1,8 @@
-
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/types';
+import { Product, mapSupabaseProduct } from '@/types';
 import {
   Card,
   CardContent,
@@ -40,31 +39,8 @@ const ProductDetails = () => {
       
       if (error) throw error;
       
-      // Map Supabase data structure to our Product interface
-      const mappedProduct: Product = {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        originalPrice: data.original_price,
-        category: data.category,
-        subCategory: data.sub_category,
-        tags: data.tags,
-        size: data.size,
-        color: data.color,
-        brand: data.brand,
-        condition: data.condition,
-        barcode: data.barcode,
-        status: data.status,
-        dateAdded: new Date(data.date_added),
-        lastUpdated: new Date(data.last_updated),
-        addedBy: data.added_by,
-        featured: data.featured,
-        measurements: data.measurements,
-        inventoryTracking: data.inventory_tracking
-      };
-      
-      return mappedProduct;
+      // Use the mapping function to ensure correct typing
+      return mapSupabaseProduct(data);
     },
   });
   

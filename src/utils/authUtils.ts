@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@/types';
+import { Profile } from '@/types';
 
 /**
  * Checks if the current user has a specific role
@@ -132,26 +131,28 @@ export const removeRole = async (userId: string, role: string): Promise<boolean>
  * Get all delivery staff users
  * @returns Array of delivery staff users
  */
-export const getDeliveryStaff = async (): Promise<User[]> => {
+export const getDeliveryStaff = async (): Promise<Profile[]> => {
   try {
     const { data, error } = await supabase
-      .from('user_roles')
-      .select('user_id, profiles!inner(id, name, email)')
-      .eq('role', 'deliveryStaff');
-
+      .rpc('get_delivery_staff');
+    
     if (error) {
-      console.error('Error fetching delivery staff:', error);
+      throw error;
+    }
+    
+    // Ensure we have proper type checking
+    if (!data || !Array.isArray(data)) {
       return [];
     }
-
-    return data.map(item => ({
-      id: item.profiles.id,
-      name: item.profiles.name,
-      email: item.profiles.email,
-      role: 'deliveryStaff'
+    
+    // Map the data to ensure it matches our Profile interface
+    return data.map(staff => ({
+      id: staff.id || '',
+      name: staff.name || '',
+      email: staff.email || ''
     }));
   } catch (error) {
-    console.error('Error in getDeliveryStaff:', error);
+    console.error('Error fetching delivery staff:', error);
     return [];
   }
 };
