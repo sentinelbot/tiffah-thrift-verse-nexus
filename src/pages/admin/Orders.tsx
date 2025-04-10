@@ -3,11 +3,19 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import { OrdersTable } from '@/components/admin/orders/OrdersTable';
 import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
 import ShippingLabelPrint from '@/components/admin/printing/ShippingLabelPrint';
+import { Order } from '@/types/order';
 
 // Mock order for demonstration
-const mockOrder = {
+const mockOrder: Order = {
   id: "order-123",
   orderNumber: "TTS-20250409-1234",
+  totalAmount: 4500,
+  status: "processing",
+  paymentMethod: "mpesa",
+  paymentStatus: "completed",
+  paymentTransactionId: "MPESA123456",
+  createdAt: new Date(),
+  orderDate: new Date(),
   customer: {
     id: "cust-123",
     name: "Jane Smith",
@@ -15,6 +23,8 @@ const mockOrder = {
   },
   items: [
     {
+      id: "item-001",
+      orderId: "order-123",
       productId: "prod-001",
       product: {
         id: "prod-001",
@@ -26,6 +36,8 @@ const mockOrder = {
       price: 2500
     },
     {
+      id: "item-002",
+      orderId: "order-123",
       productId: "prod-002",
       product: {
         id: "prod-002",
@@ -37,11 +49,9 @@ const mockOrder = {
       price: 1800
     }
   ],
-  totalAmount: 4500,
-  status: "processing" as const,
   paymentInfo: {
-    method: "mpesa" as const,
-    status: "completed" as const,
+    method: "mpesa",
+    status: "completed",
     transactionId: "MPESA123456",
     amount: 4500
   },
@@ -54,22 +64,21 @@ const mockOrder = {
     state: "Nairobi",
     postalCode: "00100",
     country: "Kenya",
-    shippingMethod: "express" as const
+    shippingMethod: "express"
   },
   deliveryInfo: {
     estimatedDelivery: new Date(Date.now() + 86400000), // Tomorrow
     trackingId: "TRK12345"
   },
-  orderDate: new Date(),
   history: [
     {
       timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-      status: "pending" as const,
+      status: "pending",
       note: "Order placed"
     },
     {
       timestamp: new Date(Date.now() - 1800000), // 30 minutes ago
-      status: "processing" as const,
+      status: "processing",
       note: "Payment confirmed"
     }
   ]

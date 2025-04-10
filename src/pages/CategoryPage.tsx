@@ -1,4 +1,3 @@
-
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ProductCard, { ProductType } from "@/components/products/ProductCard";
@@ -6,9 +5,10 @@ import { useParams } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
-// Mock data for different categories
 const categoryProducts: Record<string, ProductType[]> = {
   clothing: [
     {
@@ -109,7 +109,6 @@ const categoryProducts: Record<string, ProductType[]> = {
   ]
 };
 
-// Category name mapping
 const categoryNames: Record<string, string> = {
   clothing: "Clothing",
   accessories: "Accessories",
@@ -121,10 +120,20 @@ const CategoryPage = () => {
   const { categoryId } = useParams();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  // Get products for this category, or empty array if category not found
-  const products = categoryId ? categoryProducts[categoryId] || [] : [];
+  const [products, setProducts] = useState<ProductType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (categoryId) {
+      setProducts(categoryProducts[categoryId] || []);
+    } else {
+      setProducts([]);
+    }
+    setLoading(false);
+  }, [categoryId]);
+
   const categoryName = categoryId ? categoryNames[categoryId] || categoryId : "";
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -152,12 +161,18 @@ const CategoryPage = () => {
             </Button>
           </div>
           
-          {/* Filter panel would go here - similar to Shop page */}
-          
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {loading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {Array.from({ length: 12 }, (_, i) => (
+                  <Skeleton key={i} className="w-full h-64 rounded-lg" />
+                ))}
+              </div>
+            ) : (
+              products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            )}
           </div>
           
           {products.length === 0 && (

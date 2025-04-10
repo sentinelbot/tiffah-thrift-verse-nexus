@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
+import { getMeasurementsFromJson, getInventoryTrackingFromJson, isJsonObject } from '@/types/product';
 import {
   Card,
   CardContent,
@@ -67,16 +68,15 @@ const ProductDetails = () => {
           isMain: img.is_main,
           displayOrder: img.display_order
         })) || [],
-        measurements: data.measurements ? 
-          (typeof data.measurements === 'object' ? data.measurements : {}) : 
-          {},
-        inventoryTracking: data.inventory_tracking ? 
-          (typeof data.inventory_tracking === 'object' ? {
-            inStockDate: data.inventory_tracking.inStockDate ? new Date(data.inventory_tracking.inStockDate) : undefined,
-            reservedUntil: data.inventory_tracking.reservedUntil ? new Date(data.inventory_tracking.reservedUntil) : undefined,
-            soldDate: data.inventory_tracking.soldDate ? new Date(data.inventory_tracking.soldDate) : undefined
-          } : {}) : 
-          {}
+        measurements: getMeasurementsFromJson(data.measurements),
+        inventoryTracking: {
+          inStockDate: data.inventory_tracking && isJsonObject(data.inventory_tracking) && 
+            data.inventory_tracking.inStockDate ? new Date(data.inventory_tracking.inStockDate as string) : undefined,
+          reservedUntil: data.inventory_tracking && isJsonObject(data.inventory_tracking) && 
+            data.inventory_tracking.reservedUntil ? new Date(data.inventory_tracking.reservedUntil as string) : undefined,
+          soldDate: data.inventory_tracking && isJsonObject(data.inventory_tracking) && 
+            data.inventory_tracking.soldDate ? new Date(data.inventory_tracking.soldDate as string) : undefined
+        }
       };
       
       return formattedProduct;

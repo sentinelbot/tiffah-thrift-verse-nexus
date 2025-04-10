@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import ProductCard, { ProductType } from "@/components/products/ProductCard";
-import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
-import ProductFilters, { FilterState } from "@/components/shop/ProductFilters";
-import ProductSort, { SortOption } from "@/components/shop/ProductSort";
-import EnhancedSearch from "@/components/shop/EnhancedSearch";
-import CustomerServiceChat from "@/components/ai/CustomerServiceChat";
+import ProductCard from "@/components/products/ProductCard";
+import { ProductType } from "@/types/product";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data
 const products: ProductType[] = [

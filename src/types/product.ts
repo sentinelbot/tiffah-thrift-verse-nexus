@@ -22,6 +22,7 @@ export interface ProductWithImages extends Product {
     url: string;
     alt?: string;
     isMain: boolean;
+    displayOrder: number;
   }[];
 }
 
@@ -65,9 +66,13 @@ export const getMeasurementsFromJson = (json: Json | undefined): { [key: string]
 export const getInventoryTrackingFromJson = (json: Json | undefined): InventoryTracking => {
   if (!json || !isJsonObject(json)) return {};
   
+  const inStockDate = isJsonObject(json) && json.inStockDate ? json.inStockDate as string : undefined;
+  const reservedUntil = isJsonObject(json) && json.reservedUntil ? json.reservedUntil as string : undefined;
+  const soldDate = isJsonObject(json) && json.soldDate ? json.soldDate as string : undefined;
+  
   return {
-    inStockDate: json.inStockDate as string | undefined,
-    reservedUntil: json.reservedUntil as string | undefined,
-    soldDate: json.soldDate as string | undefined
+    inStockDate,
+    reservedUntil,
+    soldDate
   };
 };
