@@ -1,24 +1,27 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product } from '@/types';
+import { Product, ProductType } from '@/types';
+import { toast } from 'sonner';
 
 export interface CartItem {
-  product: Product;
+  product: Product | ProductType;
   quantity: number;
   reservedUntil: Date;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product, quantity: number) => void;
+  addToCart: (product: Product | ProductType, quantity: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
   getItemCount: () => number;
-  addToWishlist: (product: Product) => void;
+  addToWishlist: (product: Product | ProductType) => void;
   removeFromWishlist: (productId: string) => void;
-  wishlist: Product[];
+  wishlist: (Product | ProductType)[];
+  wishlistItems: (Product | ProductType)[]; // Alias for wishlist, for backward compatibility
+  moveToCart: (productId: string) => void; // Added for Wishlist component
   cartItems: CartItem[]; // Alias for items, for backward compatibility
   calculateCartTotal: () => number; // Alias for getCartTotal, for backward compatibility
 }
@@ -31,7 +34,7 @@ interface CartProviderProps {
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<Product[]>([]);
+  const [wishlist, setWishlist] = useState<(Product | ProductType)[]>([]);
 
   // Load cart and wishlist from localStorage on initialization
   useEffect(() => {
@@ -72,7 +75,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     localStorage.setItem('tiffah-wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
 
-  const addToCart = (product: Product, quantity: number) => {
+  const addToCart = (product: Product | ProductType, quantity: number) => {
     setItems(currentItems => {
       // Check if the product already exists in the cart
       const existingItemIndex = currentItems.findIndex(item => item.product.id === product.id);
@@ -130,7 +133,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     return items.reduce((count, item) => count + item.quantity, 0);
   };
 
-  const addToWishlist = (product: Product) => {
+  const addToWishlist = (product: Product | ProductType) => {
     setWishlist(currentWishlist => {
       // Check if product already exists in wishlist
       if (currentWishlist.some(item => item.id === product.id)) {
@@ -142,6 +145,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const removeFromWishlist = (productId: string) => {
     setWishlist(currentWishlist => currentWishlist.filter(product => product.id !== productId));
+  };
+
+  const moveToCart = (productId: string) => {
+    const product = wishlist.find(item => item.id === productId);
+    if (product) {
+      addToCart(product, 1);
+      removeFromWishlist(productId);
+      toast.success(`${product.title || product.name} added to cart`);
+    }
   };
 
   // Create the context value object
@@ -156,6 +168,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     addToWishlist,
     removeFromWishlist,
     wishlist,
+    wishlistItems: wishlist, // Alias for backward compatibility
+    moveToCart,
     // Aliases for backward compatibility
     cartItems: items,
     calculateCartTotal: getCartTotal

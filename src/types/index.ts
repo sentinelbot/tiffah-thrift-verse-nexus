@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -13,6 +14,15 @@ export interface AuthContextType {
   isLoading: boolean;
   updateProfile: (data: Partial<User>) => Promise<void>;
   refreshUserData: () => Promise<void>;
+}
+
+export interface ProductImage {
+  id?: string;
+  url: string;
+  alt?: string;
+  isMain?: boolean;
+  displayOrder?: number;
+  productId?: string;
 }
 
 export interface Product {
@@ -59,6 +69,8 @@ export interface ProductType {
   category: string;
   condition?: string;
   size?: string;
+  color?: string;
+  brand?: string;
   imageUrl: string;
 }
 
@@ -68,7 +80,7 @@ export interface CartItem {
   price: number;
   imageUrl: string;
   quantity: number;
-  size?: string; // Added for backward compatibility
+  size?: string;
 }
 
 export interface Category {
@@ -97,4 +109,60 @@ export interface PrintJob {
   relatedId?: string;
   createdAt: Date;
   processedAt?: Date;
+}
+
+// Analytics Types
+
+export interface SalesData {
+  period: string;
+  revenue: number;
+  orders: number;
+  averageOrderValue: number;
+  previousPeriodChange?: number;
+}
+
+export interface SalesByCategory {
+  category: string;
+  sales: number;
+  percentage: number;
+}
+
+export interface InventoryStatus {
+  category: string;
+  inStock: number;
+  lowStock: number;
+  totalValue: number;
+}
+
+export interface StaffPerformanceData {
+  name: string;
+  role: string;
+  processed?: number;
+  fulfilled?: number;
+  completed?: number;
+  target: number;
+  efficiency: number;
+}
+
+export interface CustomerBehavior {
+  segment: string;
+  count: number;
+  averageSpend: number;
+  repeatRate: number;
+  averageItemsPerOrder: number;
+}
+
+export interface MarketingEffectiveness {
+  campaign: string;
+  clicks: number;
+  conversions: number;
+  revenue: number;
+  roi: number;
+}
+
+export interface SystemPerformance {
+  pageLoadTime: number;
+  serverResponseTime: number;
+  errorRate: number;
+  userSatisfaction: number;
 }
