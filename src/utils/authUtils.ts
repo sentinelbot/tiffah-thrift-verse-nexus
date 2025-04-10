@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
+import { scanManagement } from '@/integrations/supabase/rpcAdapter';
 
 /**
  * Checks if a user has a specific role
@@ -171,3 +172,36 @@ export const getUserScanHistory = async (userId: string): Promise<any[]> => {
     return [];
   }
 };
+
+/**
+ * Gets scan history with a limit
+ * @param limit - Maximum number of scan history items to return
+ * @param userId - Optional user ID to filter by
+ * @returns Promise<any[]> - Array of scan history items
+ */
+export const getScanHistory = async (limit: number = 50, userId?: string): Promise<any[]> => {
+  try {
+    // If userId is provided, use getUserScanHistory
+    if (userId) {
+      return await getUserScanHistory(userId);
+    }
+    
+    // Get all scan history if userId is not provided
+    const { data, error } = await supabase
+      .from('scan_history')
+      .select('*')
+      .order('scanned_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error('Error getting scan history:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error in getScanHistory function:', error);
+    return [];
+  }
+};
+

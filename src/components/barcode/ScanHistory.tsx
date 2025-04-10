@@ -34,7 +34,8 @@ const ScanHistory: React.FC = () => {
     setError(null);
 
     try {
-      const history = await getScanHistory(50);
+      // Pass the user ID if it's available
+      const history = await getScanHistory(50, user?.id);
       setScanHistory(history);
     } catch (error) {
       console.error('Error loading scan history:', error);
