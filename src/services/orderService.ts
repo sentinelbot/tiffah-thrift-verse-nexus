@@ -69,7 +69,7 @@ export const getOrderById = async (orderId: string): Promise<Order> => {
   // In a real app, this would be a GET request to your API
   console.log(`Fetching order ${orderId}`);
   
-  // Mock successful response with corrected product structure
+  // Mock successful response
   return {
     id: orderId,
     orderNumber: 'TTS-20250409-1234',
@@ -83,7 +83,7 @@ export const getOrderById = async (orderId: string): Promise<Order> => {
         productId: '1',
         product: {
           id: '1',
-          name: 'Vintage Denim Jacket',
+          title: 'Vintage Denim Jacket',
           price: 59.99,
           imageUrl: '/placeholder.svg'
         },
@@ -137,7 +137,7 @@ export const getCustomerOrders = async (customerId: string): Promise<Order[]> =>
   // In a real app, this would be a GET request to your API
   console.log(`Fetching orders for customer ${customerId}`);
   
-  // Mock successful response with a list of orders with corrected product structure
+  // Mock successful response with a list of orders
   return [
     {
       id: '1',
@@ -152,7 +152,7 @@ export const getCustomerOrders = async (customerId: string): Promise<Order[]> =>
           productId: '1',
           product: {
             id: '1',
-            name: 'Vintage Denim Jacket',
+            title: 'Vintage Denim Jacket',
             price: 59.99,
             imageUrl: '/placeholder.svg'
           },
@@ -225,7 +225,7 @@ export const getCustomerOrders = async (customerId: string): Promise<Order[]> =>
           productId: '2',
           product: {
             id: '2',
-            name: 'Classic White Shirt',
+            title: 'Classic White Shirt',
             price: 29.99,
             imageUrl: '/placeholder.svg'
           },

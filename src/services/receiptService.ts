@@ -63,7 +63,7 @@ export const generateReceiptHTML = (order: Order): string => {
           <tbody>
             ${order.items.map(item => `
               <tr>
-                <td style="text-align: left; padding: 8px; border-bottom: 1px solid #eee;">${item.product.name}</td>
+                <td style="text-align: left; padding: 8px; border-bottom: 1px solid #eee;">${item.product.title}</td>
                 <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">${item.quantity}</td>
                 <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">${formatCurrency(item.price)}</td>
                 <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">${formatCurrency(item.price * item.quantity)}</td>

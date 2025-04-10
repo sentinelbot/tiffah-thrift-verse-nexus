@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card"
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
@@ -37,30 +38,7 @@ const ProductDetails = () => {
         .single();
       
       if (error) throw error;
-      
-      // Transform database data to match our Product interface
-      const processedData: Product = {
-        id: data.id,
-        name: data.name || '',
-        description: data.description || '',
-        price: data.price || 0,
-        originalPrice: data.original_price,
-        category: data.category || '',
-        subCategory: data.sub_category,
-        size: data.size,
-        color: data.color,
-        brand: data.brand,
-        condition: data.condition || 'good',
-        imageUrl: '',
-        images: [],
-        barcode: data.barcode || '',
-        status: data.status as 'available' | 'reserved' | 'sold',
-        dateAdded: data.date_added ? new Date(data.date_added) : new Date(),
-        featured: !!data.featured,
-        measurements: data.measurements || {},
-      };
-      
-      return processedData;
+      return data as Product;
     },
   });
   
@@ -84,7 +62,7 @@ const ProductDetails = () => {
         {/* Product Image */}
         <div>
           <img
-            src={product.imageUrl || "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"}
+            src="https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"
             alt={product.name}
             className="w-full h-auto rounded-lg"
           />
@@ -106,16 +84,16 @@ const ProductDetails = () => {
           
           <div className="flex items-center mb-4">
             <span className="text-2xl font-semibold">KSh {product.price.toFixed(2)}</span>
-            {product.originalPrice && (
+            {product.original_price && (
               <span className="text-lg text-muted-foreground ml-2 line-through">
-                KSh {product.originalPrice.toFixed(2)}
+                KSh {product.original_price.toFixed(2)}
               </span>
             )}
           </div>
           
           <div className="mb-4">
             <Badge>{product.category}</Badge>
-            {product.subCategory && <Badge className="ml-2">{product.subCategory}</Badge>}
+            {product.sub_category && <Badge className="ml-2">{product.sub_category}</Badge>}
             {product.condition && <Badge className="ml-2">{product.condition}</Badge>}
           </div>
           
