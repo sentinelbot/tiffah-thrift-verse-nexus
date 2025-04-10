@@ -1,9 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, CartItem as CartItemType } from '@/types';
-import { toast } from 'sonner';
+import { Product } from '@/types';
 
-// Define CartItem interface specifically for the context
 export interface CartItem {
   product: Product;
   quantity: number;
@@ -21,8 +19,6 @@ interface CartContextType {
   addToWishlist: (product: Product) => void;
   removeFromWishlist: (productId: string) => void;
   wishlist: Product[];
-  wishlistItems: Product[]; // Alias for wishlist, for backward compatibility
-  moveToCart: (productId: string) => void;
   cartItems: CartItem[]; // Alias for items, for backward compatibility
   calculateCartTotal: () => number; // Alias for getCartTotal, for backward compatibility
 }
@@ -148,15 +144,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setWishlist(currentWishlist => currentWishlist.filter(product => product.id !== productId));
   };
 
-  const moveToCart = (productId: string) => {
-    const product = wishlist.find(item => item.id === productId);
-    if (product) {
-      addToCart(product, 1);
-      removeFromWishlist(productId);
-      toast.success(`${product.name} added to cart`);
-    }
-  };
-
   // Create the context value object
   const contextValue: CartContextType = {
     items,
@@ -169,8 +156,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     addToWishlist,
     removeFromWishlist,
     wishlist,
-    wishlistItems: wishlist, // Alias for backward compatibility
-    moveToCart,
     // Aliases for backward compatibility
     cartItems: items,
     calculateCartTotal: getCartTotal

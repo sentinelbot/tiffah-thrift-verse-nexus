@@ -1,226 +1,230 @@
 
-import React from "react";
-import {
-  Laptop,
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Package, 
+  ShoppingCart, 
+  Layers, 
+  Printer, 
+  Barcode, 
+  BrainCircuit, 
+  Settings, 
+  Menu, 
+  X, 
   Users,
-  Warehouse,
-  Settings,
-  BarChart,
+  BarChart2,
+  Megaphone,
+  UserCog,
+  ToggleLeft,
   MessageSquare,
-  FileText,
-  Bell,
-  Clock,
-  Menu,
-  X,
-  LogOut,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Link, useLocation } from "react-router-dom";
+  Globe
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { ConnectivityIndicator } from '@/components/ui/connectivity-indicator';
 
-interface AdminLayoutProps {
-  children: React.ReactNode;
-}
-
-const AdminLayout = ({ children }: AdminLayoutProps) => {
-  const location = useLocation();
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(false);
-
+const Sidebar = ({ className }: { className?: string }) => {
+  const { pathname } = useLocation();
+  const { user } = useAuth();
+  
+  const role = user?.role || 'admin';
+  
+  const isRoleAllowed = (allowedRoles: string[]) => {
+    return allowedRoles.includes(role);
+  };
+  
   const routes = [
     {
-      label: "Dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      href: "/admin",
-      active: location.pathname === "/admin",
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      href: '/admin',
+      active: pathname === '/admin',
+      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
     },
     {
-      label: "Products",
-      icon: <Package className="h-5 w-5" />,
-      href: "/admin/products",
-      active: location.pathname.includes("/admin/products"),
+      label: 'Products',
+      icon: Package,
+      href: '/admin/products',
+      active: pathname.includes('/admin/products'),
+      allowedRoles: ['admin', 'productManager']
     },
     {
-      label: "Inventory",
-      icon: <Warehouse className="h-5 w-5" />,
-      href: "/admin/inventory",
-      active: location.pathname.includes("/admin/inventory"),
+      label: 'Orders',
+      icon: ShoppingCart,
+      href: '/admin/orders',
+      active: pathname.includes('/admin/orders'),
+      allowedRoles: ['admin', 'orderPreparer', 'deliveryStaff']
     },
     {
-      label: "Orders",
-      icon: <ShoppingCart className="h-5 w-5" />,
-      href: "/admin/orders",
-      active: location.pathname.includes("/admin/orders"),
+      label: 'Categories',
+      icon: Layers,
+      href: '/admin/categories',
+      active: pathname.includes('/admin/categories'),
+      allowedRoles: ['admin', 'productManager']
     },
     {
-      label: "Customers",
-      icon: <Users className="h-5 w-5" />,
-      href: "/admin/customers",
-      active: location.pathname.includes("/admin/customers"),
+      label: 'Analytics',
+      icon: BarChart2,
+      href: '/admin/analytics',
+      active: pathname === '/admin/analytics',
+      allowedRoles: ['admin']
     },
     {
-      label: "Analytics",
-      icon: <BarChart className="h-5 w-5" />,
-      href: "/admin/analytics",
-      active: location.pathname.includes("/admin/analytics"),
+      label: 'Marketing',
+      icon: Megaphone,
+      href: '/admin/marketing',
+      active: pathname === '/admin/marketing',
+      allowedRoles: ['admin']
     },
     {
-      label: "Marketing",
-      icon: <MessageSquare className="h-5 w-5" />,
-      href: "/admin/marketing",
-      active: location.pathname.includes("/admin/marketing"),
+      label: 'AI Dashboard',
+      icon: BrainCircuit,
+      href: '/admin/ai',
+      active: pathname === '/admin/ai',
+      allowedRoles: ['admin', 'productManager']
     },
     {
-      label: "Reports",
-      icon: <FileText className="h-5 w-5" />,
-      href: "/admin/reports",
-      active: location.pathname.includes("/admin/reports"),
+      label: 'Staff Management',
+      icon: UserCog,
+      href: '/admin/staff',
+      active: pathname === '/admin/staff',
+      allowedRoles: ['admin']
     },
     {
-      label: "Settings",
-      icon: <Settings className="h-5 w-5" />,
-      href: "/admin/settings",
-      active: location.pathname.includes("/admin/settings"),
+      label: 'Communications',
+      icon: MessageSquare,
+      href: '/admin/communications',
+      active: pathname === '/admin/communications',
+      allowedRoles: ['admin']
     },
+    {
+      label: 'Content Management',
+      icon: Globe,
+      href: '/admin/content',
+      active: pathname === '/admin/content',
+      allowedRoles: ['admin']
+    },
+    {
+      label: 'Feature Toggles',
+      icon: ToggleLeft,
+      href: '/admin/features',
+      active: pathname === '/admin/features',
+      allowedRoles: ['admin']
+    },
+    {
+      label: 'Users',
+      icon: Users,
+      href: '/admin/users',
+      active: pathname === '/admin/users',
+      allowedRoles: ['admin']
+    },
+    {
+      label: 'Printing',
+      icon: Printer,
+      href: '/admin/printing',
+      active: pathname === '/admin/printing',
+      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
+    },
+    {
+      label: 'Scanning',
+      icon: Barcode,
+      href: '/admin/scanning',
+      active: pathname === '/admin/scanning',
+      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
+    },
+    {
+      label: 'Settings',
+      icon: Settings,
+      href: '/admin/settings',
+      active: pathname === '/admin/settings',
+      allowedRoles: ['admin']
+    }
   ];
-
+  
   return (
-    <div>
-      {/* Mobile Navigation */}
-      <div className="flex items-center p-4 border-b lg:hidden">
-        <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+    <div className={cn("py-4 h-full flex flex-col", className)}>
+      <div className="px-4 py-2 flex items-center border-b mb-4">
+        <h2 className="text-xl font-bold text-primary">Tiffah Admin</h2>
+      </div>
+      <ScrollArea className="flex-1 px-2">
+        <div className="space-y-1 py-2">
+          {routes.filter(route => isRoleAllowed(route.allowedRoles)).map((route, index) => (
+            <Button
+              key={index}
+              variant={route.active ? "secondary" : "ghost"}
+              className={cn("w-full justify-start", route.active && "bg-muted")}
+              asChild
+            >
+              <Link to={route.href}>
+                <route.icon className="h-4 w-4 mr-3" />
+                {route.label}
+              </Link>
+            </Button>
+          ))}
+        </div>
+      </ScrollArea>
+      <div className="px-3 py-2 mt-auto border-t">
+        <ConnectivityIndicator className="mx-0 my-2" />
+        <div className="flex items-center gap-2">
+          <div className="rounded-full h-8 w-8 bg-primary flex items-center justify-center">
+            <span className="text-white font-semibold">
+              {user?.name?.charAt(0) || user?.email?.charAt(0) || 'A'}
+            </span>
+          </div>
+          <div className="text-sm truncate">
+            <p className="font-medium">{user?.name || user?.email || 'Admin User'}</p>
+            <p className="text-muted-foreground capitalize">{role}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AdminLayout = ({ children }: { children: React.ReactNode }) => {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  
+  return (
+    <div className="h-screen flex">
+      <aside className="hidden lg:block w-64 border-r h-full">
+        <Sidebar />
+      </aside>
+      
+      <div className="lg:hidden">
+        <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden">
-              <Menu className="h-6 w-6" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 left-4 z-10"
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72">
-            <div className="p-6 flex items-center border-b">
-              <h2 className="text-xl font-bold">Admin Dashboard</h2>
+          <SheetContent side="left" className="p-0 w-64">
+            <div className="absolute top-4 right-4 z-10">
               <Button
                 variant="ghost"
                 size="icon"
-                className="ml-auto"
-                onClick={() => setIsMobileSidebarOpen(false)}
+                onClick={() => setIsMobileOpen(false)}
               >
                 <X className="h-5 w-5" />
+                <span className="sr-only">Close Menu</span>
               </Button>
             </div>
-            <ScrollArea className="my-4 h-[calc(100vh-10rem)] pb-10">
-              <div className="flex flex-col gap-1 px-3">
-                {routes.map((route) => (
-                  <Link
-                    key={route.label}
-                    to={route.href}
-                    onClick={() => setIsMobileSidebarOpen(false)}
-                  >
-                    <span
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-all",
-                        route.active && "bg-accent"
-                      )}
-                    >
-                      {route.icon}
-                      {route.label}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </ScrollArea>
-            <div className="border-t p-3">
-              <Button variant="ghost" className="w-full justify-start" asChild>
-                <Link to="/">
-                  <Laptop className="mr-2 h-4 w-4" />
-                  View Store
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log Out
-              </Button>
-            </div>
+            <Sidebar />
           </SheetContent>
         </Sheet>
-        <div className="mx-auto font-bold">Admin Dashboard</div>
       </div>
-
-      <div className="flex">
-        {/* Sidebar - Desktop */}
-        <aside className="hidden lg:flex h-screen w-64 flex-col fixed inset-y-0">
-          <div className="flex h-14 items-center border-b px-4">
-            <Link
-              to="/"
-              className="flex items-center gap-2 font-semibold cursor-pointer"
-            >
-              <Package className="h-6 w-6" />
-              <span className="text-xl font-bold">Tiffah</span>
-            </Link>
-          </div>
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="grid items-start px-2 text-sm">
-              {routes.map((route, i) => (
-                <Link
-                  key={i}
-                  to={route.href}
-                  className={`${
-                    route.active
-                      ? "bg-accent text-accent-foreground"
-                      : "transparent"
-                  } flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent text-sm transition-all`}
-                >
-                  {route.icon}
-                  {route.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-          <div className="border-t p-4">
-            <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-              <div className="rounded-full w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center">
-                A
-              </div>
-              <div>
-                <div className="text-sm font-medium">Admin User</div>
-                <div className="text-xs text-muted-foreground">
-                  admin@tiffahthrift.com
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 lg:pl-64 min-h-screen">
-          <header className="hidden lg:flex h-14 items-center gap-4 border-b bg-muted/40 px-6">
-            <Link to="/" className="lg:hidden">
-              <Package className="h-6 w-6" />
-            </Link>
-            <div className="w-full flex items-center gap-2 md:ml-auto md:gap-5">
-              <Button variant="outline" size="icon" className="ml-auto">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon">
-                <Clock className="h-4 w-4" />
-              </Button>
-              <Link
-                to="/"
-                className="flex items-center gap-2 text-sm font-medium"
-              >
-                <Laptop className="h-4 w-4" />
-                View Store
-              </Link>
-            </div>
-          </header>
-          <div className="p-6">{children}</div>
-        </main>
-      </div>
+      
+      <main className="flex-1 overflow-y-auto bg-background p-6 lg:p-8">
+        {children}
+      </main>
     </div>
   );
 };

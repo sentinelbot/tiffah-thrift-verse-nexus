@@ -1,263 +1,242 @@
 
-import { useEffect, useRef, useState } from 'react';
-import Quagga from '@ericblade/quagga2';
+import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Camera,
+  ScanBarcode,
+  X,
+  Check,
+  Keyboard,
+  RefreshCw
+} from 'lucide-react';
+import { initScanner, syncScans, isOnline } from '@/utils/scannerUtils';
 import { toast } from 'sonner';
 import './scanner.css';
 
 interface BarcodeScannerProps {
-  onScan: (code: string) => void;
+  onScanSuccess: (code: string) => void;
+  onScanError?: (error: any) => void;
   scannerTitle?: string;
-  scannerInstructions?: string;
+  showManualEntry?: boolean;
+  showSyncButton?: boolean;
 }
 
-const BarcodeScanner = ({ onScan, scannerTitle = "Barcode Scanner", scannerInstructions = "Position the barcode in the camera view" }: BarcodeScannerProps) => {
-  const scannerRef = useRef<HTMLDivElement>(null);
-  const [scanning, setScanning] = useState(false);
-  const [scanSuccess, setScanSuccess] = useState(false);
-  const [scanError, setScanError] = useState(false);
-  const [permissionError, setPermissionError] = useState(false);
-  const [cameraCount, setCameraCount] = useState(0);
-  const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
-  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
-  
-  // Success audio
-  const playSuccessBeep = () => {
-    const audio = new Audio('/sounds/beep.mp3');
-    audio.play();
-  };
-  
-  // Initialize the barcode scanner
+const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
+  onScanSuccess,
+  onScanError,
+  scannerTitle = 'Scan Barcode',
+  showManualEntry = true,
+  showSyncButton = true
+}) => {
+  const [isScannerActive, setIsScannerActive] = useState(false);
+  const [isManualEntry, setIsManualEntry] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [networkStatus, setNetworkStatus] = useState(isOnline());
+  const scannerRef = useRef<() => void | null>(null);
+  const scannerContainerId = 'barcode-scanner-container';
+
   useEffect(() => {
-    if (!scannerRef.current) return;
-    
-    const startScanner = async () => {
-      try {
-        // Get available cameras
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-        setCameras(videoDevices);
-        setCameraCount(videoDevices.length);
-        
-        // Set default camera (back camera if available)
-        const backCamera = videoDevices.find(device => 
-          device.label.toLowerCase().includes('back') || 
-          device.label.toLowerCase().includes('rear')
-        );
-        
-        const defaultCamera = backCamera || (videoDevices.length > 0 ? videoDevices[0] : null);
-        setSelectedCamera(defaultCamera?.deviceId || null);
-        
-        if (!defaultCamera) {
-          console.error('No cameras found');
-          return;
-        }
-        
-        setScanning(true);
-        setScanSuccess(false);
-        setScanError(false);
-        
-        Quagga.init({
-          inputStream: {
-            name: "Live",
-            type: "LiveStream",
-            target: scannerRef.current,
-            constraints: {
-              width: 480,
-              height: 320,
-              facingMode: "environment",
-              deviceId: defaultCamera.deviceId
-            },
-          },
-          decoder: {
-            readers: [
-              "code_128_reader",
-              "ean_reader",
-              "code_39_reader",
-              "code_93_reader",
-              "upc_reader",
-              "upc_e_reader"
-            ],
-            debug: {
-              drawBoundingBox: true,
-              showFrequency: true,
-              drawScanline: true,
-              showPattern: true
-            },
-            multiple: false
-          },
-        }, (err) => {
-          if (err) {
-            console.error("Error initializing Quagga:", err);
-            if (err.name === 'NotAllowedError') {
-              setPermissionError(true);
-            } else {
-              setScanError(true);
-            }
-            return;
-          }
-          Quagga.start();
-        });
-        
-        // Set up result handler
-        Quagga.onDetected((result) => {
-          if (result.codeResult.code) {
-            // Visual feedback
-            setScanSuccess(true);
-            
-            // Sound feedback
-            playSuccessBeep();
-            
-            // Stop scanning
-            Quagga.stop();
-            setScanning(false);
-            
-            // Send the code back
-            onScan(result.codeResult.code);
-            
-            // Reset after 1 second
-            setTimeout(() => {
-              setScanSuccess(false);
-            }, 1000);
-          }
-        });
-      } catch (error) {
-        console.error("Error setting up scanner:", error);
-        setScanError(true);
-        toast.error("Failed to initialize camera");
+    const handleNetworkChange = () => {
+      setNetworkStatus(isOnline());
+      if (isOnline()) {
+        toast.info('Back online. You can now sync your scans.');
+      } else {
+        toast.info('You are offline. Scans will be saved locally.');
       }
     };
-    
-    startScanner();
-    
-    // Cleanup
+
+    window.addEventListener('online', handleNetworkChange);
+    window.addEventListener('offline', handleNetworkChange);
+
     return () => {
-      if (Quagga) {
-        Quagga.stop();
-      }
-      setScanning(false);
+      window.removeEventListener('online', handleNetworkChange);
+      window.removeEventListener('offline', handleNetworkChange);
     };
-  }, [onScan]);
-  
-  // Handle camera switching
-  const switchCamera = async (deviceId: string) => {
-    if (scanning) {
-      Quagga.stop();
-    }
-    
-    setSelectedCamera(deviceId);
-    
-    try {
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: scannerRef.current,
-          constraints: {
-            width: 480,
-            height: 320,
-            deviceId: deviceId
-          },
+  }, []);
+
+  useEffect(() => {
+    if (isScannerActive) {
+      // Initialize the scanner when active
+      scannerRef.current = initScanner(scannerContainerId, {
+        onDetected: (result) => {
+          if (result && result.codeResult && result.codeResult.code) {
+            handleScanSuccess(result.codeResult.code);
+          }
         },
-        decoder: {
-          readers: [
-            "code_128_reader",
-            "ean_reader",
-            "code_39_reader",
-            "code_93_reader",
-            "upc_reader",
-            "upc_e_reader"
-          ],
-          debug: {
-            drawBoundingBox: true,
-            showFrequency: true,
-            drawScanline: true,
-            showPattern: true
-          },
-          multiple: false
-        },
-      }, (err) => {
-        if (err) {
-          console.error("Error initializing Quagga:", err);
-          setScanError(true);
-          return;
+        onError: (error) => {
+          handleScanError(error);
         }
-        Quagga.start();
-        setScanning(true);
       });
-    } catch (error) {
-      console.error("Error switching camera:", error);
-      setScanError(true);
     }
-  };
-  
-  const restartScanner = () => {
-    setScanError(false);
-    setPermissionError(false);
-    if (scanning) {
-      Quagga.stop();
+
+    return () => {
+      // Clean up the scanner when component unmounts or scanner is deactivated
+      if (scannerRef.current) {
+        scannerRef.current();
+        scannerRef.current = null;
+      }
+    };
+  }, [isScannerActive]);
+
+  const handleScanSuccess = (code: string) => {
+    // Stop the scanner after successful scan
+    setIsScannerActive(false);
+    if (scannerRef.current) {
+      scannerRef.current();
+      scannerRef.current = null;
     }
     
-    if (selectedCamera) {
-      switchCamera(selectedCamera);
-    } else if (cameras.length > 0) {
-      switchCamera(cameras[0].deviceId);
+    // Call the success callback
+    onScanSuccess(code);
+  };
+
+  const handleScanError = (error: any) => {
+    setCameraError(`Camera error: ${error.message || 'Unknown error'}`);
+    if (onScanError) {
+      onScanError(error);
     }
   };
-  
+
+  const handleManualSubmit = () => {
+    if (manualCode.trim()) {
+      handleScanSuccess(manualCode.trim());
+    } else {
+      toast.error('Please enter a valid code');
+    }
+  };
+
+  const handleSync = async () => {
+    if (!networkStatus) {
+      toast.error('Cannot sync while offline');
+      return;
+    }
+    
+    setIsSyncing(true);
+    try {
+      const result = await syncScans();
+      if (result.synced > 0) {
+        toast.success(`Successfully synced ${result.synced} scans`);
+      } else {
+        toast.info('No pending scans to sync');
+      }
+    } catch (error) {
+      toast.error('Failed to sync scans');
+      console.error('Sync error:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="text-center space-y-1">
-        <h3 className="font-medium text-lg">{scannerTitle}</h3>
-        <p className="text-sm text-muted-foreground">{scannerInstructions}</p>
+    <div className="scanner-component">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">{scannerTitle}</h2>
+        <div className="flex space-x-2">
+          {showManualEntry && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setIsManualEntry(!isManualEntry);
+                setIsScannerActive(false);
+                if (scannerRef.current) {
+                  scannerRef.current();
+                  scannerRef.current = null;
+                }
+              }}
+            >
+              {isManualEntry ? <Camera className="mr-1" /> : <Keyboard className="mr-1" />}
+              {isManualEntry ? 'Use Camera' : 'Manual Entry'}
+            </Button>
+          )}
+          
+          {showSyncButton && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSync} 
+              disabled={isSyncing || !networkStatus}
+            >
+              <RefreshCw className={`mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
+              Sync Scans
+            </Button>
+          )}
+        </div>
       </div>
       
-      <div 
-        ref={scannerRef} 
-        className={`scanner-viewport ${scanSuccess ? 'scan-success' : ''} ${scanError ? 'scan-error' : ''}`}
-      />
-      
-      {permissionError && (
-        <div className="bg-red-100 dark:bg-red-900/20 p-3 rounded-md">
-          <p className="text-sm text-red-800 dark:text-red-200">
-            Camera access was denied. Please allow camera access in your browser settings and try again.
-          </p>
-          <button 
-            className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md text-sm"
-            onClick={restartScanner}
-          >
-            Try Again
-          </button>
+      {/* Network status indicator */}
+      <div className={`network-status mb-4 p-2 text-center text-sm rounded-md ${networkStatus ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'}`}>
+        {networkStatus ? 'Online: Scans will be processed immediately' : 'Offline: Scans will be saved locally and synced when online'}
+      </div>
+
+      {isManualEntry ? (
+        <div className="flex flex-col space-y-4">
+          <div className="flex space-x-2">
+            <Input
+              placeholder="Enter barcode manually"
+              value={manualCode}
+              onChange={(e) => setManualCode(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
+              className="flex-1"
+            />
+            <Button onClick={handleManualSubmit}>
+              <Check className="mr-1" />
+              Submit
+            </Button>
+          </div>
         </div>
-      )}
-      
-      {scanError && !permissionError && (
-        <div className="bg-red-100 dark:bg-red-900/20 p-3 rounded-md">
-          <p className="text-sm text-red-800 dark:text-red-200">
-            Failed to initialize the barcode scanner. Please check your camera and try again.
-          </p>
-          <button 
-            className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md text-sm"
-            onClick={restartScanner}
-          >
-            Try Again
-          </button>
-        </div>
-      )}
-      
-      {cameraCount > 1 && (
-        <div className="mt-2">
-          <label className="text-sm font-medium">Select Camera:</label>
-          <select 
-            className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-zinc-800 dark:border-zinc-700"
-            value={selectedCamera || ''}
-            onChange={(e) => switchCamera(e.target.value)}
-          >
-            {cameras.map((camera, index) => (
-              <option key={camera.deviceId} value={camera.deviceId}>
-                {camera.label || `Camera ${index + 1}`}
-              </option>
-            ))}
-          </select>
+      ) : (
+        <div className="scanner-container">
+          {!isScannerActive ? (
+            <div className="flex flex-col items-center justify-center h-64 bg-black/80 rounded-lg">
+              <Button 
+                size="lg" 
+                onClick={() => {
+                  setIsScannerActive(true);
+                  setCameraError(null);
+                }}
+              >
+                <ScanBarcode className="mr-2 h-6 w-6" />
+                Start Camera
+              </Button>
+              {cameraError && (
+                <div className="mt-4 p-2 bg-red-500/20 text-red-500 rounded-md text-sm">
+                  {cameraError}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="relative">
+              <div 
+                id={scannerContainerId} 
+                className="scanner-view h-64 overflow-hidden rounded-lg relative"
+              >
+                <div className="scanner-guide">
+                  <div className="guide-corner top-left"></div>
+                  <div className="guide-corner top-right"></div>
+                  <div className="guide-corner bottom-left"></div>
+                  <div className="guide-corner bottom-right"></div>
+                </div>
+              </div>
+              <Button 
+                variant="destructive" 
+                size="icon" 
+                className="absolute top-2 right-2"
+                onClick={() => {
+                  setIsScannerActive(false);
+                  if (scannerRef.current) {
+                    scannerRef.current();
+                    scannerRef.current = null;
+                  }
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

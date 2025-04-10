@@ -8,7 +8,7 @@ import { Heart, ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
 const Wishlist = () => {
-  const { wishlist, moveToCart, removeFromWishlist } = useCart();
+  const { wishlistItems, moveToCart, removeFromWishlist } = useCart();
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -17,7 +17,7 @@ const Wishlist = () => {
         <h1 className="text-2xl md:text-3xl font-bold mb-6">Your Wishlist</h1>
         <Separator className="mb-6" />
         
-        {wishlist.length === 0 ? (
+        {wishlistItems.length === 0 ? (
           <div className="text-center py-16">
             <Heart className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">Your wishlist is empty</h2>
@@ -31,15 +31,15 @@ const Wishlist = () => {
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {wishlist.map((product) => (
+              {wishlistItems.map((product) => (
                 <div 
                   key={product.id} 
                   className="border border-border rounded-lg overflow-hidden group hover:border-primary transition-colors"
                 >
                   <Link to={`/product/${product.id}`} className="block relative">
                     <img 
-                      src={product.imageUrl || (product.images && product.images.length > 0 ? product.images[0].url : '/placeholder.svg')} 
-                      alt={product.name} 
+                      src={product.imageUrl} 
+                      alt={product.title} 
                       className="w-full aspect-square object-cover group-hover:scale-105 transition-transform"
                     />
                     {/* Only show discount badge if originalPrice exists */}
@@ -54,7 +54,7 @@ const Wishlist = () => {
                       to={`/product/${product.id}`}
                       className="block font-medium mb-1 hover:text-primary transition-colors"
                     >
-                      {product.name}
+                      {product.title}
                     </Link>
                     <div className="flex justify-between items-baseline mb-3">
                       <div>

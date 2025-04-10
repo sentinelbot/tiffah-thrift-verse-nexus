@@ -1,19 +1,28 @@
 
-// Since Index.tsx is in read-only files, we'll create a HomePage wrapper that adds our new component
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import Hero from "@/components/home/Hero";
+import FeaturedCategories from "@/components/home/FeaturedCategories";
+import NewArrivals from "@/components/home/NewArrivals";
+import Features from "@/components/home/Features";
+import Testimonials from "@/components/home/Testimonials";
+import Newsletter from "@/components/home/Newsletter";
 
-import React from 'react';
-import Index from './Index';
-import TrackOrderSection from '@/components/layout/TrackOrderSection';
-
-const HomePage = () => {
+const Index = () => {
   return (
-    <>
-      <Index />
-      <div className="mt-[-80px]">
-        <TrackOrderSection />
-      </div>
-    </>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-grow">
+        <Hero />
+        <FeaturedCategories />
+        <NewArrivals />
+        <Features />
+        <Testimonials />
+        <Newsletter />
+      </main>
+      <Footer />
+    </div>
   );
 };
 
-export default HomePage;
+export default Index;

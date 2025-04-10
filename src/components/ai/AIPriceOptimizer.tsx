@@ -1,155 +1,157 @@
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Sparkles, RotateCw, DollarSign, ArrowRight } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { suggestProductPrice } from '@/services/aiService';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Calculator, 
+  Cpu, 
+  AlertCircle, 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign,
+  Info
+} from "lucide-react";
+import { suggestProductPrice, AIPriceRecommendation } from '@/services/aiService';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AIPriceOptimizerProps {
-  condition?: string;
-  category?: string;
+  condition: string;
+  category: string;
   brand?: string;
   originalPrice?: number;
-  onPriceRecommended?: (price: number) => void;
+  onPriceRecommended: (price: number) => void;
 }
 
 const AIPriceOptimizer = ({
-  condition = '',
-  category = '',
-  brand = '',
+  condition,
+  category,
+  brand,
   originalPrice,
   onPriceRecommended
 }: AIPriceOptimizerProps) => {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [recommendedPrice, setRecommendedPrice] = useState<number | null>(null);
-  const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
-  const [reasoning, setReasoning] = useState('');
-  const [customPrice, setCustomPrice] = useState<number | null>(null);
-  
-  const generatePriceSuggestion = async () => {
-    if (!condition || !category) {
-      toast.error("Please fill in product condition and category first");
-      return;
-    }
-    
-    setIsGenerating(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [recommendation, setRecommendation] = useState<AIPriceRecommendation | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const getRecommendation = async () => {
+    setIsLoading(true);
+    setError(null);
     
     try {
-      const result = await suggestProductPrice(
-        condition,
-        category,
-        brand,
-        originalPrice
-      );
-      
-      setRecommendedPrice(result.recommendedPrice);
-      setPriceRange([result.minPrice, result.maxPrice]);
-      setReasoning(result.reasoning);
-      setCustomPrice(result.recommendedPrice);
-      
-      toast.success("AI price suggestion generated!");
-    } catch (error) {
-      console.error("Error suggesting price:", error);
-      toast.error("Failed to generate price suggestion");
+      const result = await suggestProductPrice(condition, category, brand, originalPrice);
+      setRecommendation(result);
+      toast({
+        title: "Price recommendation ready",
+        description: "AI has analyzed market data and suggested optimal pricing",
+      });
+    } catch (err) {
+      setError('Failed to get price recommendation. Please try again or set price manually.');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to get price suggestion",
+      });
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
   };
-  
-  const handleApplyPrice = () => {
-    if (onPriceRecommended && customPrice !== null) {
-      onPriceRecommended(customPrice);
-      toast.success("Price applied to product");
+
+  const applyPrice = () => {
+    if (recommendation) {
+      onPriceRecommended(recommendation.recommendedPrice);
+      toast({
+        title: "Price applied",
+        description: "The recommended price has been applied to the product",
+      });
     }
   };
-  
-  const handleSliderChange = (value: number[]) => {
-    if (value.length > 0) {
-      setCustomPrice(value[0]);
-    }
-  };
-  
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">AI Price Optimizer</h2>
+        <div className="flex items-center gap-2">
+          <Cpu className="h-4 w-4 text-primary" />
+          <h3 className="text-base font-medium">AI Price Optimizer</h3>
+        </div>
         <Button 
-          onClick={generatePriceSuggestion}
-          disabled={isGenerating || !condition || !category}
+          onClick={getRecommendation} 
+          disabled={isLoading || !condition || !category}
+          size="sm"
+          variant={recommendation ? "outline" : "default"}
         >
-          {isGenerating ? (
-            <>
-              <RotateCw className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Suggest Price
-            </>
-          )}
+          <Calculator className="mr-2 h-4 w-4" />
+          {isLoading ? 'Analyzing...' : recommendation ? 'Recalculate' : 'Get Price Suggestion'}
         </Button>
       </div>
       
-      {recommendedPrice !== null && priceRange !== null && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Original Price</Label>
-              <div className="text-2xl font-bold mt-1">
-                KSh {originalPrice?.toLocaleString() || 'N/A'}
-              </div>
-            </div>
-            
-            <ArrowRight className="h-6 w-6 mx-4 text-muted-foreground" />
-            
-            <div>
-              <Label>Recommended Price</Label>
-              <div className="text-2xl font-bold text-primary mt-1">
-                KSh {recommendedPrice.toLocaleString()}
-              </div>
-            </div>
-          </div>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground mb-4">{reasoning}</p>
-              
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <Label>Adjust Price</Label>
-                    <span className="text-sm font-bold">KSh {customPrice?.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="relative pt-1">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                      <span>Min: KSh {priceRange[0].toLocaleString()}</span>
-                      <span>Max: KSh {priceRange[1].toLocaleString()}</span>
-                    </div>
-                    <Slider
-                      defaultValue={[recommendedPrice]}
-                      max={priceRange[1]}
-                      min={priceRange[0]}
-                      step={50}
-                      onValueChange={handleSliderChange}
-                    />
-                  </div>
-                </div>
-                
-                {onPriceRecommended && (
-                  <Button className="w-full" onClick={handleApplyPrice}>
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    Apply This Price
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+      {error && (
+        <div className="flex items-center gap-2 text-destructive text-sm p-2 border border-destructive/20 rounded-md bg-destructive/10">
+          <AlertCircle className="h-4 w-4" />
+          <p>{error}</p>
         </div>
+      )}
+      
+      {recommendation && (
+        <Card>
+          <CardContent className="pt-4 space-y-4">
+            <div className="flex justify-center items-center gap-4">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Min</p>
+                <div className="flex items-center justify-center">
+                  <TrendingDown className="h-4 w-4 text-blue-500 mr-1" />
+                  <p className="text-lg font-semibold">KSh {recommendation.minPrice}</p>
+                </div>
+              </div>
+              
+              <div className="text-center border-2 border-primary/20 bg-primary/5 px-4 py-2 rounded-md">
+                <p className="text-sm text-primary font-medium">Recommended</p>
+                <div className="flex items-center justify-center">
+                  <DollarSign className="h-4 w-4 text-primary mr-1" />
+                  <p className="text-xl font-bold text-primary">KSh {recommendation.recommendedPrice}</p>
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Max</p>
+                <div className="flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                  <p className="text-lg font-semibold">KSh {recommendation.maxPrice}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-muted/50 p-3 rounded-md text-sm">
+              <div className="flex items-start gap-2">
+                <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p>
+                        {recommendation.reasoning.length > 100 
+                          ? `${recommendation.reasoning.substring(0, 100)}...` 
+                          : recommendation.reasoning}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">{recommendation.reasoning}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+            
+            <Button onClick={applyPrice} className="w-full">
+              Apply Recommended Price
+            </Button>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

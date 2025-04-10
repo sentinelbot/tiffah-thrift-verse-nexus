@@ -48,7 +48,7 @@ export function CustomerAnalytics() {
             labelLine={false}
             outerRadius={80}
             fill="#8884d8"
-            dataKey={dataKey as string}
+            dataKey={dataKey}
             nameKey="segment"
             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
           >

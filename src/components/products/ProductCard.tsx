@@ -1,12 +1,10 @@
 
 import { Link } from "react-router-dom";
 import ProductCardActions from "./ProductCardActions";
-import { Product } from "@/types";
 
 export interface ProductType {
   id: string;
   title: string;
-  name: string; // Adding the name property to match with Product type
   price: number;
   originalPrice?: number;
   category: string;
@@ -18,28 +16,11 @@ export interface ProductType {
 }
 
 interface ProductCardProps {
-  product: ProductType | Product;
+  product: ProductType;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  // Handle both Product and ProductType
-  const id = product.id;
-  
-  // Type guard function to check for Product vs ProductType
-  const isProduct = (p: ProductType | Product): p is Product => {
-    return 'barcode' in p;
-  };
-  
-  const title = isProduct(product) ? product.title : product.title;
-  const name = isProduct(product) ? product.name : product.name;
-  const price = product.price;
-  const originalPrice = product.originalPrice;
-  const category = product.category;
-  const condition = product.condition;
-  const size = product.size;
-  const imageUrl = isProduct(product) && product.images && product.images.length > 0
-    ? product.images[0].url
-    : 'imageUrl' in product ? product.imageUrl : '/placeholder.svg';
+  const { id, title, price, originalPrice, category, condition, size, imageUrl } = product;
   
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border hover:border-primary transition-colors">

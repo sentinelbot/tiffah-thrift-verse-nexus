@@ -1,95 +1,160 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import BarcodeScanner from './BarcodeScanner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 import { processProductScan, isOnline } from '@/utils/scannerUtils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
-interface ProductScannerProps {
-  onBack?: () => void;
-  onScanComplete?: (productId: string) => void;
+interface ProductScanResult {
+  id: string;
+  name: string;
+  price: number;
+  status: string;
 }
 
-const ProductScanner = ({ onBack, onScanComplete }: ProductScannerProps) => {
-  const [scannedProduct, setScannedProduct] = useState<string | null>(null);
+const ProductScanner: React.FC = () => {
+  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
-  
+  const [scanResult, setScanResult] = useState<ProductScanResult | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+
   const handleScan = async (code: string) => {
+    if (!user) {
+      toast.error('You must be logged in to scan products');
+      return;
+    }
+
     setIsProcessing(true);
+    setScanError(null);
     
     try {
-      // Process the product scan (in a real app, this would look up the product in the database)
-      const success = await processProductScan(code);
+      const online = isOnline();
+      const result = await processProductScan(code, user.id, user.role, online);
       
-      if (success) {
-        setScannedProduct(code);
-        if (onScanComplete) {
-          onScanComplete(code);
-        }
+      if (result.status === 'success' && result.result) {
+        setScanResult(result.result);
+        toast.success('Product scanned successfully');
+      } else if (result.status === 'pending-sync') {
+        toast.info('Scan saved for later synchronization');
+        setScanResult({
+          id: 'pending',
+          name: `Product with barcode ${code}`,
+          price: 0,
+          status: 'pending-sync'
+        });
       } else {
-        toast.error("Failed to process product scan");
+        throw new Error('Failed to process scan');
       }
     } catch (error) {
-      console.error("Error processing product scan:", error);
-      toast.error("An error occurred while processing the scan");
+      console.error('Scan error:', error);
+      setScanError(error.message || 'Failed to process scan');
+      toast.error('Error scanning product');
     } finally {
       setIsProcessing(false);
     }
   };
-  
-  const isOffline = !isOnline();
-  
+
+  const handleError = (error: any) => {
+    setScanError(`Scanner error: ${error.message || 'Unknown error'}`);
+    toast.error('Scanner error');
+  };
+
+  const clearResult = () => {
+    setScanResult(null);
+    setScanError(null);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center">
-          {onBack && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onBack} 
-              className="mr-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          )}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
           <CardTitle>Product Scanner</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isOffline && (
-          <div className="bg-yellow-100 dark:bg-yellow-900/20 p-3 rounded-md mb-4">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              You're currently offline. Scans will be saved and synchronized when you're back online.
-            </p>
-          </div>
-        )}
-        
-        <BarcodeScanner 
-          onScan={handleScan} 
-          scannerTitle="Scan Product Barcode"
-          scannerInstructions="Position the product barcode in the camera view to scan"
-        />
-        
-        {isProcessing && (
-          <div className="mt-4 text-center">
+        </CardHeader>
+        <CardContent>
+          <BarcodeScanner 
+            onScanSuccess={handleScan}
+            onScanError={handleError}
+            scannerTitle="Scan Product Barcode"
+          />
+        </CardContent>
+      </Card>
+
+      {isProcessing && (
+        <Card>
+          <CardContent className="flex items-center justify-center py-6">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
             <p>Processing scan...</p>
-          </div>
-        )}
-        
-        {scannedProduct && !isProcessing && (
-          <div className="mt-4">
-            <h3 className="font-medium">Product Details</h3>
-            <p className="text-sm text-muted-foreground">
-              Product ID: {scannedProduct}
-            </p>
-            {/* In a real app, you would display more product details here */}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {scanResult && !isProcessing && (
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Scan Result</CardTitle>
+              <Button variant="ghost" size="sm" onClick={clearResult}>
+                Clear
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Product:</span>
+                <span>{scanResult.name}</span>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">ID:</span>
+                <span className="font-mono">{scanResult.id}</span>
+              </div>
+              
+              {scanResult.status !== 'pending-sync' && (
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold">Price:</span>
+                  <span>KSh {scanResult.price.toLocaleString()}</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Status:</span>
+                <Badge variant={scanResult.status === 'available' ? 'secondary' : 'default'}>
+                  {scanResult.status === 'pending-sync' ? 'Pending Sync' : scanResult.status}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {scanError && !isProcessing && (
+        <Card className="border-destructive">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-destructive">Scan Error</CardTitle>
+              <Button variant="ghost" size="sm" onClick={clearResult}>
+                Clear
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p>{scanError}</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => setScanError(null)}
+            >
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 

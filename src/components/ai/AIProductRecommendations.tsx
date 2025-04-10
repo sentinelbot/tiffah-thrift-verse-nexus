@@ -1,170 +1,146 @@
 
-import { useEffect, useState } from 'react';
-import { Product } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ProductCard, { ProductType } from '@/components/products/ProductCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import ProductCard from '@/components/products/ProductCard';
+import { ProductType } from '@/context/CartContext';
 
 interface AIProductRecommendationsProps {
   productId: string;
   category: string;
+  limit?: number;
 }
 
-const AIProductRecommendations = ({ productId, category }: AIProductRecommendationsProps) => {
-  const [similarItems, setSimilarItems] = useState<ProductType[]>([]);
-  const [complementaryItems, setComplementaryItems] = useState<ProductType[]>([]);
-  
+export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> = ({ 
+  productId,
+  category,
+  limit = 4
+}) => {
+  const [recommendations, setRecommendations] = useState<ProductType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    // In a real app, this would call an API endpoint that uses AI to find similar/complementary products
-    // For this demo, we'll simulate it with mock data
-    
-    // Simulate fetching similar items based on the current product
-    const fetchSimilarItems = async () => {
-      // Mock data - in reality, this would come from an AI service
-      const mockSimilarItems: ProductType[] = [
-        {
-          id: "s1",
-          name: "Vintage Blue Denim Jacket",
-          title: "Vintage Blue Denim Jacket",
-          price: 49.99,
-          originalPrice: 89.99,
-          category: category,
-          condition: "good",
-          size: "M",
-          color: "Blue",
-          brand: "Vintage Finds",
-          imageUrl: "https://images.unsplash.com/photo-1610452220299-5edf90b2a044?q=80&w=400&auto=format&fit=crop"
-        },
-        {
-          id: "s2",
-          name: "Classic Denim Jeans",
-          title: "Classic Denim Jeans",
-          price: 39.99,
-          category: category,
-          condition: "likeNew",
-          size: "L",
-          color: "Blue",
-          brand: "Levi's",
-          imageUrl: "https://images.unsplash.com/photo-1582552938357-32b906df40cb?q=80&w=400&auto=format&fit=crop"
-        },
-        {
-          id: "s3",
-          name: "Oversized Denim Jacket",
-          title: "Oversized Denim Jacket",
-          price: 55.99,
-          originalPrice: 75.99,
-          category: category,
-          condition: "good",
-          size: "XL",
-          color: "Light Blue",
-          brand: "GAP",
-          imageUrl: "https://images.unsplash.com/photo-1594632814188-feb454e0c6f5?q=80&w=400&auto=format&fit=crop"
-        },
-        {
-          id: "s4",
-          name: "Distressed Denim Jacket",
-          title: "Distressed Denim Jacket",
-          price: 42.99,
-          category: category,
-          condition: "fair",
-          size: "S",
-          color: "Dark Blue",
-          brand: "H&M",
-          imageUrl: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=400&auto=format&fit=crop"
-        }
-      ];
+    const fetchRecommendations = async () => {
+      if (!productId || !category) {
+        setLoading(false);
+        return;
+      }
       
-      setSimilarItems(mockSimilarItems);
+      try {
+        setLoading(true);
+        // Simulating API call to AI recommendation service
+        // In a real app, this would call the backend AI service
+        
+        // Mock data for demonstration
+        setTimeout(() => {
+          const mockProducts: ProductType[] = [
+            {
+              id: 'rec1',
+              title: 'Vintage Denim Jacket',
+              price: 45.99,
+              imageUrl: '/placeholder.svg',
+              category: 'jackets',
+              condition: 'excellent',
+              size: 'M',
+              color: 'blue',
+              brand: 'Levi\'s'
+            },
+            {
+              id: 'rec2',
+              title: 'Floral Summer Dress',
+              price: 28.50,
+              imageUrl: '/placeholder.svg',
+              category: 'dresses',
+              condition: 'like-new',
+              size: 'S',
+              color: 'multicolor',
+              brand: 'Zara'
+            },
+            {
+              id: 'rec3',
+              title: 'Leather Crossbody Bag',
+              price: 35.00,
+              imageUrl: '/placeholder.svg',
+              category: 'accessories',
+              condition: 'good',
+              size: 'One Size',
+              color: 'brown',
+              brand: 'Coach'
+            },
+            {
+              id: 'rec4',
+              title: 'Wool Winter Coat',
+              price: 89.99,
+              imageUrl: '/placeholder.svg',
+              category: 'outerwear',
+              condition: 'excellent',
+              size: 'L',
+              color: 'gray',
+              brand: 'H&M'
+            }
+          ];
+          
+          // Filter out the current product and limit results
+          const filtered = mockProducts
+            .filter(p => p.id !== productId)
+            .slice(0, limit);
+            
+          setRecommendations(filtered);
+          setLoading(false);
+        }, 1000);
+        
+      } catch (err) {
+        console.error('Error fetching AI recommendations:', err);
+        setError('Unable to load recommendations');
+        setLoading(false);
+        toast.error('Failed to load product recommendations');
+      }
     };
-    
-    // Simulate fetching complementary items based on the current product
-    const fetchComplementaryItems = async () => {
-      // Mock data - in reality, this would come from an AI service
-      const mockComplementaryItems: ProductType[] = [
-        {
-          id: "c1",
-          name: "Leather Belt",
-          title: "Leather Belt",
-          price: 19.99,
-          originalPrice: 29.99,
-          category: "Accessories",
-          condition: "new",
-          color: "Brown",
-          brand: "Fossil",
-          imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=400&auto=format&fit=crop"
-        },
-        {
-          id: "c2",
-          name: "Hiking Boots",
-          title: "Hiking Boots",
-          price: 79.99,
-          category: "Footwear",
-          condition: "likeNew",
-          size: "42",
-          color: "Brown",
-          brand: "Timberland",
-          imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=400&auto=format&fit=crop"
-        },
-        {
-          id: "c3",
-          name: "Wool Beanie",
-          title: "Wool Beanie",
-          price: 14.99,
-          originalPrice: 24.99,
-          category: "Accessories",
-          condition: "good",
-          color: "Gray",
-          brand: "H&M",
-          imageUrl: "https://images.unsplash.com/photo-1591921129557-c0ee5c692f01?q=80&w=400&auto=format&fit=crop"
-        },
-        {
-          id: "c4",
-          name: "Canvas Backpack",
-          title: "Canvas Backpack",
-          price: 34.99,
-          category: "Accessories",
-          condition: "good",
-          color: "Green",
-          brand: "Herschel",
-          imageUrl: "https://images.unsplash.com/photo-1581605405669-fcdf81165afa?q=80&w=400&auto=format&fit=crop"
-        }
-      ];
-      
-      setComplementaryItems(mockComplementaryItems);
-    };
-    
-    fetchSimilarItems();
-    fetchComplementaryItems();
-  }, [productId, category]);
-  
+
+    fetchRecommendations();
+  }, [productId, category, limit]);
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <p className="text-center text-muted-foreground">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="mt-12 mb-8">
-      <CardHeader>
-        <CardTitle>You May Also Like</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="similar">
-          <TabsList className="mb-4">
-            <TabsTrigger value="similar">Similar Items</TabsTrigger>
-            <TabsTrigger value="complete">Complete the Look</TabsTrigger>
-          </TabsList>
-          <TabsContent value="similar">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {similarItems.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="complete">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {complementaryItems.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div>
+      <h3 className="text-xl font-medium mb-4">You May Also Like</h3>
+      
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array(limit).fill(0).map((_, index) => (
+            <Card key={index}>
+              <CardContent className="p-4 space-y-3">
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : recommendations.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {recommendations.map((product) => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-muted-foreground">No recommendations available</p>
+      )}
+    </div>
   );
 };
 

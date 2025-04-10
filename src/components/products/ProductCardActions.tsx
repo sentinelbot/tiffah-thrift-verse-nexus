@@ -3,76 +3,40 @@ import React from "react";
 import { Plus, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
-import { Product } from "@/types";
-import { toast } from "sonner";
+import { ProductType as ContextProductType } from "@/context/CartContext";
 import { ProductType } from "./ProductCard";
+import { toast } from "sonner";
 
 interface ProductCardActionsProps {
-  product: Product | ProductType;
+  product: ProductType;
 }
 
 const ProductCardActions = ({ product }: ProductCardActionsProps) => {
   const { addToCart, addToWishlist } = useCart();
   
-  // Type guard function to check for Product vs ProductType
-  const isProduct = (p: ProductType | Product): p is Product => {
-    return 'barcode' in p;
-  };
-  
   const handleAddToCart = () => {
-    // Access name and title safely using our type guard
-    const productName = isProduct(product) ? product.name : product.name;
-    const productTitle = isProduct(product) ? product.title : product.title;
-    
-    // Convert to a format that works with both Product and ProductType
-    const cartProduct: Product = {
-      id: product.id,
-      name: productName,
-      title: productTitle, 
-      price: product.price,
-      category: product.category,
-      condition: product.condition as 'new' | 'likeNew' | 'good' | 'fair',
-      barcode: isProduct(product) ? product.barcode : product.id, // Use ID as fallback barcode
-      status: 'available',
-      dateAdded: new Date(),
-      lastUpdated: new Date(),
-      featured: false,
-      imageUrl: isProduct(product) && product.images && product.images.length > 0
-        ? product.images[0].url
-        : 'imageUrl' in product ? product.imageUrl : '/placeholder.svg',
-      size: product.size
+    // Convert from ProductCard.ProductType to CartContext.ProductType
+    const contextProduct: ContextProductType = {
+      ...product,
+      condition: product.condition || 'good', // Provide default if missing
+      originalPrice: product.originalPrice || undefined, // Handle originalPrice properly
     };
     
-    addToCart(cartProduct, 1);
-    toast.success(`${productName} added to cart`);
+    // Pass the product and quantity 1 as arguments
+    addToCart(contextProduct, 1);
+    toast.success(`${product.title} added to cart`);
   };
   
   const handleAddToWishlist = () => {
-    // Access name and title safely using our type guard
-    const productName = isProduct(product) ? product.name : product.name;
-    const productTitle = isProduct(product) ? product.title : product.title;
-    
-    // Convert to a format that works with both Product and ProductType
-    const wishlistProduct: Product = {
-      id: product.id,
-      name: productName,
-      title: productTitle,
-      price: product.price,
-      category: product.category,
-      condition: product.condition as 'new' | 'likeNew' | 'good' | 'fair',
-      barcode: isProduct(product) ? product.barcode : product.id, // Use ID as fallback barcode
-      status: 'available',
-      dateAdded: new Date(),
-      lastUpdated: new Date(),
-      featured: false,
-      imageUrl: isProduct(product) && product.images && product.images.length > 0
-        ? product.images[0].url
-        : 'imageUrl' in product ? product.imageUrl : '/placeholder.svg',
-      size: product.size
+    // Convert from ProductCard.ProductType to CartContext.ProductType
+    const contextProduct: ContextProductType = {
+      ...product,
+      condition: product.condition || 'good', // Provide default if missing
+      originalPrice: product.originalPrice || undefined, // Handle originalPrice properly
     };
     
-    addToWishlist(wishlistProduct);
-    toast.success(`${productName} added to wishlist`);
+    addToWishlist(contextProduct);
+    toast.success(`${product.title} added to wishlist`);
   };
   
   return (

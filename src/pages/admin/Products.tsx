@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -24,7 +25,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Product, mapSupabaseProduct } from '@/types';
+import { Product } from '@/types';
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,8 +39,7 @@ const Products = () => {
         .order('date_added', { ascending: false });
       
       if (error) throw error;
-      
-      return data.map(item => mapSupabaseProduct(item));
+      return data as Product[];
     }
   });
   
