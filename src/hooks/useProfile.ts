@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -240,7 +241,10 @@ export const useProfile = () => {
       
       const filteredAddressBook = addressBook.filter((addr: Json) => (addr as any).id !== addressId);
       
-      const wasDefault = addressBook.find((addr: Json) => (addr as any).id === addressId)?.(addr as any).isDefault;
+      // Find the address being deleted and check if it was default
+      const addressToDelete = addressBook.find((addr: Json) => (addr as any).id === addressId) as any;
+      const wasDefault = addressToDelete?.isDefault;
+      
       if (wasDefault && filteredAddressBook.length > 0) {
         (filteredAddressBook[0] as any).isDefault = true;
       }
