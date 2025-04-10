@@ -2,218 +2,220 @@
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
 
-/**
- * Checks if the current user has a specific role
- * @param role Role to check for
- * @returns Boolean indicating if user has the specified role
- */
-export const hasRole = async (role: string): Promise<boolean> => {
-  try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      return false;
-    }
+// Sign in with email and password
+export const signInWithEmail = async (email: string, password: string): Promise<User> => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    const { data, error } = await supabase.rpc('has_role', { 
-      required_role: role 
-    });
+  if (error) {
+    throw new Error(error.message);
+  }
 
-    if (error) {
-      console.error('Error checking role:', error);
-      return false;
-    }
+  // Fetch user profile data
+  const user = await getUserProfile(data.user.id);
+  return user;
+};
 
-    return !!data;
-  } catch (error) {
-    console.error('Error in hasRole:', error);
-    return false;
+// Sign up with email and password
+export const signUpWithEmail = async (
+  email: string,
+  password: string,
+  name?: string,
+  role: string = 'customer'
+): Promise<User> => {
+  // Sign up the user
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        name,
+        role,
+      },
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data.user) {
+    throw new Error('User creation failed');
+  }
+
+  // Create profile record
+  const { error: profileError } = await supabase.from('profiles').insert({
+    id: data.user.id,
+    name: name || '',
+    role,
+  });
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+
+  return {
+    id: data.user.id,
+    email: data.user.email || '',
+    name: name || '',
+    role,
+  };
+};
+
+// Sign out
+export const signOut = async (): Promise<void> => {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    throw new Error(error.message);
   }
 };
 
-/**
- * Checks if the current user has any of the specified roles
- * @param roles Array of roles to check for
- * @returns Boolean indicating if user has any of the specified roles
- */
-export const hasAnyRole = async (roles: string[]): Promise<boolean> => {
+// Get current user
+export const getCurrentUser = async (): Promise<User | null> => {
+  const { data } = await supabase.auth.getUser();
+  
+  if (!data.user) {
+    return null;
+  }
+
   try {
-    for (const role of roles) {
-      const hasUserRole = await hasRole(role);
-      if (hasUserRole) {
-        return true;
+    // Get user profile data
+    const user = await getUserProfile(data.user.id);
+    return user;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return null;
+  }
+};
+
+// Get user profile by ID
+export const getUserProfile = async (userId: string): Promise<User> => {
+  // Fetch profile data
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    // Handle error when profile doesn't exist
+    if (error.code === 'PGRST116') {
+      // If profile doesn't exist, get basic info from auth
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) {
+        throw new Error('User not found');
       }
-    }
-    return false;
-  } catch (error) {
-    console.error('Error in hasAnyRole:', error);
-    return false;
-  }
-};
-
-/**
- * Gets all roles for the current user
- * @returns Array of role names
- */
-export const getUserRoles = async (): Promise<string[]> => {
-  try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      return [];
-    }
-
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.user.id);
-
-    if (error) {
-      console.error('Error fetching user roles:', error);
-      return [];
-    }
-
-    return data.map(item => item.role);
-  } catch (error) {
-    console.error('Error in getUserRoles:', error);
-    return [];
-  }
-};
-
-/**
- * Add a role to the current user
- * @param role Role to add
- * @returns Boolean indicating success
- */
-export const addRole = async (userId: string, role: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('user_roles')
-      .insert([{ user_id: userId, role }]);
-
-    if (error) {
-      console.error('Error adding role:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error in addRole:', error);
-    return false;
-  }
-};
-
-/**
- * Remove a role from the current user
- * @param role Role to remove
- * @returns Boolean indicating success
- */
-export const removeRole = async (userId: string, role: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId)
-      .eq('role', role);
-
-    if (error) {
-      console.error('Error removing role:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error in removeRole:', error);
-    return false;
-  }
-};
-
-/**
- * Get all delivery staff users
- * @returns Array of delivery staff users
- */
-export const getDeliveryStaff = async (): Promise<User[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('user_id, profiles!inner(id, name, email)')
-      .eq('role', 'deliveryStaff');
-
-    if (error) {
-      console.error('Error fetching delivery staff:', error);
-      return [];
-    }
-
-    return data.map(item => ({
-      id: item.profiles.id,
-      name: item.profiles.name,
-      email: item.profiles.email,
-      role: 'deliveryStaff'
-    }));
-  } catch (error) {
-    console.error('Error in getDeliveryStaff:', error);
-    return [];
-  }
-};
-
-/**
- * Complete scan synchronization
- */
-export const completeScanSync = async (scans: any[]): Promise<{synced: number, failed: number}> => {
-  let synced = 0;
-  let failed = 0;
-
-  try {
-    // Process in batches for better performance
-    const batchSize = 10;
-    for (let i = 0; i < scans.length; i += batchSize) {
-      const batch = scans.slice(i, i + batchSize);
       
-      const { data, error } = await supabase
-        .from('scan_history')
-        .insert(batch);
-      
-      if (error) {
-        console.error('Error syncing scans batch:', error);
-        failed += batch.length;
-      } else {
-        synced += batch.length;
+      // Create default profile
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          name: authData.user.user_metadata?.name || '',
+          role: 'customer', // Default role
+        })
+        .select('*')
+        .single();
+        
+      if (insertError) {
+        throw new Error(insertError.message);
       }
+      
+      return {
+        id: newProfile.id,
+        name: newProfile.name,
+        email: authData.user.email || '',
+        role: newProfile.role,
+      };
     }
     
-    return { synced, failed };
-  } catch (error) {
-    console.error('Error in completeScanSync:', error);
-    return { synced, failed: scans.length - synced };
+    throw new Error(error.message);
   }
+
+  // Get user email from auth
+  const { data: authData } = await supabase.auth.getUser();
+  
+  return {
+    id: data.id,
+    name: data.name,
+    email: authData.user?.email || '',
+    role: data.role,
+  };
 };
 
-/**
- * Get scan history for the current user
- */
-export const getScanHistory = async (limit = 20): Promise<any[]> => {
-  try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      return [];
-    }
+// Update user profile
+export const updateUserProfile = async (
+  userId: string,
+  profileData: Partial<User>
+): Promise<User> => {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      name: profileData.name,
+      // Only update role if it's provided and user is authorized (would typically be restricted by RLS)
+      ...(profileData.role ? { role: profileData.role } : {}),
+    })
+    .eq('id', userId);
 
-    const { data, error } = await supabase
-      .from('scan_history')
-      .select('*')
-      .eq('scanned_by', userData.user.id)
-      .order('scan_time', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error('Error fetching scan history:', error);
-      return [];
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error in getScanHistory:', error);
-    return [];
+  if (error) {
+    throw new Error(error.message);
   }
+
+  // Get updated profile
+  return getUserProfile(userId);
+};
+
+// Check if user has specific role
+export const hasRole = async (userId: string, role: string): Promise<boolean> => {
+  const user = await getUserProfile(userId);
+  return user.role === role;
+};
+
+// Check if a user has a specific permission
+export const hasPermission = async (
+  userId: string,
+  permission: string
+): Promise<boolean> => {
+  // First get the user's role
+  const user = await getUserProfile(userId);
+
+  // Then check if this role has the required permission
+  const { data, error } = await supabase
+    .from('role_permissions')
+    .select('permission_id, permissions(name)')
+    .eq('role', user.role)
+    .eq('permissions.name', permission);
+
+  if (error) {
+    console.error('Permission check error:', error);
+    return false;
+  }
+
+  return data.length > 0;
+};
+
+// For testing/mocking permissions during development
+export const mockPermissionCheck = (
+  userRole: string,
+  permission: string
+): boolean => {
+  // Simple permission mapping for development
+  const rolePermissions: Record<string, string[]> = {
+    admin: ['all'],
+    productManager: ['product:read', 'product:write', 'product:delete'],
+    orderPreparer: ['order:read', 'order:process'],
+    deliveryStaff: ['delivery:read', 'delivery:update'],
+    customer: ['profile:read', 'profile:update', 'order:create'],
+  };
+
+  const permissions = rolePermissions[userRole] || [];
+  
+  // Admin has all permissions
+  if (permissions.includes('all')) {
+    return true;
+  }
+  
+  return permissions.includes(permission);
 };

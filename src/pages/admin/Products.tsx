@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -39,7 +38,15 @@ const Products = () => {
         .order('date_added', { ascending: false });
       
       if (error) throw error;
-      return data as Product[];
+      
+      return data.map(item => ({
+        ...item,
+        dateAdded: new Date(item.date_added),
+        lastUpdated: new Date(item.last_updated),
+        subCategory: item.sub_category,
+        originalPrice: item.original_price,
+        addedBy: item.added_by
+      })) as Product[];
     }
   });
   

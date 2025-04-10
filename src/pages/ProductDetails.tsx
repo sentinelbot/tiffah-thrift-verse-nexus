@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -38,7 +39,16 @@ const ProductDetails = () => {
         .single();
       
       if (error) throw error;
-      return data as Product;
+      
+      // Map database fields to the Product interface
+      return {
+        ...data,
+        dateAdded: new Date(data.date_added),
+        lastUpdated: new Date(data.last_updated),
+        subCategory: data.sub_category,
+        originalPrice: data.original_price,
+        addedBy: data.added_by
+      } as Product;
     },
   });
   
@@ -84,16 +94,16 @@ const ProductDetails = () => {
           
           <div className="flex items-center mb-4">
             <span className="text-2xl font-semibold">KSh {product.price.toFixed(2)}</span>
-            {product.original_price && (
+            {product.originalPrice && (
               <span className="text-lg text-muted-foreground ml-2 line-through">
-                KSh {product.original_price.toFixed(2)}
+                KSh {product.originalPrice.toFixed(2)}
               </span>
             )}
           </div>
           
           <div className="mb-4">
             <Badge>{product.category}</Badge>
-            {product.sub_category && <Badge className="ml-2">{product.sub_category}</Badge>}
+            {product.subCategory && <Badge className="ml-2">{product.subCategory}</Badge>}
             {product.condition && <Badge className="ml-2">{product.condition}</Badge>}
           </div>
           
