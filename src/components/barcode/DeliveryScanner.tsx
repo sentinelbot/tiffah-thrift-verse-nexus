@@ -9,10 +9,11 @@ import { toast } from 'sonner';
 
 interface DeliveryScannerProps {
   onBack?: () => void;
+  onScan?: (code: string) => void;
   onScanComplete?: (deliveryId: string) => void;
 }
 
-const DeliveryScanner = ({ onBack, onScanComplete }: DeliveryScannerProps) => {
+const DeliveryScanner = ({ onBack, onScan, onScanComplete }: DeliveryScannerProps) => {
   const [scannedDelivery, setScannedDelivery] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -25,6 +26,9 @@ const DeliveryScanner = ({ onBack, onScanComplete }: DeliveryScannerProps) => {
       
       if (success) {
         setScannedDelivery(code);
+        if (onScan) {
+          onScan(code);
+        }
         if (onScanComplete) {
           onScanComplete(code);
         }
