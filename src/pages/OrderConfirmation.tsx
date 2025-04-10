@@ -114,7 +114,7 @@ const OrderConfirmation = () => {
       case 'outForDelivery':
         return 'default';
       case 'delivered':
-        return 'success';
+        return 'default'; // Changed from 'success' to 'default' to fix the TypeScript error
       case 'cancelled':
         return 'destructive';
       default:
