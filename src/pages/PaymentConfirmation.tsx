@@ -39,7 +39,7 @@ const PaymentConfirmationPage = () => {
       // No payment details found, redirect to home
       navigate('/');
     }
-  }, [location]);
+  }, [location, navigate]);
   
   return (
     <div className="min-h-screen flex flex-col">

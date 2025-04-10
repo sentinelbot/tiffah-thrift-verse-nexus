@@ -51,7 +51,7 @@ export function PaymentConfirmation({
           )}
           <div className="flex flex-col sm:flex-row gap-4 mt-6">
             <Button asChild>
-              <Link to={`/order-confirmation?id=${orderId}`}>
+              <Link to={`/order-confirmation/${orderId}`}>
                 View Order
               </Link>
             </Button>
