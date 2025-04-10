@@ -1,4 +1,3 @@
-
 import Quagga from '@ericblade/quagga2';
 import { openDB } from 'idb';
 import { supabase } from '@/integrations/supabase/client';
@@ -312,4 +311,77 @@ export const syncScans = async (): Promise<{ synced: number; failed: number }> =
   }
   
   return { synced, failed };
+};
+
+// Process delivery scan
+export const processDeliveryScan = async (
+  code: string,
+  userId: string,
+  userRole: string,
+  online: boolean
+): Promise<{
+  status: 'success' | 'error' | 'pending-sync';
+  result?: any;
+  error?: string;
+}> => {
+  // If offline, store scan locally
+  if (!online) {
+    const db = await dbPromise;
+    await db.add('pending-scans', {
+      type: 'delivery',
+      code,
+      userId,
+      userRole,
+      timestamp: new Date().toISOString(),
+    });
+    
+    return { status: 'pending-sync' };
+  }
+  
+  try {
+    // Process online - query the database
+    const { data, error } = await supabase
+      .from('delivery_info')
+      .select(`
+        id,
+        tracking_id,
+        order_id,
+        orders(order_number),
+        estimated_delivery,
+        actual_delivery,
+        recipient_name,
+        notes,
+        delivery_staff
+      `)
+      .eq('tracking_id', code)
+      .single();
+    
+    if (error) throw error;
+    
+    // Record scan in scan history
+    await supabase
+      .from('scan_history')
+      .insert({
+        barcode: code,
+        scan_type: 'delivery',
+        scanned_by: userId,
+        scan_result: 'success',
+      });
+    
+    return {
+      status: 'success',
+      result: {
+        id: data.id,
+        orderNumber: data.orders?.order_number || 'Unknown',
+        status: data.actual_delivery ? 'delivered' : 'inProgress',
+        deliveryTime: data.estimated_delivery
+      }
+    };
+  } catch (error) {
+    console.error('Error processing delivery scan:', error);
+    return {
+      status: 'error',
+      error: error.message || 'Failed to process scan'
+    };
+  }
 };

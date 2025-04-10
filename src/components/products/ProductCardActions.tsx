@@ -14,27 +14,33 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
   const { addToCart, addToWishlist } = useCart();
   
   const handleAddToCart = () => {
-    // Convert from ProductCard.ProductType to CartContext.ProductType
-    const contextProduct = {
-      ...product,
-      condition: product.condition || 'good', // Provide default if missing
-      originalPrice: product.originalPrice || undefined, // Handle originalPrice properly
+    // Format product to cart item
+    const cartItem = {
+      id: product.id,
+      name: product.title, // Map title to name
+      price: product.price,
+      imageUrl: product.imageUrl,
+      quantity: 1,
+      size: product.size
     };
     
     // Pass the product and quantity 1 as arguments
-    addToCart(contextProduct, 1);
+    addToCart(cartItem, 1);
     toast.success(`${product.title} added to cart`);
   };
   
   const handleAddToWishlist = () => {
-    // Convert from ProductCard.ProductType to CartContext.ProductType
-    const contextProduct = {
-      ...product,
-      condition: product.condition || 'good', // Provide default if missing
-      originalPrice: product.originalPrice || undefined, // Handle originalPrice properly
+    // Format product to wishlist item
+    const wishlistItem = {
+      id: product.id,
+      name: product.title, // Map title to name
+      price: product.price,
+      imageUrl: product.imageUrl,
+      quantity: 1,
+      size: product.size
     };
     
-    addToWishlist(contextProduct);
+    addToWishlist(wishlistItem);
     toast.success(`${product.title} added to wishlist`);
   };
   

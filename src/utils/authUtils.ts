@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
 
@@ -218,4 +217,24 @@ export const mockPermissionCheck = (
   }
   
   return permissions.includes(permission);
+};
+
+// Get scan history
+export const getScanHistory = async (limit: number = 50): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('scan_history')
+      .select('*')
+      .order('scan_time', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching scan history:', error);
+    return [];
+  }
 };

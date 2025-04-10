@@ -14,6 +14,12 @@ export interface Delivery {
   createdAt: Date;
   updatedAt?: Date;
   trackingCode?: string;
+  totalPrice?: number; // Added property
+  customerInfo?: {
+    name: string;
+    phone: string;
+    email?: string;
+  }; // Added property
 }
 
 export interface DeliveryItem {
@@ -22,6 +28,7 @@ export interface DeliveryItem {
   name: string;
   quantity: number;
   verified: boolean;
+  price?: number; // Added property for price
 }
 
 export interface DeliveryFilter {

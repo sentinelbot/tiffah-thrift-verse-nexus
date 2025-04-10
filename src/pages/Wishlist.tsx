@@ -1,4 +1,3 @@
-
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { Heart, ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useState } from "react";
 
 // Mock data for wishlist items - to be replaced with actual context integration
 const mockWishlistItems = [
@@ -29,22 +29,29 @@ const mockWishlistItems = [
 ];
 
 const Wishlist = () => {
-  const { cart, addToCart, removeFromCart } = useCart();
-  
-  // Since the current CartContext doesn't have wishlist functionality,
-  // we'll use mock data for the UI and implement placeholder functions
-  const wishlistItems = mockWishlistItems;
+  const { addToCart } = useCart();
+  const [wishlistItems, setWishlistItems] = useState(mockWishlistItems);
   
   const moveToCart = (productId: string) => {
     const product = wishlistItems.find(item => item.id === productId);
     if (product) {
-      addToCart(product, 1);
-      // In a real implementation, we would also remove from wishlist
+      const cartItem = {
+        id: product.id,
+        name: product.title,
+        price: product.price,
+        imageUrl: product.imageUrl,
+        quantity: 1,
+        size: product.size
+      };
+      
+      addToCart(cartItem, 1);
+      // Remove from wishlist
+      setWishlistItems(prev => prev.filter(item => item.id !== productId));
     }
   };
   
   const removeFromWishlist = (productId: string) => {
-    // This would remove the item from wishlist in a real implementation
+    setWishlistItems(prev => prev.filter(item => item.id !== productId));
   };
   
   return (
