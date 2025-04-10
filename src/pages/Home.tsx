@@ -61,13 +61,13 @@ const Home: React.FC = () => {
   const testimonials = [
     {
       id: '1',
-      quote: 'I found the most amazing vintage dress for my sister's wedding. So many compliments!',
+      quote: 'I found the most amazing vintage dress for my sister\'s wedding. So many compliments!',
       author: 'Aisha W.',
       location: 'Nairobi'
     },
     {
       id: '2',
-      quote: 'The quality of items here is incredible. You wouldn't believe they're second-hand.',
+      quote: 'The quality of items here is incredible. You wouldn\'t believe they\'re second-hand.',
       author: 'Michael K.',
       location: 'Mombasa'
     },

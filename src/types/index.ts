@@ -1,25 +1,26 @@
 
+// Common Types for the Tiffah Thrift Store
 export interface User {
   id: string;
   email: string;
-  name: string;
-  role: string;
+  name?: string;
+  role?: string;
+  phone?: string;
+  avatar?: string;
 }
 
-export interface AuthContextType {
-  user: User | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name?: string, role?: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  isLoading: boolean;
-  updateProfile: (data: Partial<User>) => Promise<void>;
-  refreshUserData: () => Promise<void>;
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  parentId?: string;
+  slug?: string;
+  image?: string;
 }
 
 export interface Product {
   id: string;
   name: string;
-  title?: string;
   description?: string;
   price: number;
   originalPrice?: number;
@@ -31,13 +32,12 @@ export interface Product {
   brand?: string;
   condition: 'new' | 'likeNew' | 'good' | 'fair';
   images?: ProductImage[];
-  imageUrl?: string;
   barcode: string;
   status: 'available' | 'reserved' | 'sold';
-  dateAdded: Date;
-  lastUpdated: Date;
+  dateAdded: Date | string;
+  lastUpdated: Date | string;
   addedBy?: string;
-  featured: boolean;
+  featured?: boolean;
   measurements?: {
     chest?: number;
     waist?: number;
@@ -45,43 +45,191 @@ export interface Product {
     [key: string]: number | undefined;
   };
   inventoryTracking?: {
-    inStockDate?: Date;
-    reservedUntil?: Date;
-    soldDate?: Date;
+    inStockDate?: Date | string;
+    reservedUntil?: Date | string;
+    soldDate?: Date | string;
   };
 }
 
 export interface ProductImage {
-  id: string;
+  id?: string;
   url: string;
   alt?: string;
-  isMain: boolean;
-  displayOrder: number;
+  isMain?: boolean;
 }
 
 export interface CartItem {
   id: string;
+  productId: string;
   name: string;
   price: number;
-  imageUrl: string;
   quantity: number;
-  product?: Product;
-  reservedUntil?: Date;
+  image?: string;
+  size?: string;
+  color?: string;
 }
 
-export interface Category {
+export interface Customer {
   id: string;
   name: string;
-  description?: string;
-  parentId?: string;
-  children?: Category[];
+  email: string;
+  phone?: string;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
+export type OrderStatus = 
+  | 'pending'
+  | 'processing'
+  | 'ready'
+  | 'outForDelivery'
+  | 'delivered'
+  | 'cancelled';
+
+export type PaymentMethod = 
+  | 'mpesa'
+  | 'card'
+  | 'paypal'
+  | 'cash';
+
+export type PaymentStatus = 
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'refunded';
+
+export type ShippingMethod = 
+  | 'standard'
+  | 'express'
+  | 'pickup';
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  productId: string;
+  product?: Product;
+  quantity: number;
+  price: number;
+}
+
+export interface DeliveryInfo {
+  method: ShippingMethod;
+  cost: number;
+  estimatedDelivery: Date | string;
+  actualDelivery?: Date | string;
+  trackingId?: string;
+  deliveryStaff?: string;
+}
+
+export interface PaymentInfo {
+  method: PaymentMethod;
+  transactionId?: string;
+  status: PaymentStatus;
+  amount: number;
+}
+
+export interface ShippingAddress {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  specialInstructions?: string;
+  shippingMethod: ShippingMethod;
+}
+
+export interface OrderHistory {
+  timestamp: Date | string;
+  status: OrderStatus;
+  note?: string;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  customer: Customer;
+  items: OrderItem[];
+  totalAmount: number;
+  status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  paymentTransactionId?: string;
+  paymentInfo?: PaymentInfo;
+  shippingInfo?: ShippingAddress;
+  deliveryInfo?: DeliveryInfo;
+  orderDate: Date | string;
+  createdAt: Date | string;
+  processedBy?: string;
+  notes?: string;
+  barcodeData?: string;
+  history?: OrderHistory[];
+}
+
+export type DeliveryStatus = 
+  | 'ready'
+  | 'assigned'
+  | 'intransit'
+  | 'delivered'
+  | 'failed';
+
+export interface DeliveryAddress {
+  street: string;
+  city: string;
+  postalCode: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+}
+
+export interface DeliveryProof {
+  photo?: string;
+  signature?: string;
+  notes?: string;
+}
+
+export interface Delivery {
+  id: string;
+  orderNumber: string;
+  trackingId: string;
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  status: DeliveryStatus;
+  items: {
+    id: string;
+    name: string;
+    quantity: number;
+  }[];
+  totalAmount: number;
+  shippingMethod: ShippingMethod;
+  address: DeliveryAddress;
+  assignedAt: Date | string;
+  estimatedDelivery: Date | string;
+  actualDelivery?: Date | string;
+  pickedUpAt?: Date | string;
+  attemptedDelivery?: Date | string;
+  failureReason?: string;
+  priority: 'high' | 'normal' | 'low';
+  distance: number;
+  notes?: string;
+  deliveryProof?: DeliveryProof;
+}
+
+export interface ScanHistory {
+  id: string;
+  barcode: string;
+  scan_type: 'product' | 'order' | 'delivery' | 'unknown';
+  scan_time: Date | string;
+  location?: string;
+  result?: string;
+  status: 'success' | 'error';
+  scanned_by?: string;
+  device_info?: string;
 }
 
 export interface PrintJob {
@@ -90,110 +238,9 @@ export interface PrintJob {
   content: string;
   printerId: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
+  createdAt: Date | string;
+  processedAt?: Date | string;
   error?: string;
-  requestedBy?: string;
   relatedId?: string;
-  createdAt: Date;
-  processedAt?: Date;
-}
-
-// Analytics Types
-export interface SalesData {
-  date: string;
-  revenue: number;
-  orders: number;
-  averageOrderValue: number;
-}
-
-export interface SalesByCategory {
-  category: string;
-  revenue: number;
-  units: number;
-  percentage: number;
-}
-
-export interface InventoryStatus {
-  category: string;
-  inStock: number;
-  lowStock: number;
-  outOfStock: number;
-  totalValue: number;
-}
-
-export interface StaffPerformanceData {
-  staffId: string;
-  name: string;
-  role: string;
-  ordersProcessed: number;
-  itemsProcessed: number;
-  averageTime: number;
-  rating: number;
-}
-
-export interface CustomerBehavior {
-  metric: string;
-  value: number;
-  previousValue: number;
-  change: number;
-  count?: number;
-  averageSpend?: number;
-  repeatRate?: number;
-  averageItemsPerOrder?: number;
-}
-
-export interface MarketingEffectiveness {
-  channel: string;
-  visits: number;
-  conversions: number;
-  revenue: number;
-  roi: number;
-}
-
-export interface SystemPerformance {
-  metric: string;
-  value: number;
-  target: number;
-  status: 'good' | 'warning' | 'critical';
-  pageLoadTime?: number;
-  serverResponseTime?: number;
-  errorRate?: number;
-  userSatisfaction?: number;
-}
-
-// Extended CartContext Types
-export interface ProductType {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-  title?: string;
-}
-
-export interface WishlistItem {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-  addedOn: Date;
-  title?: string;
-  originalPrice?: number;
-  size?: string;
-}
-
-export interface ExtendedCartContextType {
-  items: CartItem[];
-  wishlistItems: WishlistItem[];
-  addItem: (item: CartItem) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
-  clearCart: () => void;
-  getCartTotal: () => number;
-  getItemCount: () => number;
-  addToCart: (product: ProductType) => void;
-  removeFromCart: (id: string) => void;
-  addToWishlist: (product: ProductType) => void;
-  removeFromWishlist: (id: string) => void;
-  moveToCart: (id: string) => void;
-  cartItems: CartItem[];
-  calculateCartTotal: () => number;
+  requestedBy?: string;
 }

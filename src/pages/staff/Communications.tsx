@@ -1,733 +1,424 @@
 
 import React, { useState } from 'react';
 import StaffLayout from '@/components/layout/StaffLayout';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { MessageCircle, Send, Search, Bell, Pin, Paperclip, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Search,
-  Send,
-  MessageSquare,
-  User,
-  Phone,
-  Mail,
-  FileText,
-  PackageCheck,
-  ShoppingBag,
-  Truck,
-  Package,
-  Calendar,
-  ChevronRight,
-  AlertCircle,
-  Check,
-  X,
-  XCircle,
-  Filter,
-  Bell,
-  RefreshCw,
-} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Types for the chat data
-interface Customer {
-  id: string;
-  name: string;
-  avatar: string | null;
-  email: string;
-  phone: string;
-}
-
-interface Message {
-  id: string;
-  text: string;
-  timestamp: Date;
-  sender: 'customer' | 'staff';
-}
-
-interface Chat {
-  id: string;
-  customer: Customer;
-  lastMessage: {
-    text: string;
-    timestamp: Date;
-    sender: 'customer' | 'staff';
-  };
-  orderId: string | null;
-  status: 'active' | 'resolved';
-  priority: 'high' | 'medium' | 'low';
-  unread: number;
-}
-
-const Communications = () => {
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const [messageText, setMessageText] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<string>('all');
-
-  // Mock customer support chats
-  const mockChats: Chat[] = [
+const Communications: React.FC = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('messages');
+  const [newMessage, setNewMessage] = useState('');
+  
+  // Mock data for communications
+  const conversations = [
+    { 
+      id: '1', 
+      name: 'Admin Team', 
+      avatar: '', 
+      lastMessage: 'New inventory received today', 
+      time: '10:23 AM', 
+      unread: 2,
+      isGroup: true,
+      members: ['Jane', 'John', 'Sarah', 'Michael']
+    },
+    { 
+      id: '2', 
+      name: 'Sarah Johnson', 
+      avatar: '', 
+      lastMessage: 'The new labels are ready for printing', 
+      time: 'Yesterday', 
+      unread: 0,
+      isGroup: false
+    },
+    { 
+      id: '3', 
+      name: 'Delivery Team', 
+      avatar: '', 
+      lastMessage: 'Routes for tomorrow are set', 
+      time: 'Yesterday', 
+      unread: 3,
+      isGroup: true,
+      members: ['David', 'Grace', 'Robert', 'Emma']
+    },
+    { 
+      id: '4', 
+      name: 'Michael Brown', 
+      avatar: '', 
+      lastMessage: 'I\'ve prepared the monthly inventory report', 
+      time: 'Monday', 
+      unread: 0,
+      isGroup: false
+    },
+  ];
+  
+  const announcements = [
     {
       id: '1',
-      customer: {
-        id: 'c1',
-        name: 'Sarah Johnson',
-        avatar: null,
-        email: 'sarah.j@example.com',
-        phone: '+254712345678',
-      },
-      lastMessage: {
-        text: 'I still haven\'t received my order #TTS-20250405-1234. It\'s been 5 days now.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30),
-        sender: 'customer',
-      },
-      orderId: 'TTS-20250405-1234',
-      status: 'active',
-      priority: 'high',
-      unread: 3,
+      title: 'System Maintenance',
+      content: 'The system will be under maintenance this Saturday from 11 PM to 2 AM. Please complete all pending tasks before this time.',
+      date: '2025-04-08T10:00:00',
+      author: 'System Admin',
+      priority: 'high'
     },
     {
       id: '2',
-      customer: {
-        id: 'c2',
-        name: 'Michael Kimani',
-        avatar: null,
-        email: 'michael.k@example.com',
-        phone: '+254723456789',
-      },
-      lastMessage: {
-        text: 'Thanks for the quick response. I'll check with my bank.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 120),
-        sender: 'customer',
-      },
-      orderId: 'TTS-20250403-5678',
-      status: 'active',
-      priority: 'medium',
-      unread: 0,
+      title: 'New Shipping Partner',
+      content: 'We are pleased to announce our partnership with FastShip for rural area deliveries. Training session will be held next Tuesday.',
+      date: '2025-04-07T14:30:00',
+      author: 'Operations Manager',
+      priority: 'medium'
     },
     {
       id: '3',
-      customer: {
-        id: 'c3',
-        name: 'Amina Wanjiku',
-        avatar: null,
-        email: 'amina.w@example.com',
-        phone: '+254734567890',
-      },
-      lastMessage: {
-        text: 'Do you have this dress in size M?',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-        sender: 'staff',
-      },
-      orderId: null,
-      status: 'active',
-      priority: 'low',
-      unread: 0,
+      title: 'Updated Return Policy',
+      content: 'Please note that our return policy has been updated. All staff should review the new guidelines in the knowledge base.',
+      date: '2025-04-05T09:15:00',
+      author: 'Customer Service Lead',
+      priority: 'medium'
+    },
+  ];
+  
+  const knowledgeBase = [
+    {
+      id: '1',
+      title: 'Product Quality Assessment Guide',
+      category: 'Inventory',
+      lastUpdated: '2025-04-01',
+      views: 156
+    },
+    {
+      id: '2',
+      title: 'Shipping and Delivery SOP',
+      category: 'Logistics',
+      lastUpdated: '2025-03-25',
+      views: 98
+    },
+    {
+      id: '3',
+      title: 'Customer Service Guidelines',
+      category: 'Support',
+      lastUpdated: '2025-03-20',
+      views: 143
     },
     {
       id: '4',
-      customer: {
-        id: 'c4',
-        name: 'David Omondi',
-        avatar: null,
-        email: 'david.o@example.com',
-        phone: '+254745678901',
-      },
-      lastMessage: {
-        text: 'Issue resolved. Thank you for your help.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-        sender: 'customer',
-      },
-      orderId: 'TTS-20250401-9012',
-      status: 'resolved',
-      priority: 'low',
-      unread: 0,
+      title: 'Barcode Scanning Instructions',
+      category: 'Operations',
+      lastUpdated: '2025-03-15',
+      views: 87
+    },
+    {
+      id: '5',
+      title: 'Product Pricing Strategy',
+      category: 'Sales',
+      lastUpdated: '2025-03-10',
+      views: 112
     },
   ];
-
-  // Mock messages for the selected chat
-  const mockMessages: Message[] = [
-    {
-      id: 'm1',
-      text: 'I still haven\'t received my order #TTS-20250405-1234. It\'s been 5 days now.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-      sender: 'customer',
-    },
-    {
-      id: 'm2',
-      text: 'I'm sorry to hear that. Let me check the status for you right away.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 28),
-      sender: 'staff',
-    },
-    {
-      id: 'm3',
-      text: 'I've checked and it looks like your order is currently with our delivery team. There was a slight delay due to high volume.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 25),
-      sender: 'staff',
-    },
-    {
-      id: 'm4',
-      text: 'When can I expect to receive it? I need it for an event this weekend.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 20),
-      sender: 'customer',
-    },
-    {
-      id: 'm5',
-      text: 'I understand your concern. I've flagged your order for priority delivery. You should receive it by tomorrow. I'll send you the tracking details in a moment.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 18),
-      sender: 'staff',
-    },
-    {
-      id: 'm6',
-      text: 'Thank you! I appreciate the quick response.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 15),
-      sender: 'customer',
-    },
-    {
-      id: 'm7',
-      text: 'Here is your tracking number: TRK-123456. You can use this to follow your delivery in real-time.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 10),
-      sender: 'staff',
-    },
-    {
-      id: 'm8',
-      text: 'Perfect, thank you!',
-      timestamp: new Date(Date.now() - 1000 * 60 * 8),
-      sender: 'customer',
-    },
-    {
-      id: 'm9',
-      text: 'Actually, I just realized I might not be home tomorrow. Is it possible to have it delivered on Saturday instead?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5),
-      sender: 'customer',
-    },
-    {
-      id: 'm10',
-      text: 'Of course! I've updated your delivery preference for Saturday. The driver will call you before arriving.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 3),
-      sender: 'staff',
-    },
-  ];
-
-  // Format timestamp for display
-  const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+  
+  const selectedConversation = {
+    id: '1',
+    name: 'Admin Team',
+    avatar: '',
+    isGroup: true,
+    members: ['Jane', 'John', 'Sarah', 'Michael'],
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Jane',
+        avatar: '',
+        content: 'Good morning team! We have a new shipment arriving today.',
+        time: '9:45 AM',
+        isCurrentUser: false
+      },
+      {
+        id: 'm2',
+        sender: 'John',
+        avatar: '',
+        content: 'What time should we expect it?',
+        time: '9:47 AM',
+        isCurrentUser: false
+      },
+      {
+        id: 'm3',
+        sender: 'Sarah',
+        avatar: '',
+        content: 'Around 11 AM. I\'ll need help with inventory processing.',
+        time: '9:50 AM',
+        isCurrentUser: false
+      },
+      {
+        id: 'm4',
+        sender: user?.name || 'You',
+        avatar: '',
+        content: 'I can help with that. I\'ll be available after my current task.',
+        time: '10:15 AM',
+        isCurrentUser: true
+      },
+      {
+        id: 'm5',
+        sender: 'Jane',
+        avatar: '',
+        content: 'Thank you! Also, remember we have a team meeting at 2 PM today.',
+        time: '10:23 AM',
+        isCurrentUser: false
+      },
+    ]
   };
-
-  // Format date for display
-  const formatDate = (date: Date) => {
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else {
-      return new Intl.DateTimeFormat('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }).format(date);
+  
+  const handleSendMessage = () => {
+    if (newMessage.trim() === '') return;
+    
+    // In a real app, this would send the message to the backend
+    toast.success('Message sent successfully');
+    setNewMessage('');
+  };
+  
+  const getPriorityBadge = (priority: string) => {
+    switch(priority) {
+      case 'high':
+        return <Badge className="bg-red-500">High</Badge>;
+      case 'medium':
+        return <Badge className="bg-orange-500">Medium</Badge>;
+      default:
+        return <Badge>Low</Badge>;
     }
   };
-
-  const handleSendMessage = () => {
-    if (!messageText.trim()) return;
-
-    toast.success('Message sent');
-    setMessageText('');
+  
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
-
-  // Filter chats based on search and active tab
-  const filteredChats = mockChats.filter((chat) => {
-    // Apply search filter
-    const matchesSearch =
-      searchQuery === '' ||
-      chat.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (chat.orderId && chat.orderId.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    // Apply tab filter
-    const matchesTab =
-      activeTab === 'all' ||
-      (activeTab === 'unread' && chat.unread > 0) ||
-      (activeTab === 'active' && chat.status === 'active') ||
-      (activeTab === 'resolved' && chat.status === 'resolved');
-
-    return matchesSearch && matchesTab;
-  });
-
+  
   return (
     <StaffLayout>
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">Customer Communications</h1>
-            <Button variant="outline" onClick={() => toast.info('Refreshing messages...')}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Communications Hub</h1>
+            <p className="text-muted-foreground">Stay connected with your team and access important information</p>
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left sidebar - Chat list */}
-            <Card className="lg:col-span-1">
-              <CardHeader className="space-y-4 pb-3">
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name or order number"
-                    className="pl-8"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="w-full">
-                    <TabsTrigger value="all" className="flex-1">
-                      All
-                    </TabsTrigger>
-                    <TabsTrigger value="unread" className="flex-1">
-                      Unread
-                      <Badge className="ml-2 bg-primary">{mockChats.filter(c => c.unread > 0).length}</Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="active" className="flex-1">
-                      Active
-                    </TabsTrigger>
-                    <TabsTrigger value="resolved" className="flex-1">
-                      Resolved
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ScrollArea className="h-[calc(100vh-320px)]">
-                  {filteredChats.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-40 text-center px-4">
-                      <MessageSquare className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">No conversations found</p>
-                    </div>
-                  ) : (
-                    <div className="divide-y">
-                      {filteredChats.map((chat) => (
-                        <div
-                          key={chat.id}
-                          className={`p-3 cursor-pointer hover:bg-accent transition-colors ${
-                            selectedChat?.id === chat.id ? 'bg-accent' : ''
-                          }`}
-                          onClick={() => setSelectedChat(chat)}
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="messages">
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Messages
+            </TabsTrigger>
+            <TabsTrigger value="announcements">
+              <Bell className="mr-2 h-4 w-4" />
+              Announcements
+            </TabsTrigger>
+            <TabsTrigger value="knowledge">
+              <Users className="mr-2 h-4 w-4" />
+              Knowledge Base
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="messages" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-280px)]">
+              {/* Conversations list */}
+              <Card className="col-span-1 overflow-hidden">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-lg">Conversations</CardTitle>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Search messages..." className="pl-8" />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[calc(100vh-380px)]">
+                    <div className="space-y-0 divide-y">
+                      {conversations.map((conversation) => (
+                        <div 
+                          key={conversation.id} 
+                          className={`p-3 hover:bg-muted/50 cursor-pointer ${conversation.id === '1' ? 'bg-muted' : ''}`}
                         >
-                          <div className="flex items-start gap-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={chat.customer.avatar || ''} alt={chat.customer.name} />
-                              <AvatarFallback>{chat.customer.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarImage src={conversation.avatar} />
+                              <AvatarFallback>
+                                {conversation.isGroup ? 
+                                  <Users className="h-4 w-4" /> : 
+                                  conversation.name.charAt(0)}
+                              </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <div className="font-medium truncate">{chat.customer.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {formatTime(chat.lastMessage.timestamp)}
-                                </div>
+                              <div className="flex justify-between items-start">
+                                <p className="font-medium truncate">{conversation.name}</p>
+                                <span className="text-xs text-muted-foreground">{conversation.time}</span>
                               </div>
-                              <div className="flex items-center justify-between mt-1">
-                                <div className="text-sm text-muted-foreground truncate max-w-[160px]">
-                                  {chat.lastMessage.text}
-                                </div>
-                                {chat.unread > 0 && (
-                                  <Badge className="bg-primary">{chat.unread}</Badge>
+                              <p className="text-sm text-muted-foreground truncate">{conversation.lastMessage}</p>
+                            </div>
+                            {conversation.unread > 0 && (
+                              <Badge className="ml-auto">{conversation.unread}</Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+              
+              {/* Chat area */}
+              <Card className="col-span-2 flex flex-col overflow-hidden">
+                <CardHeader className="p-4 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={selectedConversation.avatar} />
+                        <AvatarFallback>
+                          {selectedConversation.isGroup ? 
+                            <Users className="h-4 w-4" /> : 
+                            selectedConversation.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-lg">{selectedConversation.name}</CardTitle>
+                        {selectedConversation.isGroup && (
+                          <CardDescription>
+                            {selectedConversation.members.join(', ')}
+                          </CardDescription>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-1 p-4 overflow-auto" style={{ maxHeight: 'calc(100vh - 470px)' }}>
+                  <ScrollArea className="h-full pr-4">
+                    <div className="space-y-4">
+                      {selectedConversation.messages.map((message) => (
+                        <div 
+                          key={message.id} 
+                          className={`flex ${message.isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div className={`flex gap-2 max-w-[80%] ${message.isCurrentUser ? 'flex-row-reverse' : ''}`}>
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={message.avatar} />
+                              <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className={`rounded-lg px-3 py-2 ${message.isCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                {!message.isCurrentUser && (
+                                  <p className="text-xs font-medium mb-1">{message.sender}</p>
                                 )}
+                                <p>{message.content}</p>
                               </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                {chat.orderId && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {chat.orderId}
-                                  </Badge>
-                                )}
-                                <Badge
-                                  variant={
-                                    chat.priority === 'high'
-                                      ? 'destructive'
-                                      : chat.priority === 'medium'
-                                      ? 'secondary'
-                                      : 'outline'
-                                  }
-                                  className="text-xs"
-                                >
-                                  {chat.priority}
-                                </Badge>
-                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">{message.time}</p>
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            {/* Right side - Chat and Customer Info */}
-            <Card className="lg:col-span-2">
-              {selectedChat ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 h-full divide-x">
-                  {/* Chat area */}
-                  <div className="md:col-span-2 flex flex-col h-[calc(100vh-160px)]">
-                    <CardHeader className="pb-3 border-b">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={selectedChat.customer.avatar || ''} alt={selectedChat.customer.name} />
-                            <AvatarFallback>
-                              {selectedChat.customer.name.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-medium">{selectedChat.customer.name}</h3>
-                            {selectedChat.orderId && (
-                              <div className="text-xs text-muted-foreground">
-                                Order: {selectedChat.orderId}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Phone className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                          {selectedChat.status === 'active' ? (
-                            <Button
-                              variant="outline"
-                              className="text-xs"
-                              onClick={() => toast.success('Conversation marked as resolved')}
-                            >
-                              <Check className="h-3 w-3 mr-1" />
-                              Resolve
-                            </Button>
-                          ) : (
-                            <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                              Resolved
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </CardHeader>
-
-                    <ScrollArea className="flex-1 p-4">
-                      {/* Messages */}
-                      <div className="space-y-4">
-                        {mockMessages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`flex ${
-                              message.sender === 'staff' ? 'justify-end' : 'justify-start'
-                            }`}
-                          >
-                            <div
-                              className={`max-w-[80%] rounded-lg p-3 ${
-                                message.sender === 'staff'
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-muted'
-                              }`}
-                            >
-                              <div className="text-sm">{message.text}</div>
-                              <div
-                                className={`text-xs mt-1 ${
-                                  message.sender === 'staff'
-                                    ? 'text-primary-foreground/80'
-                                    : 'text-muted-foreground'
-                                }`}
-                              >
-                                {formatTime(message.timestamp)}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-
-                    <CardFooter className="p-3 border-t">
-                      <div className="flex w-full items-center gap-2">
-                        <Input
-                          placeholder="Type your message..."
-                          value={messageText}
-                          onChange={(e) => setMessageText(e.target.value)}
-                          className="flex-1"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }}
-                        />
-                        <Button onClick={handleSendMessage} disabled={!messageText.trim()}>
-                          <Send className="h-4 w-4 mr-2" />
-                          Send
-                        </Button>
-                      </div>
-                    </CardFooter>
-                  </div>
-
-                  {/* Customer info sidebar */}
-                  <div className="hidden md:block md:col-span-1">
-                    <ScrollArea className="h-[calc(100vh-160px)]">
-                      <div className="p-4">
-                        <h3 className="font-medium mb-4">Customer Information</h3>
-
-                        <div className="space-y-4">
-                          <div>
-                            <div className="text-sm text-muted-foreground">Customer ID</div>
-                            <div>{selectedChat.customer.id}</div>
-                          </div>
-
-                          <div>
-                            <div className="text-sm text-muted-foreground">Contact</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Mail className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-sm">{selectedChat.customer.email}</span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Phone className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-sm">{selectedChat.customer.phone}</span>
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          {selectedChat.orderId ? (
-                            <div>
-                              <div className="text-sm text-muted-foreground">Related Order</div>
-                              <div className="mt-2 p-3 border rounded-md">
-                                <div className="flex items-center justify-between">
-                                  <Badge variant="outline">{selectedChat.orderId}</Badge>
-                                  <Badge variant="secondary">Processing</Badge>
-                                </div>
-
-                                <div className="mt-3 space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm">2 items</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm">Ordered on Apr 5, 2025</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Package className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm">Packed, awaiting delivery</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Truck className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm">Est. delivery: Apr 12, 2025</span>
-                                  </div>
-                                </div>
-
-                                <Button variant="ghost" size="sm" className="w-full mt-3">
-                                  <FileText className="h-4 w-4 mr-1" />
-                                  View Full Order
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div>
-                              <div className="text-sm text-muted-foreground">No related order</div>
-                              <p className="text-sm mt-1">
-                                This is a general inquiry not linked to a specific order.
-                              </p>
-                            </div>
-                          )}
-
-                          <Separator />
-
-                          <div>
-                            <div className="text-sm text-muted-foreground">Quick Responses</div>
-                            <div className="mt-2 space-y-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full justify-start"
-                                onClick={() =>
-                                  setMessageText(
-                                    "Thank you for contacting us. I'll look into this right away and get back to you as soon as possible."
-                                  )
-                                }
-                              >
-                                Initial Response
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full justify-start"
-                                onClick={() =>
-                                  setMessageText(
-                                    "I've checked your order status and it's currently being processed. You should receive it within the next 2-3 business days."
-                                  )
-                                }
-                              >
-                                Order Status
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full justify-start"
-                                onClick={() =>
-                                  setMessageText(
-                                    "I apologize for the inconvenience. I'd be happy to help resolve this issue. Could you please provide more details?"
-                                  )
-                                }
-                              >
-                                Issue Response
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full justify-start"
-                                onClick={() =>
-                                  setMessageText(
-                                    "Is there anything else I can help you with today? Please don't hesitate to ask."
-                                  )
-                                }
-                              >
-                                Follow-up
-                              </Button>
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          <div>
-                            <div className="text-sm text-muted-foreground">Notes</div>
-                            <Textarea
-                              placeholder="Add notes about this customer (only visible to staff)"
-                              className="mt-2"
-                            />
-                            <Button className="w-full mt-2" variant="outline" size="sm">
-                              Save Notes
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </ScrollArea>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[calc(100vh-160px)] text-center px-4">
-                  <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-medium mb-2">No Conversation Selected</h3>
-                  <p className="text-muted-foreground max-w-md mb-4">
-                    Select a conversation from the list to view messages and customer details.
-                  </p>
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* Staff Communication Templates */}
-          <div className="mt-6">
-            <h2 className="text-xl font-semibold mb-4">Staff Communication Templates</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Template 1 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Order Delivery Update</CardTitle>
-                  <CardDescription>Use this template for delivery status updates</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-2">Template preview:</p>
-                  <div className="p-3 bg-muted rounded-md text-sm">
-                    Hello [Customer Name], <br /><br />
-                    We're pleased to inform you that your order #[Order Number] has been [Status]. <br /><br />
-                    [Additional Details] <br /><br />
-                    If you have any questions, please reply to this message. <br /><br />
-                    Thank you for shopping with Tiffah Thrift Store!
-                  </div>
+                  </ScrollArea>
                 </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" onClick={() => toast.success('Template copied')}>
-                    Use Template
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              {/* Template 2 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Order Delay Notification</CardTitle>
-                  <CardDescription>Use this template for delayed deliveries</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-2">Template preview:</p>
-                  <div className="p-3 bg-muted rounded-md text-sm">
-                    Hello [Customer Name], <br /><br />
-                    We regret to inform you that your order #[Order Number] has been delayed due to [Reason]. <br /><br />
-                    The new estimated delivery date is [New Date]. <br /><br />
-                    We sincerely apologize for any inconvenience this may cause. <br /><br />
-                    Thank you for your understanding.
+                <CardFooter className="p-4 border-t">
+                  <div className="flex items-center gap-2 w-full">
+                    <Button variant="outline" size="icon">
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      placeholder="Type your message..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                      className="flex-1"
+                    />
+                    <Button onClick={handleSendMessage}>
+                      <Send className="h-4 w-4 mr-2" />
+                      Send
+                    </Button>
                   </div>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" onClick={() => toast.success('Template copied')}>
-                    Use Template
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              {/* Template 3 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Product Inquiry Response</CardTitle>
-                  <CardDescription>Use this template for product questions</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-2">Template preview:</p>
-                  <div className="p-3 bg-muted rounded-md text-sm">
-                    Hello [Customer Name], <br /><br />
-                    Thank you for your interest in [Product Name]. <br /><br />
-                    Regarding your question about [Topic], [Answer]. <br /><br />
-                    Please let me know if you have any other questions!
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" onClick={() => toast.success('Template copied')}>
-                    Use Template
-                  </Button>
                 </CardFooter>
               </Card>
             </div>
-          </div>
-        </div>
+          </TabsContent>
+          
+          <TabsContent value="announcements" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Company Announcements</CardTitle>
+                <CardDescription>Important updates and notifications</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {announcements.map((announcement) => (
+                    <div key={announcement.id} className="space-y-2 border-b pb-4 last:border-0">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">{announcement.title}</h3>
+                          {getPriorityBadge(announcement.priority)}
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <time dateTime={announcement.date}>{formatDate(announcement.date)}</time>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Pin className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-muted-foreground">{announcement.content}</p>
+                      <p className="text-sm text-muted-foreground">Posted by: {announcement.author}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="knowledge" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Knowledge Base</CardTitle>
+                <CardDescription>Access training materials and standard operating procedures</CardDescription>
+                <div className="relative mt-2">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Search knowledge base..." className="pl-8" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {knowledgeBase.map((item) => (
+                    <Card key={item.id} className="cursor-pointer hover:bg-muted/50">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-medium">{item.title}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline">{item.category}</Badge>
+                              <p className="text-xs text-muted-foreground">
+                                Updated: {item.lastUpdated} • {item.views} views
+                              </p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">View</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="w-full">Browse All Resources</Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </StaffLayout>
   );
