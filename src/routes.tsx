@@ -2,7 +2,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
-// Import all page components individually
+// Import all page components individually 
 import Index from "./pages/Index";
 import ProductDetails from "./pages/ProductDetails"; 
 import TrackOrderPage from "./pages/TrackOrderPage";
@@ -23,14 +23,12 @@ import AdminRoutes from "./routes/AdminRoutes";
 import StaffRoutes from "./routes/StaffRoutes";
 import DeliveryReports from "./pages/staff/DeliveryReports";
 
-// Import App last to avoid circular dependencies
-import App from "./App";
-
-// Define the router configuration without directly referencing App
-const routes = [
+// Create the router without any references to App
+const router = createBrowserRouter([
   {
     path: "/",
-    element: null, // Will be replaced with App component when router is created
+    // We'll use a simple container here instead of App
+    element: <div id="app-container"></div>,
     children: [
       {
         index: true,
@@ -118,19 +116,6 @@ const routes = [
       },
     ],
   },
-];
-
-// Create the router with App component as the root element
-const router = createBrowserRouter(
-  routes.map(route => {
-    if (route.path === "/") {
-      return {
-        ...route,
-        element: <App />, // Set the App component here after all imports are processed
-      };
-    }
-    return route;
-  })
-);
+]);
 
 export { router };

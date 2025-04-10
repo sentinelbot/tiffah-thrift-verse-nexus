@@ -1,6 +1,5 @@
 
-import { RouterProvider } from "react-router-dom";
-import { router } from "./routes";
+import { Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
 import "./App.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -26,7 +25,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <Outlet />
       <Toaster position="top-right" richColors closeButton />
       <ConnectivityIndicator />
     </QueryClientProvider>

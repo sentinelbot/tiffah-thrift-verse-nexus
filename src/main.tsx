@@ -1,6 +1,7 @@
 
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
+import { RouterProvider } from "react-router-dom";
+import { router } from "./routes";
 import './index.css'
 import './styles/animations.css'
 import { toast } from 'sonner';
@@ -63,5 +64,7 @@ window.addEventListener('online', () => {
   });
 });
 
-// Initialize the app
-createRoot(document.getElementById("root")!).render(<App />);
+// Initialize the app with the router
+createRoot(document.getElementById("root")!).render(
+  <RouterProvider router={router} />
+);
