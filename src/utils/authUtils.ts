@@ -63,17 +63,18 @@ export const getUserRoles = async (): Promise<string[]> => {
       return [];
     }
 
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.user.id);
+    // Call the function to get user roles
+    const { data, error } = await supabase.rpc('get_user_roles', { 
+      user_id: userData.user.id 
+    });
 
     if (error) {
       console.error('Error fetching user roles:', error);
       return [];
     }
 
-    return data.map(item => item.role);
+    // The function returns an array of roles
+    return data || [];
   } catch (error) {
     console.error('Error in getUserRoles:', error);
     return [];
@@ -87,9 +88,10 @@ export const getUserRoles = async (): Promise<string[]> => {
  */
 export const addRole = async (userId: string, role: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('user_roles')
-      .insert([{ user_id: userId, role }]);
+    const { error } = await supabase.rpc('add_user_role', { 
+      p_user_id: userId, 
+      p_role: role 
+    });
 
     if (error) {
       console.error('Error adding role:', error);
@@ -110,11 +112,10 @@ export const addRole = async (userId: string, role: string): Promise<boolean> =>
  */
 export const removeRole = async (userId: string, role: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId)
-      .eq('role', role);
+    const { error } = await supabase.rpc('remove_user_role', { 
+      p_user_id: userId, 
+      p_role: role 
+    });
 
     if (error) {
       console.error('Error removing role:', error);
@@ -134,20 +135,17 @@ export const removeRole = async (userId: string, role: string): Promise<boolean>
  */
 export const getDeliveryStaff = async (): Promise<User[]> => {
   try {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('user_id, profiles!inner(id, name, email)')
-      .eq('role', 'deliveryStaff');
+    const { data, error } = await supabase.rpc('get_delivery_staff');
 
     if (error) {
       console.error('Error fetching delivery staff:', error);
       return [];
     }
 
-    return data.map(item => ({
-      id: item.profiles.id,
-      name: item.profiles.name,
-      email: item.profiles.email,
+    return data.map((item: any) => ({
+      id: item.id,
+      name: item.name || 'Unknown',
+      email: item.email || '',
       role: 'deliveryStaff'
     }));
   } catch (error) {
@@ -164,21 +162,17 @@ export const completeScanSync = async (scans: any[]): Promise<{synced: number, f
   let failed = 0;
 
   try {
-    // Process in batches for better performance
-    const batchSize = 10;
-    for (let i = 0; i < scans.length; i += batchSize) {
-      const batch = scans.slice(i, i + batchSize);
-      
-      const { data, error } = await supabase
-        .from('scan_history')
-        .insert(batch);
-      
-      if (error) {
-        console.error('Error syncing scans batch:', error);
-        failed += batch.length;
-      } else {
-        synced += batch.length;
-      }
+    // Call the RPC function to process scans
+    const { data, error } = await supabase.rpc('process_pending_scans', { 
+      scans_json: JSON.stringify(scans) 
+    });
+    
+    if (error) {
+      console.error('Error syncing scans:', error);
+      failed = scans.length;
+    } else {
+      synced = data.processed || 0;
+      failed = scans.length - synced;
     }
     
     return { synced, failed };
@@ -199,19 +193,18 @@ export const getScanHistory = async (limit = 20): Promise<any[]> => {
       return [];
     }
 
-    const { data, error } = await supabase
-      .from('scan_history')
-      .select('*')
-      .eq('scanned_by', userData.user.id)
-      .order('scan_time', { ascending: false })
-      .limit(limit);
+    // Call the function to get scan history
+    const { data, error } = await supabase.rpc('get_user_scan_history', { 
+      p_user_id: userData.user.id,
+      p_limit: limit
+    });
 
     if (error) {
       console.error('Error fetching scan history:', error);
       return [];
     }
 
-    return data;
+    return data || [];
   } catch (error) {
     console.error('Error in getScanHistory:', error);
     return [];

@@ -1,226 +1,97 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { 
   SalesData, 
   SalesByCategory, 
   InventoryStatus, 
-  StaffPerformanceData,
-  CustomerBehavior,
-  MarketingEffectiveness,
-  SystemPerformance
+  StaffPerformanceData, 
+  CustomerBehavior, 
+  MarketingEffectiveness, 
+  SystemPerformance 
 } from '@/types';
 
-// Helper to format numbers with commas
-export const formatNumber = (num: number): string => {
-  return num.toLocaleString();
+// Page load time analytics
+export const recordPageLoadTime = () => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+      const navigationTiming = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      const loadTime = navigationTiming.loadEventEnd - navigationTiming.startTime;
+      console.log(`Page loaded in ${loadTime.toFixed(2)}ms`);
+      
+      // In a real app, we would send this data to an analytics service
+      // For now, we just log it to the console
+    });
+  }
 };
 
-// Helper to format currency
-export const formatCurrency = (amount: number): string => {
-  return `KSh ${amount.toLocaleString()}`;
-};
-
-// Fetch sales data by time period (daily, weekly, monthly)
-export const fetchSalesData = async (period: 'daily' | 'weekly' | 'monthly'): Promise<SalesData[]> => {
-  // This would typically fetch from Supabase, but we're mocking data for now
-  
-  // Daily data
-  if (period === 'daily') {
-    return [
-      { period: 'Mon', revenue: 1200, orders: 5, averageOrderValue: 240, previousPeriodChange: 10 },
-      { period: 'Tue', revenue: 1800, orders: 7, averageOrderValue: 257, previousPeriodChange: 15 },
-      { period: 'Wed', revenue: 1500, orders: 6, averageOrderValue: 250, previousPeriodChange: -5 },
-      { period: 'Thu', revenue: 2000, orders: 8, averageOrderValue: 250, previousPeriodChange: 12 },
-      { period: 'Fri', revenue: 2400, orders: 9, averageOrderValue: 267, previousPeriodChange: 20 },
-      { period: 'Sat', revenue: 2800, orders: 11, averageOrderValue: 255, previousPeriodChange: 18 },
-      { period: 'Sun', revenue: 1900, orders: 8, averageOrderValue: 238, previousPeriodChange: -8 },
-    ];
-  }
-  
-  // Weekly data
-  if (period === 'weekly') {
-    return [
-      { period: 'Week 1', revenue: 12000, orders: 45, averageOrderValue: 267, previousPeriodChange: 8 },
-      { period: 'Week 2', revenue: 18000, orders: 65, averageOrderValue: 277, previousPeriodChange: 15 },
-      { period: 'Week 3', revenue: 15000, orders: 58, averageOrderValue: 259, previousPeriodChange: -5 },
-      { period: 'Week 4', revenue: 20000, orders: 72, averageOrderValue: 278, previousPeriodChange: 12 },
-    ];
-  }
-  
-  // Monthly data
+// Sample data functions for analytics
+export const fetchSalesData = async (): Promise<SalesData[]> => {
+  // This would be an API call in a real application
   return [
-    { period: 'Jan', revenue: 45000, orders: 160, averageOrderValue: 281, previousPeriodChange: 5 },
-    { period: 'Feb', revenue: 52000, orders: 180, averageOrderValue: 289, previousPeriodChange: 12 },
-    { period: 'Mar', revenue: 49000, orders: 172, averageOrderValue: 285, previousPeriodChange: -3 },
-    { period: 'Apr', revenue: 60000, orders: 210, averageOrderValue: 286, previousPeriodChange: 18 },
-    { period: 'May', revenue: 55000, orders: 190, averageOrderValue: 289, previousPeriodChange: -8 },
-    { period: 'Jun', revenue: 70000, orders: 235, averageOrderValue: 298, previousPeriodChange: 22 },
+    { date: '2023-01-01', revenue: 5000, orders: 120, averageOrderValue: 41.67 },
+    { date: '2023-01-02', revenue: 6200, orders: 145, averageOrderValue: 42.76 },
+    { date: '2023-01-03', revenue: 5800, orders: 135, averageOrderValue: 42.96 },
+    { date: '2023-01-04', revenue: 7500, orders: 160, averageOrderValue: 46.88 },
+    { date: '2023-01-05', revenue: 7800, orders: 170, averageOrderValue: 45.88 },
+    { date: '2023-01-06', revenue: 8200, orders: 175, averageOrderValue: 46.86 },
+    { date: '2023-01-07', revenue: 9000, orders: 190, averageOrderValue: 47.37 },
   ];
 };
 
-// Fetch sales data by category
 export const fetchSalesByCategory = async (): Promise<SalesByCategory[]> => {
-  // Mock data for sales by category
   return [
-    { category: 'Dresses', sales: 35, percentage: 35 },
-    { category: 'Tops', sales: 25, percentage: 25 },
-    { category: 'Bottoms', sales: 15, percentage: 15 },
-    { category: 'Accessories', sales: 10, percentage: 10 },
-    { category: 'Shoes', sales: 15, percentage: 15 },
+    { category: 'Dresses', revenue: 12000, units: 240, percentage: 30 },
+    { category: 'Shirts', revenue: 8000, units: 200, percentage: 20 },
+    { category: 'Pants', revenue: 6000, units: 120, percentage: 15 },
+    { category: 'Shoes', revenue: 10000, units: 150, percentage: 25 },
+    { category: 'Accessories', revenue: 4000, units: 100, percentage: 10 },
   ];
 };
 
-// Fetch inventory status
 export const fetchInventoryStatus = async (): Promise<InventoryStatus[]> => {
-  // Mock data for inventory status
   return [
-    { category: 'Dresses', inStock: 65, lowStock: 5, totalValue: 18500 },
-    { category: 'Tops', inStock: 45, lowStock: 8, totalValue: 9800 },
-    { category: 'Bottoms', inStock: 30, lowStock: 4, totalValue: 7500 },
-    { category: 'Accessories', inStock: 50, lowStock: 10, totalValue: 4200 },
-    { category: 'Shoes', inStock: 20, lowStock: 15, totalValue: 12000 },
+    { category: 'Dresses', inStock: 120, lowStock: 15, outOfStock: 5, totalValue: 12000 },
+    { category: 'Shirts', inStock: 200, lowStock: 10, outOfStock: 3, totalValue: 8000 },
+    { category: 'Pants', inStock: 150, lowStock: 12, outOfStock: 8, totalValue: 7500 },
+    { category: 'Shoes', inStock: 90, lowStock: 20, outOfStock: 10, totalValue: 13500 },
+    { category: 'Accessories', inStock: 300, lowStock: 5, outOfStock: 2, totalValue: 4500 },
   ];
 };
 
-// Fetch staff performance data
-export const fetchStaffPerformance = async (role: 'productManager' | 'orderPreparer' | 'deliveryStaff'): Promise<StaffPerformanceData[]> => {
-  // Mock data for staff performance
-  if (role === 'productManager') {
-    return [
-      { name: 'John', role: 'productManager', processed: 48, target: 40, efficiency: 120 },
-      { name: 'Sarah', role: 'productManager', processed: 65, target: 40, efficiency: 162 },
-      { name: 'Michael', role: 'productManager', processed: 38, target: 40, efficiency: 95 },
-      { name: 'Emily', role: 'productManager', processed: 52, target: 40, efficiency: 130 },
-    ];
-  }
-  
-  if (role === 'orderPreparer') {
-    return [
-      { name: 'Alex', role: 'orderPreparer', fulfilled: 32, target: 25, efficiency: 128 },
-      { name: 'Diana', role: 'orderPreparer', fulfilled: 28, target: 25, efficiency: 112 },
-      { name: 'Robert', role: 'orderPreparer', fulfilled: 20, target: 25, efficiency: 80 },
-      { name: 'Jessica', role: 'orderPreparer', fulfilled: 35, target: 25, efficiency: 140 },
-    ];
-  }
-  
-  // Delivery staff
+export const fetchStaffPerformance = async (): Promise<StaffPerformanceData[]> => {
   return [
-    { name: 'Thomas', role: 'deliveryStaff', completed: 18, target: 15, efficiency: 120 },
-    { name: 'Lisa', role: 'deliveryStaff', completed: 22, target: 15, efficiency: 147 },
-    { name: 'Mark', role: 'deliveryStaff', completed: 12, target: 15, efficiency: 80 },
-    { name: 'Sophie', role: 'deliveryStaff', completed: 19, target: 15, efficiency: 127 },
+    { staffId: '1', name: 'John Doe', role: 'productManager', ordersProcessed: 120, itemsProcessed: 350, averageTime: 5.2, rating: 4.8 },
+    { staffId: '2', name: 'Jane Smith', role: 'orderPreparer', ordersProcessed: 85, itemsProcessed: 280, averageTime: 4.5, rating: 4.6 },
+    { staffId: '3', name: 'Bob Johnson', role: 'deliveryStaff', ordersProcessed: 65, itemsProcessed: 65, averageTime: 22.3, rating: 4.2 },
+    { staffId: '4', name: 'Alice Brown', role: 'productManager', ordersProcessed: 110, itemsProcessed: 320, averageTime: 5.7, rating: 4.7 },
   ];
 };
 
-// Fetch customer behavior data
 export const fetchCustomerBehavior = async (): Promise<CustomerBehavior[]> => {
-  // Mock data for customer behavior
   return [
-    { segment: 'New Customers', count: 120, averageSpend: 1800, repeatRate: 15, averageItemsPerOrder: 1.2 },
-    { segment: 'Returning Customers', count: 85, averageSpend: 2400, repeatRate: 65, averageItemsPerOrder: 2.3 },
-    { segment: 'VIP Customers', count: 25, averageSpend: 5200, repeatRate: 85, averageItemsPerOrder: 3.5 },
-    { segment: 'One-time Shoppers', count: 210, averageSpend: 1200, repeatRate: 0, averageItemsPerOrder: 1.0 },
+    { metric: 'Average Order Value', value: 45.32, previousValue: 42.18, change: 7.4 },
+    { metric: 'Cart Abandonment Rate', value: 22.5, previousValue: 24.8, change: -9.3 },
+    { metric: 'Return Rate', value: 3.2, previousValue: 3.5, change: -8.6 },
+    { metric: 'Customer Retention', value: 68.4, previousValue: 65.9, change: 3.8 },
+    { metric: 'Time on Site (mins)', value: 4.2, previousValue: 3.8, change: 10.5 },
   ];
 };
 
-// Fetch marketing effectiveness data
 export const fetchMarketingEffectiveness = async (): Promise<MarketingEffectiveness[]> => {
-  // Mock data for marketing effectiveness
   return [
-    { campaign: 'Spring Sale', clicks: 1250, conversions: 125, revenue: 25000, roi: 350 },
-    { campaign: 'Fashion Week', clicks: 980, conversions: 82, revenue: 18500, roi: 245 },
-    { campaign: 'Email Newsletter', clicks: 580, conversions: 63, revenue: 12600, roi: 420 },
-    { campaign: 'Instagram Ads', clicks: 2300, conversions: 198, revenue: 38000, roi: 280 },
-    { campaign: 'Referral Program', clicks: 450, conversions: 72, revenue: 15800, roi: 520 },
+    { channel: 'Social Media', visits: 4560, conversions: 320, revenue: 15000, roi: 3.2 },
+    { channel: 'Email', visits: 3200, conversions: 280, revenue: 12500, roi: 4.5 },
+    { channel: 'Search', visits: 6800, conversions: 450, revenue: 20000, roi: 3.8 },
+    { channel: 'Direct', visits: 2500, conversions: 180, revenue: 8200, roi: 2.1 },
+    { channel: 'Referral', visits: 1800, conversions: 150, revenue: 6500, roi: 3.4 },
   ];
 };
 
-// Fetch system performance metrics
-export const fetchSystemPerformance = async (): Promise<SystemPerformance> => {
-  // Mock data for system performance
-  return {
-    pageLoadTime: 1.2, // seconds
-    serverResponseTime: 0.3, // seconds
-    errorRate: 0.5, // percentage
-    userSatisfaction: 92, // percentage
-  };
-};
-
-// Export simple reports in CSV format
-export const exportToCSV = (data: any[], filename: string): void => {
-  if (!data || !data.length) {
-    console.error('No data to export');
-    return;
-  }
-
-  // Get headers
-  const headers = Object.keys(data[0]);
-  
-  // Convert data to CSV rows
-  const csvRows = [
-    headers.join(','), // Header row
-    ...data.map(row => 
-      headers.map(header => {
-        const cell = row[header];
-        // Handle cells with commas by wrapping in quotes
-        return typeof cell === 'string' && cell.includes(',') 
-          ? `"${cell}"` 
-          : cell;
-      }).join(',')
-    )
+export const fetchSystemPerformance = async (): Promise<SystemPerformance[]> => {
+  return [
+    { metric: 'Page Load Time (s)', value: 1.8, target: 2, status: 'good' },
+    { metric: 'API Response Time (ms)', value: 220, target: 200, status: 'warning' },
+    { metric: 'Database Query Time (ms)', value: 85, target: 100, status: 'good' },
+    { metric: 'Error Rate (%)', value: 0.8, target: 1, status: 'good' },
+    { metric: 'Server CPU Usage (%)', value: 78, target: 80, status: 'warning' },
   ];
-  
-  // Create blob and download
-  const csvContent = csvRows.join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}.csv`);
-  link.style.visibility = 'hidden';
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-// Export reports in PDF format (mock - would require a PDF library in production)
-export const exportToPDF = (data: any[], filename: string): void => {
-  console.log('PDF export would be implemented with a library like jsPDF');
-  alert('PDF Export functionality would be implemented with a library like jsPDF');
-};
-
-// Performance monitoring utility
-export const recordPageLoadTime = (): void => {
-  if (typeof window !== 'undefined' && window.performance) {
-    const perfData = window.performance.timing;
-    const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
-    
-    // In a real app, we would send this to our analytics backend
-    console.log(`Page load time: ${pageLoadTime}ms`);
-    
-    // You could send this to Supabase for tracking
-    // supabase.from('performance_metrics').insert([{ 
-    //   page: window.location.pathname,
-    //   load_time_ms: pageLoadTime,
-    //   user_agent: navigator.userAgent,
-    //   timestamp: new Date()
-    // }]);
-  }
-};
-
-// Error tracking utility
-export const trackError = (error: Error, context: any = {}): void => {
-  console.error('Error tracked:', error, context);
-  
-  // In a real app, we would send this to our error tracking system
-  // supabase.from('error_logs').insert([{
-  //   error_message: error.message,
-  //   error_stack: error.stack,
-  //   context: JSON.stringify(context),
-  //   url: window.location.href,
-  //   user_agent: navigator.userAgent,
-  //   timestamp: new Date()
-  // }]);
 };

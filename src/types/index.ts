@@ -92,3 +92,92 @@ export interface PrintJob {
   createdAt: Date;
   processedAt?: Date;
 }
+
+// Analytics Types
+export interface SalesData {
+  date: string;
+  revenue: number;
+  orders: number;
+  averageOrderValue: number;
+}
+
+export interface SalesByCategory {
+  category: string;
+  revenue: number;
+  units: number;
+  percentage: number;
+}
+
+export interface InventoryStatus {
+  category: string;
+  inStock: number;
+  lowStock: number;
+  outOfStock: number;
+  totalValue: number;
+}
+
+export interface StaffPerformanceData {
+  staffId: string;
+  name: string;
+  role: string;
+  ordersProcessed: number;
+  itemsProcessed: number;
+  averageTime: number;
+  rating: number;
+}
+
+export interface CustomerBehavior {
+  metric: string;
+  value: number;
+  previousValue: number;
+  change: number;
+}
+
+export interface MarketingEffectiveness {
+  channel: string;
+  visits: number;
+  conversions: number;
+  revenue: number;
+  roi: number;
+}
+
+export interface SystemPerformance {
+  metric: string;
+  value: number;
+  target: number;
+  status: 'good' | 'warning' | 'critical';
+}
+
+// Extended CartContext Types
+export interface ProductType {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+}
+
+export interface WishlistItem {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  addedOn: Date;
+}
+
+export interface ExtendedCartContextType {
+  items: CartItem[];
+  wishlistItems: WishlistItem[];
+  addItem: (item: CartItem) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
+  getCartTotal: () => number;
+  getItemCount: () => number;
+  addToCart: (product: ProductType) => void;
+  removeFromCart: (id: string) => void;
+  addToWishlist: (product: ProductType) => void;
+  removeFromWishlist: (id: string) => void;
+  moveToCart: (id: string) => void;
+  cartItems: CartItem[];
+  calculateCartTotal: () => number;
+}

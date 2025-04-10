@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -38,7 +39,32 @@ const ProductDetails = () => {
         .single();
       
       if (error) throw error;
-      return data as Product;
+      
+      // Convert from Supabase format to our Product interface
+      const formattedProduct: Product = {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        originalPrice: data.original_price,
+        category: data.category,
+        subCategory: data.sub_category,
+        tags: data.tags,
+        size: data.size,
+        color: data.color,
+        brand: data.brand,
+        condition: data.condition,
+        barcode: data.barcode,
+        status: data.status,
+        dateAdded: new Date(data.date_added),
+        lastUpdated: new Date(data.last_updated),
+        addedBy: data.added_by,
+        featured: data.featured,
+        measurements: data.measurements,
+        inventoryTracking: data.inventory_tracking
+      };
+      
+      return formattedProduct;
     },
   });
   
@@ -84,16 +110,16 @@ const ProductDetails = () => {
           
           <div className="flex items-center mb-4">
             <span className="text-2xl font-semibold">KSh {product.price.toFixed(2)}</span>
-            {product.original_price && (
+            {product.originalPrice && (
               <span className="text-lg text-muted-foreground ml-2 line-through">
-                KSh {product.original_price.toFixed(2)}
+                KSh {product.originalPrice.toFixed(2)}
               </span>
             )}
           </div>
           
           <div className="mb-4">
             <Badge>{product.category}</Badge>
-            {product.sub_category && <Badge className="ml-2">{product.sub_category}</Badge>}
+            {product.subCategory && <Badge className="ml-2">{product.subCategory}</Badge>}
             {product.condition && <Badge className="ml-2">{product.condition}</Badge>}
           </div>
           
