@@ -22,12 +22,18 @@ import Communications from "./pages/staff/Communications";
 import AdminRoutes from "./routes/AdminRoutes";
 import StaffRoutes from "./routes/StaffRoutes";
 import DeliveryReports from "./pages/staff/DeliveryReports";
+import Auth from "./pages/Auth";
+import AdminAuth from "./pages/AdminAuth";
+import Unauthorized from "./pages/Unauthorized";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { AuthProvider } from "./contexts/AuthContext";
+import Users from "./pages/admin/Users";
 
 // Create the router with App as the root element
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: <AuthProvider><App /></AuthProvider>,
     children: [
       {
         index: true,
@@ -42,8 +48,20 @@ const router = createBrowserRouter([
         element: <TrackOrderPage />,
       },
       {
+        path: "auth",
+        element: <Auth />,
+      },
+      {
+        path: "admin/auth",
+        element: <AdminAuth />,
+      },
+      {
+        path: "unauthorized",
+        element: <Unauthorized />,
+      },
+      {
         path: "admin",
-        element: <AdminRoutes />,
+        element: <ProtectedRoute allowedRoles={['admin']} />,
         children: [
           {
             index: true,
@@ -81,11 +99,15 @@ const router = createBrowserRouter([
             path: "marketing",
             element: <Marketing />,
           },
+          {
+            path: "users",
+            element: <Users />,
+          },
         ],
       },
       {
         path: "staff",
-        element: <StaffRoutes />,
+        element: <ProtectedRoute allowedRoles={['productManager', 'orderPreparer', 'deliveryStaff']} />,
         children: [
           {
             index: true,
@@ -93,19 +115,27 @@ const router = createBrowserRouter([
           },
           {
             path: "product-manager",
-            element: <ProductManager />,
+            element: <ProtectedRoute allowedRoles={['productManager']} redirectPath="/staff">
+              <ProductManager />
+            </ProtectedRoute>,
           },
           {
             path: "order-preparer",
-            element: <OrderPreparer />,
+            element: <ProtectedRoute allowedRoles={['orderPreparer']} redirectPath="/staff">
+              <OrderPreparer />
+            </ProtectedRoute>,
           },
           {
             path: "delivery",
-            element: <DeliveryStaff />,
+            element: <ProtectedRoute allowedRoles={['deliveryStaff']} redirectPath="/staff">
+              <DeliveryStaff />
+            </ProtectedRoute>,
           },
           {
             path: "delivery/reports",
-            element: <DeliveryReports />,
+            element: <ProtectedRoute allowedRoles={['deliveryStaff']} redirectPath="/staff">
+              <DeliveryReports />
+            </ProtectedRoute>,
           },
           {
             path: "communications",
