@@ -24,18 +24,22 @@ interface ProductCardProps {
 const ProductCard = ({ product }: ProductCardProps) => {
   // Handle both Product and ProductType
   const id = product.id;
-  const title = 'title' in product ? product.title : product.name;
-  const name = 'name' in product ? product.name : product.title; // Make sure name is always available
+  
+  // Type guard function to check for Product vs ProductType
+  const isProduct = (p: ProductType | Product): p is Product => {
+    return 'barcode' in p;
+  };
+  
+  const title = isProduct(product) ? product.title : product.title;
+  const name = isProduct(product) ? product.name : product.name;
   const price = product.price;
   const originalPrice = product.originalPrice;
   const category = product.category;
   const condition = product.condition;
   const size = product.size;
-  const imageUrl = 'imageUrl' in product ? 
-    product.imageUrl : 
-    (product.images && product.images.length > 0 ? 
-      product.images[0].url : 
-      '/placeholder.svg');
+  const imageUrl = isProduct(product) && product.images && product.images.length > 0
+    ? product.images[0].url
+    : 'imageUrl' in product ? product.imageUrl : '/placeholder.svg';
   
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border hover:border-primary transition-colors">

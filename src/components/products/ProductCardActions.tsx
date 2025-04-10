@@ -14,28 +14,32 @@ interface ProductCardActionsProps {
 const ProductCardActions = ({ product }: ProductCardActionsProps) => {
   const { addToCart, addToWishlist } = useCart();
   
+  // Type guard function to check for Product vs ProductType
+  const isProduct = (p: ProductType | Product): p is Product => {
+    return 'barcode' in p;
+  };
+  
   const handleAddToCart = () => {
-    // Ensure both name and title are available regardless of the product type
-    const productName = 'name' in product ? product.name : product.title;
+    // Access name and title safely using our type guard
+    const productName = isProduct(product) ? product.name : product.name;
+    const productTitle = isProduct(product) ? product.title : product.title;
     
     // Convert to a format that works with both Product and ProductType
     const cartProduct: Product = {
       id: product.id,
       name: productName,
-      title: 'title' in product ? product.title : product.name,
+      title: productTitle, 
       price: product.price,
       category: product.category,
       condition: product.condition as 'new' | 'likeNew' | 'good' | 'fair',
-      barcode: 'barcode' in product ? product.barcode : product.id, // Use ID as fallback barcode
+      barcode: isProduct(product) ? product.barcode : product.id, // Use ID as fallback barcode
       status: 'available',
       dateAdded: new Date(),
       lastUpdated: new Date(),
       featured: false,
-      imageUrl: 'imageUrl' in product ? 
-        product.imageUrl : 
-        (('images' in product && product.images && product.images.length > 0) ? 
-          product.images[0].url : 
-          '/placeholder.svg'),
+      imageUrl: isProduct(product) && product.images && product.images.length > 0
+        ? product.images[0].url
+        : 'imageUrl' in product ? product.imageUrl : '/placeholder.svg',
       size: product.size
     };
     
@@ -44,27 +48,26 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
   };
   
   const handleAddToWishlist = () => {
-    // Ensure both name and title are available regardless of the product type
-    const productName = 'name' in product ? product.name : product.title;
+    // Access name and title safely using our type guard
+    const productName = isProduct(product) ? product.name : product.name;
+    const productTitle = isProduct(product) ? product.title : product.title;
     
     // Convert to a format that works with both Product and ProductType
     const wishlistProduct: Product = {
       id: product.id,
       name: productName,
-      title: 'title' in product ? product.title : product.name,
+      title: productTitle,
       price: product.price,
       category: product.category,
       condition: product.condition as 'new' | 'likeNew' | 'good' | 'fair',
-      barcode: 'barcode' in product ? product.barcode : product.id, // Use ID as fallback barcode
+      barcode: isProduct(product) ? product.barcode : product.id, // Use ID as fallback barcode
       status: 'available',
       dateAdded: new Date(),
       lastUpdated: new Date(),
       featured: false,
-      imageUrl: 'imageUrl' in product ? 
-        product.imageUrl : 
-        (('images' in product && product.images && product.images.length > 0) ? 
-          product.images[0].url : 
-          '/placeholder.svg'),
+      imageUrl: isProduct(product) && product.images && product.images.length > 0
+        ? product.images[0].url
+        : 'imageUrl' in product ? product.imageUrl : '/placeholder.svg',
       size: product.size
     };
     
