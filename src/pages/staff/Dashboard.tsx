@@ -1,312 +1,197 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CalendarClock, CheckSquare, PackageCheck, Truck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Package, Clock, ShoppingBag, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 
-const StaffDashboard = () => {
+const Dashboard = () => {
   const { user } = useAuth();
   
-  // Stats based on staff role
-  const getRoleBasedStats = () => {
-    switch (user?.role) {
+  // Role-specific content
+  const getRoleContent = () => {
+    switch(user?.role) {
       case 'productManager':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-2xl">86</CardTitle>
-                <CardDescription>Products Processed</CardDescription>
+                <CardTitle className="text-lg font-medium">Products Added Today</CardTitle>
+                <CardDescription>Total new inventory processed</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center">
-                  <Package className="h-4 w-4 text-muted-foreground mr-1" />
-                  <span className="text-xs text-muted-foreground">
-                    48 added this month
-                  </span>
-                </div>
+                <div className="text-3xl font-bold">12</div>
+                <p className="text-xs text-muted-foreground mt-1">+20% from yesterday</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-2xl">14.2 min</CardTitle>
-                <CardDescription>Average Processing Time</CardDescription>
+                <CardTitle className="text-lg font-medium">Images Processed</CardTitle>
+                <CardDescription>Product photos uploaded</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center">
-                  <Clock className="h-4 w-4 text-muted-foreground mr-1" />
-                  <span className="text-xs text-muted-foreground">
-                    -2.1 min from last week
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-2xl">12</CardTitle>
-                <CardDescription>Scheduled For Today</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center text-green-500">
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  <span className="text-xs">On track</span>
-                </div>
+                <div className="text-3xl font-bold">48</div>
+                <p className="text-xs text-muted-foreground mt-1">+5% from yesterday</p>
               </CardContent>
             </Card>
           </div>
         );
+      
       case 'orderPreparer':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-2xl">8</CardTitle>
-                <CardDescription>Pending Orders</CardDescription>
+                <CardTitle className="text-lg font-medium">Orders to Prepare</CardTitle>
+                <CardDescription>Pending order preparation</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center">
-                  <AlertTriangle className="h-4 w-4 text-amber-500 mr-1" />
-                  <span className="text-xs text-muted-foreground">
-                    Awaiting processing
-                  </span>
-                </div>
+                <div className="text-3xl font-bold">7</div>
+                <p className="text-xs text-muted-foreground mt-1">3 high priority</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-2xl">15</CardTitle>
-                <CardDescription>Processed Today</CardDescription>
+                <CardTitle className="text-lg font-medium">Orders Completed</CardTitle>
+                <CardDescription>Today's fulfilled orders</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-xs text-muted-foreground">
-                    +3 more than yesterday
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-2xl">6.4 min</CardTitle>
-                <CardDescription>Average Time Per Order</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center">
-                  <Clock className="h-4 w-4 text-muted-foreground mr-1" />
-                  <span className="text-xs text-muted-foreground">
-                    On target for daily goal
-                  </span>
-                </div>
+                <div className="text-3xl font-bold">15</div>
+                <p className="text-xs text-muted-foreground mt-1">+3 from yesterday</p>
               </CardContent>
             </Card>
           </div>
         );
+        
       case 'deliveryStaff':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-2xl">6</CardTitle>
-                <CardDescription>Orders To Deliver</CardDescription>
+                <CardTitle className="text-lg font-medium">Pending Deliveries</CardTitle>
+                <CardDescription>Orders ready for delivery</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center">
-                  <ShoppingBag className="h-4 w-4 text-muted-foreground mr-1" />
-                  <span className="text-xs text-muted-foreground">
-                    Scheduled for today
-                  </span>
-                </div>
+                <div className="text-3xl font-bold">5</div>
+                <p className="text-xs text-muted-foreground mt-1">2 express deliveries</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-2xl">4 / 10</CardTitle>
-                <CardDescription>Delivered Today</CardDescription>
+                <CardTitle className="text-lg font-medium">Completed Today</CardTitle>
+                <CardDescription>Successfully delivered orders</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center">
-                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-xs text-muted-foreground">
-                    40% completed
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-2xl">28 min</CardTitle>
-                <CardDescription>Average Delivery Time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center">
-                  <Clock className="h-4 w-4 text-muted-foreground mr-1" />
-                  <span className="text-xs text-muted-foreground">
-                    -5 min from target
-                  </span>
-                </div>
+                <div className="text-3xl font-bold">8</div>
+                <p className="text-xs text-muted-foreground mt-1">100% on-time rate</p>
               </CardContent>
             </Card>
           </div>
         );
+        
       default:
-        return null;
-    }
-  };
-  
-  const getQuickActions = () => {
-    switch (user?.role) {
-      case 'productManager':
         return (
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link to="/staff/products/new">Add New Product</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/staff/scanning">Scan Product</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/staff/ai">Use AI Tools</Link>
-            </Button>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Welcome</CardTitle>
+              <CardDescription>Your role-specific dashboard is not available</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Please contact an administrator to update your role permissions.</p>
+            </CardContent>
+          </Card>
         );
-      case 'orderPreparer':
-        return (
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link to="/staff/orders">Process Orders</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/staff/scanning">Scan Order</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/staff/printing">Print Receipt</Link>
-            </Button>
-          </div>
-        );
-      case 'deliveryStaff':
-        return (
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link to="/staff/deliveries">View Deliveries</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/staff/scanning">Scan Package</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/staff/printing">Print Delivery Label</Link>
-            </Button>
-          </div>
-        );
-      default:
-        return null;
     }
   };
   
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Staff Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {user?.name}. Here's your overview for today.</p>
-        </div>
-        <div className="mt-4 md:mt-0">
-          {getQuickActions()}
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome back, {user?.name || 'Staff Member'}
+        </p>
       </div>
       
-      {getRoleBasedStats()}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Your recent tasks and actions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-primary/10 rounded-full p-2">
-                  <CheckCircle className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Task completed</p>
-                  <p className="text-sm text-muted-foreground">You processed order #TTS-20250409-1234</p>
-                  <p className="text-xs text-muted-foreground">10 minutes ago</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="bg-primary/10 rounded-full p-2">
-                  <Package className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">New item added</p>
-                  <p className="text-sm text-muted-foreground">You added "Vintage Denim Jacket" to inventory</p>
-                  <p className="text-xs text-muted-foreground">1 hour ago</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="bg-primary/10 rounded-full p-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Performance notification</p>
-                  <p className="text-sm text-muted-foreground">Your processing speed improved by 12% this week</p>
-                  <p className="text-xs text-muted-foreground">2 hours ago</p>
-                </div>
-              </div>
+          <CardContent className="p-4 flex items-center gap-4">
+            <PackageCheck className="h-10 w-10 text-primary" />
+            <div>
+              <p className="text-sm font-medium">New Orders</p>
+              <h3 className="text-2xl font-bold">18</h3>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Schedule</CardTitle>
-            <CardDescription>Your upcoming shifts and tasks</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-primary/10 rounded-full p-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Today, 2:00 PM - 7:00 PM</p>
-                  <p className="text-sm text-muted-foreground">Regular shift</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="bg-primary/10 rounded-full p-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Tomorrow, 9:00 AM - 3:00 PM</p>
-                  <p className="text-sm text-muted-foreground">Processing new arrivals</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="bg-primary/10 rounded-full p-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
-                </div>
-                <div>
-                  <p className="font-medium">Team meeting</p>
-                  <p className="text-sm text-muted-foreground">Friday, 10:00 AM - Weekly review</p>
-                </div>
-              </div>
+          <CardContent className="p-4 flex items-center gap-4">
+            <CheckSquare className="h-10 w-10 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Processing</p>
+              <h3 className="text-2xl font-bold">12</h3>
             </div>
-            
-            <div className="mt-4">
-              <Button variant="outline" className="w-full" asChild>
-                <Link to="/staff/schedule">View Full Schedule</Link>
-              </Button>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <Truck className="h-10 w-10 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Deliveries</p>
+              <h3 className="text-2xl font-bold">7</h3>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <CalendarClock className="h-10 w-10 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Today's Tasks</p>
+              <h3 className="text-2xl font-bold">5</h3>
             </div>
           </CardContent>
         </Card>
       </div>
+      
+      {/* Role-specific dashboard content */}
+      {getRoleContent()}
+      
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>Your latest actions and notifications</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
+              <div>
+                <p className="font-medium">Order #TTS-20250409-1234 has been assigned to you</p>
+                <p className="text-sm text-muted-foreground">10 minutes ago</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
+              <div>
+                <p className="font-medium">You completed processing Order #TTS-20250409-0987</p>
+                <p className="text-sm text-muted-foreground">1 hour ago</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
+              <div>
+                <p className="font-medium">New message from Admin regarding inventory update</p>
+                <p className="text-sm text-muted-foreground">3 hours ago</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default StaffDashboard;
+export default Dashboard;
