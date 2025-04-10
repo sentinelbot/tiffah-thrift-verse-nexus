@@ -17,7 +17,11 @@ const orders = [
   { id: 'TTS-20250407-0001', customer: 'Sarah Wilson', date: '2025-04-07', items: 2, total: 5300, status: 'Delivered' },
 ];
 
-export function OrdersTable() {
+interface OrdersTableProps {
+  onRowClick?: (orderId: string) => void;
+}
+
+export function OrdersTable({ onRowClick }: OrdersTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   
@@ -82,7 +86,11 @@ export function OrdersTable() {
           <TableBody>
             {filteredOrders.length > 0 ? (
               filteredOrders.map((order) => (
-                <TableRow key={order.id}>
+                <TableRow 
+                  key={order.id} 
+                  onClick={() => onRowClick && onRowClick(order.id)}
+                  className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
+                >
                   <TableCell className="font-medium">{order.id}</TableCell>
                   <TableCell>{order.customer}</TableCell>
                   <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>

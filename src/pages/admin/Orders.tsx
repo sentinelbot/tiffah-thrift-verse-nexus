@@ -1,8 +1,12 @@
 
+import { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { OrdersTable } from '@/components/admin/orders/OrdersTable';
+import { OrderDetail } from '@/components/admin/orders/OrderDetail';
 import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
 import ShippingLabelPrint from '@/components/admin/printing/ShippingLabelPrint';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft } from 'lucide-react';
 
 // Mock order for demonstration
 const mockOrder = {
@@ -37,13 +41,13 @@ const mockOrder = {
       price: 1800
     }
   ],
-  totalAmount: 4500,
+  totalAmount: 4300,
   status: "processing" as const,
   paymentInfo: {
     method: "mpesa" as const,
     status: "completed" as const,
     transactionId: "MPESA123456",
-    amount: 4500
+    amount: 4300
   },
   shippingInfo: {
     fullName: "Jane Smith",
@@ -76,22 +80,48 @@ const mockOrder = {
 };
 
 const Orders = () => {
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  
+  // In a real app, you would fetch the order details here based on selectedOrderId
+  const selectedOrder = selectedOrderId ? mockOrder : null;
+  
+  const handleRowClick = (orderId: string) => {
+    setSelectedOrderId(orderId);
+  };
+  
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Orders</h1>
-            <p className="text-muted-foreground">Manage customer orders</p>
+      {selectedOrder ? (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setSelectedOrderId(null)}
+              className="flex items-center"
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back to Orders
+            </Button>
+            <div className="flex gap-2">
+              <OrderReceiptPrint order={selectedOrder} />
+              <ShippingLabelPrint order={selectedOrder} />
+            </div>
           </div>
-          <div className="flex gap-2">
-            <OrderReceiptPrint order={mockOrder} />
-            <ShippingLabelPrint order={mockOrder} />
-          </div>
+          
+          <OrderDetail order={selectedOrder} />
         </div>
-        
-        <OrdersTable />
-      </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Orders</h1>
+              <p className="text-muted-foreground">Manage customer orders</p>
+            </div>
+          </div>
+          
+          <OrdersTable onRowClick={handleRowClick} />
+        </div>
+      )}
     </AdminLayout>
   );
 };
