@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,52 +8,79 @@ import { Button } from '@/components/ui/button';
 import { Printer, Package, FileText, Truck } from 'lucide-react';
 import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
 import { useConnectivity } from '@/hooks/use-connectivity';
+import { Order, OrderStatus, PaymentMethod, PaymentStatus } from '@/types/order';
 
 // Mock order for demo purposes
-const mockOrder = {
+const mockOrder: Order = {
   id: 'ORD-123456',
   orderNumber: 'TTS-20240410-0001',
   customer: {
     id: 'cust-001',
     name: 'Jane Smith',
-    email: 'jane@example.com',
-    phone: '+254712345678'
+    email: 'jane@example.com'
   },
   items: [
     {
+      productId: 'prod-001',
       product: {
         id: 'prod-001',
-        name: 'Vintage Denim Jacket',
+        title: 'Vintage Denim Jacket',
         price: 2500,
-        images: [{ url: '/placeholder.svg', alt: 'Vintage Denim Jacket' }]
+        imageUrl: '/placeholder.svg'
       },
       price: 2500,
       quantity: 1
     },
     {
+      productId: 'prod-002',
       product: {
         id: 'prod-002',
-        name: 'Floral Summer Dress',
+        title: 'Floral Summer Dress',
         price: 1800,
-        images: [{ url: '/placeholder.svg', alt: 'Floral Summer Dress' }]
+        imageUrl: '/placeholder.svg'
       },
       price: 1800,
       quantity: 1
     }
   ],
   totalAmount: 4300,
-  status: 'processing',
+  status: 'processing' as OrderStatus,
   paymentInfo: {
-    method: 'mpesa',
+    method: 'mpesa' as PaymentMethod,
     transactionId: 'MP123456789',
-    status: 'paid'
+    status: 'completed' as PaymentStatus,
+    amount: 4300
   },
-  shippingAddress: {
-    street: '123 Kimathi Street',
+  shippingInfo: {
+    fullName: 'Jane Smith',
+    email: 'jane@example.com',
+    phone: '+254712345678',
+    address: '123 Kimathi Street',
     city: 'Nairobi',
-    zipCode: '00100'
+    state: 'Nairobi',
+    postalCode: '00100',
+    country: 'Kenya',
+    shippingMethod: 'standard',
+    specialInstructions: 'Call before delivery'
   },
-  orderDate: new Date('2024-04-10T10:30:00')
+  deliveryInfo: {
+    estimatedDelivery: new Date('2024-04-12'),
+    trackingId: 'TRK-123456'
+  },
+  orderDate: new Date('2024-04-10T10:30:00'),
+  history: [
+    {
+      timestamp: new Date('2024-04-10T10:30:00'),
+      status: 'pending',
+      note: 'Order created'
+    },
+    {
+      timestamp: new Date('2024-04-10T11:15:00'),
+      status: 'processing',
+      note: 'Payment received',
+      updatedBy: 'system'
+    }
+  ]
 };
 
 const Printing = () => {
