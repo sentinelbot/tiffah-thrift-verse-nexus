@@ -1,40 +1,44 @@
 
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle2, Cpu } from "lucide-react";
-import { generateProductDescription, AIGeneratedDescription } from '@/services/aiService';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Sparkles, RotateCw, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { generateProductDescription } from '@/services/aiService';
 
 interface AIDescriptionGeneratorProps {
-  name: string;
-  category: string;
-  condition: string;
+  name?: string;
+  category?: string;
+  condition?: string;
   originalPrice?: number;
   brand?: string;
   color?: string;
-  onDescriptionGenerated: (description: string, keyPoints: string[], seoKeywords: string[]) => void;
+  onDescriptionGenerated?: (description: string, keyPoints: string[], seoKeywords: string[]) => void;
 }
 
 const AIDescriptionGenerator = ({
-  name,
-  category,
-  condition,
+  name = '',
+  category = '',
+  condition = '',
   originalPrice,
-  brand,
-  color,
+  brand = '',
+  color = '',
   onDescriptionGenerated
 }: AIDescriptionGeneratorProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<AIGeneratedDescription | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedDescription, setGeneratedDescription] = useState('');
+  const [keyPoints, setKeyPoints] = useState<string[]>([]);
+  const [seoKeywords, setSeoKeywords] = useState<string[]>([]);
+  
   const generateDescription = async () => {
-    setIsLoading(true);
-    setError(null);
+    if (!name || !category || !condition) {
+      toast.error("Please fill in product name, category, and condition first");
+      return;
+    }
+    
+    setIsGenerating(true);
     
     try {
       const result = await generateProductDescription(
@@ -46,111 +50,88 @@ const AIDescriptionGenerator = ({
         color
       );
       
-      setGeneratedContent(result);
-      toast({
-        title: "Description generated",
-        description: "AI has successfully generated a product description",
-      });
-    } catch (err) {
-      setError('Failed to generate description. Please try again or enter description manually.');
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to generate description",
-      });
+      setGeneratedDescription(result.description);
+      setKeyPoints(result.keyPoints);
+      setSeoKeywords(result.seoKeywords);
+      
+      if (onDescriptionGenerated) {
+        onDescriptionGenerated(result.description, result.keyPoints, result.seoKeywords);
+      }
+      
+      toast.success("AI description generated successfully!");
+    } catch (error) {
+      console.error("Error generating description:", error);
+      toast.error("Failed to generate AI description");
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
-
-  const applyDescription = () => {
-    if (generatedContent) {
-      onDescriptionGenerated(
-        generatedContent.description,
-        generatedContent.keyPoints,
-        generatedContent.seoKeywords
-      );
-      toast({
-        title: "Description applied",
-        description: "The generated description has been applied to the product",
-      });
+  
+  const handleUseDescription = () => {
+    if (onDescriptionGenerated && generatedDescription) {
+      onDescriptionGenerated(generatedDescription, keyPoints, seoKeywords);
+      toast.success("Description applied to product");
     }
   };
-
-  const editDescription = (newDescription: string) => {
-    if (generatedContent) {
-      setGeneratedContent({
-        ...generatedContent,
-        description: newDescription,
-      });
-    }
-  };
-
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Cpu className="h-4 w-4 text-primary" />
-          <h3 className="text-base font-medium">AI Description Generator</h3>
-        </div>
+        <h2 className="text-xl font-semibold">AI Description Generator</h2>
         <Button 
-          onClick={generateDescription} 
-          disabled={isLoading || !name || !category || !condition}
-          size="sm"
-          variant={generatedContent ? "outline" : "default"}
+          onClick={generateDescription}
+          disabled={isGenerating || !name || !category || !condition}
         >
-          {isLoading ? 'Generating...' : generatedContent ? 'Regenerate' : 'Generate Description'}
+          {isGenerating ? (
+            <>
+              <RotateCw className="mr-2 h-4 w-4 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Generate Description
+            </>
+          )}
         </Button>
       </div>
       
-      {error && (
-        <div className="flex items-center gap-2 text-destructive text-sm p-2 border border-destructive/20 rounded-md bg-destructive/10">
-          <AlertCircle className="h-4 w-4" />
-          <p>{error}</p>
-        </div>
-      )}
-      
-      {generatedContent && (
-        <Card>
-          <CardContent className="pt-4 space-y-4">
-            <div>
-              <label className="text-sm font-medium">Description</label>
-              <Textarea 
-                className="mt-1"
-                value={generatedContent.description}
-                onChange={(e) => editDescription(e.target.value)}
-                rows={4}
-              />
+      {generatedDescription && (
+        <div className="space-y-4">
+          <div>
+            <Label className="mb-2 block">Generated Description</Label>
+            <Textarea 
+              value={generatedDescription}
+              onChange={(e) => setGeneratedDescription(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+          
+          <div>
+            <Label className="mb-2 block">Key Selling Points</Label>
+            <div className="flex flex-wrap gap-2">
+              {keyPoints.map((point, index) => (
+                <Badge key={index} variant="outline">{point}</Badge>
+              ))}
             </div>
-            
-            <div>
-              <label className="text-sm font-medium">Key Points</label>
-              <ul className="mt-1 space-y-1">
-                {generatedContent.keyPoints.map((point, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5" />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
+          </div>
+          
+          <div>
+            <Label className="mb-2 block">SEO Keywords</Label>
+            <div className="flex flex-wrap gap-2">
+              {seoKeywords.map((keyword, index) => (
+                <Badge key={index} variant="secondary">{keyword}</Badge>
+              ))}
             </div>
-            
-            <div>
-              <label className="text-sm font-medium">SEO Keywords</label>
-              <div className="mt-1 flex flex-wrap gap-1">
-                {generatedContent.seoKeywords.map((keyword, index) => (
-                  <Badge key={index} variant="outline">
-                    {keyword}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            
-            <Button onClick={applyDescription} className="w-full">
-              Apply Description
+          </div>
+          
+          {onDescriptionGenerated && (
+            <Button variant="outline" onClick={handleUseDescription}>
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Use This Description
             </Button>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       )}
     </div>
   );

@@ -1,28 +1,37 @@
 
-import JsBarcode from 'jsbarcode';
-
-export const generateBarcodeDataURL = (value: string): string => {
-  const canvas = document.createElement('canvas');
-  JsBarcode(canvas, value, {
-    format: 'CODE128',
-    width: 2,
-    height: 100,
-    displayValue: true,
-    fontSize: 18,
-    margin: 10,
-    background: '#171717',
-    lineColor: '#ffffff'
-  });
-  return canvas.toDataURL('image/png');
+/**
+ * Generates a unique barcode with an optional prefix
+ * @param prefix Optional prefix for the barcode (default: 'TTS-')
+ * @returns A unique barcode string
+ */
+export const generateUniqueBarcode = (prefix: string = 'TTS-'): string => {
+  // Generate a timestamp component (base36 encoded)
+  const timestamp = Date.now().toString(36).toUpperCase();
+  
+  // Generate a random component (5 characters)
+  const randomPart = Math.random().toString(36).substring(2, 7).toUpperCase();
+  
+  // Combine parts to create a unique barcode
+  return `${prefix}${timestamp}-${randomPart}`;
 };
 
-export const generateUniqueBarcode = (): string => {
-  // Format: TTS-YYYYMMDD-XXXX (where XXXX is a random number)
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const random = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
-  
-  return `TTS-${year}${month}${day}-${random}`;
+/**
+ * Validates a barcode format
+ * @param barcode The barcode to validate
+ * @returns boolean indicating if the barcode is valid
+ */
+export const validateBarcode = (barcode: string): boolean => {
+  // Simple validation - can be expanded based on specific requirements
+  const pattern = /^[A-Z0-9-]+$/;
+  return pattern.test(barcode) && barcode.length >= 10;
+};
+
+/**
+ * Formats a barcode for display
+ * @param barcode The barcode to format
+ * @returns A formatted barcode string
+ */
+export const formatBarcode = (barcode: string): string => {
+  // Format the barcode for display or printing
+  return barcode.trim().toUpperCase();
 };

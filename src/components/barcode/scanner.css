@@ -5,69 +5,44 @@
   max-width: 480px;
   height: 320px;
   overflow: hidden;
+  margin: 0 auto;
+  border: 2px solid #666;
   border-radius: 8px;
   background-color: #000;
-  margin: 0 auto;
 }
 
-.scanner-viewport video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.scanner-viewport.scan-success {
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
 }
 
-.scanner-viewport canvas {
+.scanner-viewport.scan-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+.drawingBuffer {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
 }
 
-.scanner-viewport .drawingBuffer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* Scanner laser animation */
-.scanner-viewport::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: #ec4899;
-  z-index: 1;
-  animation: scan 2s linear infinite;
-  box-shadow: 0 0 10px #ec4899, 0 0 5px #ec4899;
-}
-
-@keyframes scan {
+@keyframes scanner-line {
   0% {
-    top: 0;
+    transform: translateY(0);
   }
   50% {
-    top: 100%;
+    transform: translateY(300px);
   }
   100% {
-    top: 0;
+    transform: translateY(0);
   }
 }
 
-/* Indicator for scan success */
-.scan-success {
-  border: 2px solid #10b981;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
-  transition: all 0.3s ease;
-}
-
-/* Indicator for scan error */
-.scan-error {
-  border: 2px solid #ef4444;
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
-  transition: all 0.3s ease;
+.scanner-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: #ef4444;
+  animation: scanner-line 3s infinite;
 }
