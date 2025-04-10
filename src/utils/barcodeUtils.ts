@@ -1,4 +1,6 @@
 
+import JsBarcode from 'jsbarcode';
+
 /**
  * Generates a unique barcode with an optional prefix
  * @param prefix Optional prefix for the barcode (default: 'TTS-')
@@ -34,4 +36,38 @@ export const validateBarcode = (barcode: string): boolean => {
 export const formatBarcode = (barcode: string): string => {
   // Format the barcode for display or printing
   return barcode.trim().toUpperCase();
+};
+
+/**
+ * Generates a data URL for a barcode image
+ * @param data The data to encode in the barcode
+ * @param options Optional configuration options
+ * @returns A data URL string for the barcode image
+ */
+export const generateBarcodeDataURL = (data: string, options: any = {}): string => {
+  // Create a canvas element to render the barcode
+  const canvas = document.createElement('canvas');
+  
+  // Set default options
+  const defaultOptions = {
+    format: 'CODE128',
+    width: 2,
+    height: 100,
+    displayValue: true,
+    background: '#ffffff',
+    lineColor: '#000000',
+    margin: 10,
+    fontSize: 14,
+    ...options
+  };
+  
+  // Generate barcode on the canvas
+  try {
+    JsBarcode(canvas, data, defaultOptions);
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.error('Error generating barcode:', error);
+    // Return a placeholder if barcode generation fails
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+  }
 };

@@ -2,13 +2,15 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import Index from "./pages/Index";
-import ProductDetailPage from "./pages/ProductDetailPage";
+import ProductDetails from "./pages/ProductDetails"; // Changed from ProductDetailPage
 import TrackOrderPage from "./pages/TrackOrderPage";
 import Products from "./pages/admin/Products";
 import ProductForm from "./pages/admin/ProductForm";
 import AdminDashboard from "./pages/admin/Dashboard";
 import ProductManager from "./pages/staff/ProductManager";
 import InventoryManagement from "./pages/admin/InventoryManagement";
+import Orders from "./pages/admin/Orders";
+import Printing from "./pages/admin/Printing";
 
 export const router = createBrowserRouter([
   {
@@ -21,7 +23,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "product/:id",
-        element: <ProductDetailPage />,
+        element: <ProductDetails />, // Changed from ProductDetailPage
       },
       {
         path: "track",
@@ -49,6 +51,14 @@ export const router = createBrowserRouter([
           {
             path: "inventory",
             element: <InventoryManagement />,
+          },
+          {
+            path: "orders",
+            element: <Orders />,
+          },
+          {
+            path: "printing",
+            element: <Printing />,
           },
         ],
       },
