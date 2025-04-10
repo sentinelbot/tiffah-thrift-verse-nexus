@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -36,6 +35,8 @@ export interface Product {
   lastUpdated: Date;
   addedBy?: string;
   featured: boolean;
+  imageUrl?: string; // Added for backward compatibility with some components
+  title?: string; // Added for backward compatibility with some components
   measurements?: {
     chest?: number;
     waist?: number;
@@ -49,12 +50,16 @@ export interface Product {
   };
 }
 
-export interface ProductImage {
+// This interface replicates the structure used in some components
+export interface ProductType {
   id: string;
-  url: string;
-  alt?: string;
-  isMain: boolean;
-  displayOrder: number;
+  title: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  condition?: string;
+  size?: string;
+  imageUrl: string;
 }
 
 export interface CartItem {
@@ -63,6 +68,7 @@ export interface CartItem {
   price: number;
   imageUrl: string;
   quantity: number;
+  size?: string; // Added for backward compatibility
 }
 
 export interface Category {
