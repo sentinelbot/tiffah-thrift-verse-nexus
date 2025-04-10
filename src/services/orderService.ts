@@ -76,17 +76,17 @@ export const getCustomerOrders = async (customerId: string): Promise<Order[]> =>
   }
 };
 
-export const createOrder = async (orderData: any): Promise<Order | null> => {
+export const createOrder = async (order: any): Promise<Order | null> => {
   try {
     // Step 1: Create the order record
-    const { data: orderData, error: orderError } = await supabase
+    const { data: newOrderData, error: orderError } = await supabase
       .from('orders')
       .insert([
         {
-          customer_id: orderData.customerId,
-          total_amount: orderData.totalAmount,
+          customer_id: order.customerId,
+          total_amount: order.totalAmount,
           status: 'pending',
-          payment_method: orderData.paymentMethod,
+          payment_method: order.paymentMethod,
           payment_status: 'pending',
           order_number: `TTS-${Date.now()}`
         }
@@ -100,8 +100,8 @@ export const createOrder = async (orderData: any): Promise<Order | null> => {
     }
 
     // Step 2: Create order items
-    const orderItems = orderData.items.map((item: any) => ({
-      order_id: orderData.id,
+    const orderItems = order.items.map((item: any) => ({
+      order_id: newOrderData.id,
       product_id: item.productId,
       price: item.price,
       quantity: item.quantity
@@ -118,7 +118,7 @@ export const createOrder = async (orderData: any): Promise<Order | null> => {
     }
 
     // Fetch the complete order with items
-    return await getOrderById(orderData.id);
+    return await getOrderById(newOrderData.id);
   } catch (err) {
     console.error('Exception creating order:', err);
     return null;

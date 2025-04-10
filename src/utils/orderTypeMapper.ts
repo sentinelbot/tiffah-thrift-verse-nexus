@@ -12,6 +12,7 @@ export const convertOrderType = (order: OrderType1): OrderType2 => {
     status: order.status as any,
     paymentStatus: order.paymentStatus as any,
     paymentMethod: order.paymentMethod as any,
+    items: order.items || [], // Ensure items is never undefined
   };
 };
 
