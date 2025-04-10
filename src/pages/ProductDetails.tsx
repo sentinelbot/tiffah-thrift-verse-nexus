@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -42,25 +41,21 @@ const ProductDetails = () => {
       // Transform database data to match our Product interface
       const processedData: Product = {
         id: data.id,
-        name: data.name || data.title || '',
-        title: data.title,
+        name: data.name || '',
         description: data.description || '',
         price: data.price || 0,
         originalPrice: data.original_price,
-        original_price: data.original_price,
         category: data.category || '',
         subCategory: data.sub_category,
-        sub_category: data.sub_category,
         size: data.size,
         color: data.color,
         brand: data.brand,
         condition: data.condition || 'good',
-        imageUrl: data.image_url || (data.images && data.images[0]?.url) || '',
-        images: data.images || [],
+        imageUrl: '',
+        images: [],
         barcode: data.barcode || '',
-        status: data.status || 'available',
-        dateAdded: data.date_added ? new Date(data.date_added) : undefined,
-        date_added: data.date_added,
+        status: data.status as 'available' | 'reserved' | 'sold',
+        dateAdded: data.date_added ? new Date(data.date_added) : new Date(),
         featured: !!data.featured,
         measurements: data.measurements || {},
       };

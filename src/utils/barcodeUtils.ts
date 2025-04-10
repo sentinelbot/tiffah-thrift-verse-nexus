@@ -74,8 +74,8 @@ export const generateBarcodeDataURL = (barcodeText: string): string => {
 };
 
 /**
- * Wrapper for the generateBarcode function that ensures it returns the barcode directly
- * rather than a Promise for contexts where we need to use it synchronously
+ * Synchronous version of generateBarcode for immediate use
+ * This doesn't check the database but generates a unique code for immediate use
  */
 export const getBarcodeSynchronously = (): string => {
   // Generate a random 5-digit number for immediate use
@@ -83,5 +83,11 @@ export const getBarcodeSynchronously = (): string => {
   return `TTS-${randomDigits}`;
 };
 
-// Alias for backward compatibility
-export const generateUniqueBarcode = generateBarcode;
+/**
+ * Generate a unique barcode synchronously (for cases where we can't use async)
+ */
+export const generateUniqueBarcode = (): string => {
+  // Generate a random 5-digit number for immediate use
+  const randomDigits = Math.floor(10000 + Math.random() * 90000);
+  return `TTS-${randomDigits}`;
+};

@@ -165,6 +165,7 @@ const ProductForm = () => {
     setLoading(true);
     try {
       if (!values.barcode) {
+        // Use the synchronous version instead of async
         values.barcode = generateUniqueBarcode();
       }
 

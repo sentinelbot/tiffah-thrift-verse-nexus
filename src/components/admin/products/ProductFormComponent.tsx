@@ -88,7 +88,24 @@ const ProductFormComponent = ({ productId }: ProductFormProps) => {
 
         if (error) throw error;
 
-        setInitialData(data);
+        const processedData: Partial<Product> = {
+          id: data.id,
+          name: data.name,
+          description: data.description || '',
+          price: data.price,
+          originalPrice: data.original_price,
+          category: data.category,
+          subCategory: data.sub_category,
+          size: data.size,
+          color: data.color,
+          brand: data.brand,
+          condition: data.condition,
+          status: data.status as 'available' | 'reserved' | 'sold',
+          barcode: data.barcode,
+          featured: data.featured
+        };
+        
+        setInitialData(processedData);
         
         // Update form values with existing data
         form.reset({
@@ -102,7 +119,7 @@ const ProductFormComponent = ({ productId }: ProductFormProps) => {
           color: data.color || undefined,
           brand: data.brand || undefined,
           condition: data.condition,
-          status: data.status,
+          status: data.status as 'available' | 'reserved' | 'sold',
         });
       } catch (error) {
         console.error('Error fetching product:', error);
@@ -120,7 +137,7 @@ const ProductFormComponent = ({ productId }: ProductFormProps) => {
     mutationFn: async (values: ProductFormValues) => {
       if (!user) throw new Error('You must be logged in to perform this action');
 
-      const productData = {
+      const productData: any = {
         name: values.name,
         description: values.description,
         price: values.price,
@@ -139,6 +156,8 @@ const ProductFormComponent = ({ productId }: ProductFormProps) => {
       if (!productId) {
         const barcode = await generateBarcode();
         productData.barcode = barcode;
+      } else if (initialData && initialData.barcode) {
+        productData.barcode = initialData.barcode;
       }
 
       if (productId) {

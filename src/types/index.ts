@@ -20,30 +20,31 @@ export interface AuthContextType {
 export interface Product {
   id: string;
   name: string;
-  title?: string; // For backward compatibility
   description: string;
   price: number;
   originalPrice?: number;
-  original_price?: number; // For backward compatibility
   category: string;
   subCategory?: string;
-  sub_category?: string; // For backward compatibility
   size?: string;
   color?: string;
   brand?: string;
   condition: 'new' | 'likeNew' | 'good' | 'fair';
-  imageUrl?: string;
-  images: { url: string; alt: string; isMain: boolean }[];
+  imageUrl: string;
+  images: { url: string; alt?: string; isMain: boolean }[];
   barcode: string;
   status: 'available' | 'reserved' | 'sold';
   dateAdded?: Date;
-  date_added?: string; // For backward compatibility
   featured: boolean;
   measurements?: {
     chest?: number;
     waist?: number;
     length?: number;
   };
+  // For backward compatibility
+  title?: string;
+  original_price?: number;
+  sub_category?: string;
+  date_added?: string;
 }
 
 // Analytics types
