@@ -2,8 +2,6 @@
 import {
   SupabaseProduct,
   ProductImageSupabase,
-  OrderSupabase,
-  OrderItemSupabase,
   SalesDataSupabase,
   SalesByCategorySupabase,
   InventoryStatusSupabase,
@@ -12,13 +10,14 @@ import {
 import {
   Product,
   ProductImage,
-  Order,
-  OrderItem,
   SalesData,
   SalesByCategory,
   InventoryStatus,
   StaffPerformanceData
 } from '@/types';
+import { Order, OrderItem } from '@/types/order';
+import { OrderSupabase, OrderItemSupabase } from '@/types/order';
+import { Json, ProductType } from '@/types/product';
 
 /**
  * Maps a Supabase product to a frontend Product
@@ -97,6 +96,38 @@ export function mapProductToSupabase(product: Partial<Product>): Partial<Supabas
 }
 
 /**
+ * Maps Supabase order data to frontend format
+ */
+export function mapSupabaseOrder(data: OrderSupabase): Order {
+  return {
+    id: data.id,
+    orderNumber: data.order_number,
+    totalAmount: Number(data.total_amount),
+    status: data.status,
+    paymentMethod: data.payment_method,
+    paymentStatus: data.payment_status,
+    paymentTransactionId: data.payment_transaction_id,
+    customerId: data.customer_id,
+    createdAt: new Date(data.created_at),
+    updatedAt: data.updated_at ? new Date(data.updated_at) : undefined
+  };
+}
+
+/**
+ * Maps Supabase order item to frontend format
+ */
+export function mapSupabaseOrderItem(data: OrderItemSupabase): OrderItem {
+  return {
+    id: data.id,
+    orderId: data.order_id,
+    productId: data.product_id,
+    price: Number(data.price),
+    quantity: data.quantity,
+    createdAt: data.created_at ? new Date(data.created_at) : undefined
+  };
+}
+
+/**
  * Maps Supabase sales data to frontend format
  */
 export function mapSupabaseSalesData(data: SalesDataSupabase): SalesData {
@@ -151,17 +182,21 @@ export function mapSupabaseStaffPerformance(data: StaffPerformanceSupabase): Sta
 /**
  * Converts a Supabase product to a simplified ProductType
  */
-export function convertToProductType(product: SupabaseProduct | Product) {
+export function convertToProductType(product: any): ProductType {
   return {
     id: product.id,
-    name: product.name,
+    name: product.name || product.title,
     title: 'title' in product ? product.title : product.name,
     price: Number(product.price),
     originalPrice: 'original_price' in product ? Number(product.original_price) : product.originalPrice,
     size: product.size,
-    imageUrl: 'image_url' in product ? product.image_url : 
-              product.images && product.images.length > 0 ? 
-              product.images.find(img => img.isMain)?.url || product.images[0].url : 
-              '/placeholder.svg'
+    category: product.category,
+    condition: product.condition,
+    brand: product.brand,
+    color: product.color,
+    imageUrl: product.imageUrl || product.image_url || 
+              (product.images && product.images.length > 0 ? 
+              product.images.find((img: any) => img.isMain || img.is_main)?.url || product.images[0].url : 
+              '/placeholder.svg')
   };
 }

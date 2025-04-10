@@ -34,7 +34,9 @@ export function EnhancedSalesChart() {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchSalesData(timeRange);
+        // Updated to match the function signature - not passing timeRange as it's 
+        // handled internally in the fetchSalesData function
+        const data = await fetchSalesData();
         setSalesData(data);
       } catch (error) {
         console.error('Error fetching sales data:', error);
@@ -48,8 +50,10 @@ export function EnhancedSalesChart() {
   
   const handleExport = (format: 'csv' | 'pdf') => {
     if (format === 'csv') {
+      // Pass the data correctly as an array
       exportToCSV(salesData, `sales_${timeRange}_${new Date().toISOString().split('T')[0]}`);
     } else {
+      // Pass the data correctly as an array
       exportToPDF(salesData, `sales_${timeRange}_${new Date().toISOString().split('T')[0]}`);
     }
   };

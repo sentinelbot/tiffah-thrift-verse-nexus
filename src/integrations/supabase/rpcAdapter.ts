@@ -33,16 +33,16 @@ export async function callRpcFunction<T = any>(
 
 export const userRoles = {
   hasRole: (userId: string, role: string) => 
-    callRpcFunction<boolean>('has_role', { user_id: userId, role_name: role }),
+    callRpcFunction<boolean>('has_role', { p_user_id: userId, p_role: role }),
     
   getUserRoles: (userId: string) => 
-    callRpcFunction<string[]>('get_user_roles', { user_id: userId }),
+    callRpcFunction<string[]>('get_user_roles', { p_user_id: userId }),
     
   addUserRole: (userId: string, role: string) => 
-    callRpcFunction<boolean>('add_user_role', { user_id: userId, role_name: role }),
+    callRpcFunction<boolean>('add_user_role', { p_user_id: userId, p_role: role }),
     
   removeUserRole: (userId: string, role: string) => 
-    callRpcFunction<boolean>('remove_user_role', { user_id: userId, role_name: role })
+    callRpcFunction<boolean>('remove_user_role', { p_user_id: userId, p_role: role })
 };
 
 export const staffManagement = {
@@ -55,10 +55,10 @@ export const staffManagement = {
 
 export const scanManagement = {
   processPendingScans: (userId: string) => 
-    callRpcFunction<{ processed: number }>('process_pending_scans', { user_id: userId }),
+    callRpcFunction<{ processed: number }>('process_pending_scans', { p_user_id: userId }),
     
   getUserScanHistory: (userId: string) => 
-    callRpcFunction<any[]>('get_user_scan_history', { user_id: userId })
+    callRpcFunction<any[]>('get_user_scan_history', { p_user_id: userId, p_limit: 50 })
 };
 
 export const analytics = {

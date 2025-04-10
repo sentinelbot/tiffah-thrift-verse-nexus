@@ -1,7 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
-import { scanManagement } from '@/integrations/supabase/rpcAdapter';
+import { scanManagement, userRoles } from '@/integrations/supabase/rpcAdapter';
+import { Json } from '@/types/product';
 
 /**
  * Checks if a user has a specific role
@@ -12,7 +13,7 @@ import { scanManagement } from '@/integrations/supabase/rpcAdapter';
 export const hasRole = async (userId: string, role: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .rpc('has_role', { user_id: userId, role_name: role });
+      .rpc('has_role', { p_user_id: userId, p_role: role });
     
     if (error) {
       console.error('Error checking user role:', error);
@@ -34,7 +35,7 @@ export const hasRole = async (userId: string, role: string): Promise<boolean> =>
 export const getUserRoles = async (userId: string): Promise<string[]> => {
   try {
     const { data, error } = await supabase
-      .rpc('get_user_roles', { user_id: userId });
+      .rpc('get_user_roles', { p_user_id: userId });
     
     if (error) {
       console.error('Error getting user roles:', error);
@@ -63,7 +64,7 @@ export const getUserRoles = async (userId: string): Promise<string[]> => {
 export const addUserRole = async (userId: string, role: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .rpc('add_user_role', { user_id: userId, role_name: role });
+      .rpc('add_user_role', { p_user_id: userId, p_role: role });
     
     if (error) {
       console.error('Error adding user role:', error);
@@ -86,7 +87,7 @@ export const addUserRole = async (userId: string, role: string): Promise<boolean
 export const removeUserRole = async (userId: string, role: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .rpc('remove_user_role', { user_id: userId, role_name: role });
+      .rpc('remove_user_role', { p_user_id: userId, p_role: role });
     
     if (error) {
       console.error('Error removing user role:', error);
@@ -135,7 +136,7 @@ export const getDeliveryStaff = async (): Promise<User[]> => {
 export const processPendingScans = async (userId: string): Promise<{ processed: number }> => {
   try {
     const { data, error } = await supabase
-      .rpc('process_pending_scans', { user_id: userId });
+      .rpc('process_pending_scans', { p_user_id: userId });
     
     if (error) {
       console.error('Error processing pending scans:', error);
@@ -143,7 +144,11 @@ export const processPendingScans = async (userId: string): Promise<{ processed: 
     }
     
     // Return the number of processed scans
-    return { processed: data?.processed || 0 };
+    if (typeof data === 'object' && data !== null && 'processed' in data) {
+      return { processed: data.processed as number };
+    }
+    
+    return { processed: 0 };
   } catch (error) {
     console.error('Error in processPendingScans function:', error);
     return { processed: 0 };
@@ -158,7 +163,7 @@ export const processPendingScans = async (userId: string): Promise<{ processed: 
 export const getUserScanHistory = async (userId: string): Promise<any[]> => {
   try {
     const { data, error } = await supabase
-      .rpc('get_user_scan_history', { user_id: userId });
+      .rpc('get_user_scan_history', { p_user_id: userId, p_limit: 50 });
     
     if (error) {
       console.error('Error getting user scan history:', error);
@@ -190,7 +195,7 @@ export const getScanHistory = async (limit: number = 50, userId?: string): Promi
     const { data, error } = await supabase
       .from('scan_history')
       .select('*')
-      .order('scanned_at', { ascending: false })
+      .order('scan_time', { ascending: false })
       .limit(limit);
     
     if (error) {
@@ -204,4 +209,3 @@ export const getScanHistory = async (limit: number = 50, userId?: string): Promi
     return [];
   }
 };
-

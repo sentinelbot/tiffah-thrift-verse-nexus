@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import ProductCard, { ProductType } from "../products/ProductCard";
+import ProductCard from "../products/ProductCard";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProductType } from "@/types/product";
 
 // Mock data
 const newArrivals: ProductType[] = [
@@ -21,6 +23,7 @@ const newArrivals: ProductType[] = [
   {
     id: "2",
     title: "Floral Summer Dress",
+    name: "Floral Summer Dress",
     price: 28.50,
     category: "Clothing",
     condition: "Like New",
@@ -30,6 +33,7 @@ const newArrivals: ProductType[] = [
   {
     id: "3",
     title: "Leather Crossbody Bag",
+    name: "Leather Crossbody Bag",
     price: 34.99,
     originalPrice: 50.00,
     category: "Accessories",
@@ -39,6 +43,7 @@ const newArrivals: ProductType[] = [
   {
     id: "4",
     title: "Knit Wool Sweater",
+    name: "Knit Wool Sweater",
     price: 32.00,
     category: "Clothing",
     condition: "Good",
@@ -48,6 +53,7 @@ const newArrivals: ProductType[] = [
   {
     id: "5",
     title: "Vintage Polaroid Camera",
+    name: "Vintage Polaroid Camera",
     price: 65.00,
     category: "Home",
     condition: "Fair",
@@ -56,6 +62,7 @@ const newArrivals: ProductType[] = [
   {
     id: "6",
     title: "Classic Trench Coat",
+    name: "Classic Trench Coat",
     price: 75.99,
     originalPrice: 120.00,
     category: "Clothing",
