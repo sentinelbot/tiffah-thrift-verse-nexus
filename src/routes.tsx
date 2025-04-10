@@ -27,15 +27,25 @@ import AdminAuth from "./pages/AdminAuth";
 import Unauthorized from "./pages/Unauthorized";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
+import { CartProvider } from "./context/CartContext";
 import Users from "./pages/admin/Users";
 import NotFound from "./pages/NotFound";
 import HomePage from "./components/home/HomePage";
+import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
+import Shop from "./pages/Shop";
 
 // Create the router with App as the root element
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <AuthProvider><App /></AuthProvider>,
+    element: (
+      <AuthProvider>
+        <CartProvider>
+          <App />
+        </CartProvider>
+      </AuthProvider>
+    ),
     children: [
       {
         index: true,
@@ -44,6 +54,18 @@ const router = createBrowserRouter([
       {
         path: "product/:id",
         element: <ProductDetails />,
+      },
+      {
+        path: "shop",
+        element: <Shop />,
+      },
+      {
+        path: "cart",
+        element: <Cart />,
+      },
+      {
+        path: "wishlist",
+        element: <Wishlist />,
       },
       {
         path: "track",
