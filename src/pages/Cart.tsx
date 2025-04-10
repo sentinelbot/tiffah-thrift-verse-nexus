@@ -66,8 +66,8 @@ const Cart = () => {
                               <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 flex-shrink-0 rounded overflow-hidden border border-border">
                                   <img 
-                                    src={product.imageUrl} 
-                                    alt={product.title} 
+                                    src={product.imageUrl || (product.images && product.images.length > 0 ? product.images[0].url : '/placeholder.svg')} 
+                                    alt={product.name} 
                                     className="w-full h-full object-cover"
                                   />
                                 </div>
@@ -76,7 +76,7 @@ const Cart = () => {
                                     to={`/product/${product.id}`} 
                                     className="font-medium hover:text-primary transition-colors"
                                   >
-                                    {product.title}
+                                    {product.name}
                                   </Link>
                                   <div className="text-sm text-muted-foreground">
                                     {product.size && <span>Size: {product.size}</span>}

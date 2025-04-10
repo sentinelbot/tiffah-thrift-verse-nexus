@@ -3,25 +3,24 @@ import React from "react";
 import { Plus, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
-import { ProductType } from "@/types";
+import { Product } from "@/types";
 import { toast } from "sonner";
 
 interface ProductCardActionsProps {
-  product: ProductType;
+  product: Product;
 }
 
 const ProductCardActions = ({ product }: ProductCardActionsProps) => {
   const { addToCart, addToWishlist } = useCart();
   
   const handleAddToCart = () => {
-    // Convert from ProductCard.ProductType to CartContext.ProductType
     addToCart(product, 1);
-    toast.success(`${product.title} added to cart`);
+    toast.success(`${product.name} added to cart`);
   };
   
   const handleAddToWishlist = () => {
     addToWishlist(product);
-    toast.success(`${product.title} added to wishlist`);
+    toast.success(`${product.name} added to wishlist`);
   };
   
   return (
