@@ -223,7 +223,7 @@ const Checkout = () => {
         productId: item.product.id,
         product: {
           id: item.product.id,
-          name: item.product.title, // Map title to name
+          title: item.product.title,
           price: item.product.price,
           imageUrl: item.product.imageUrl
         },

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -18,17 +19,20 @@ const OrderConfirmation = () => {
   const location = useLocation();
   const { toast } = useToast();
   
+  // Get order ID from location state
   const orderId = location.state?.orderId;
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
+    // If no orderId, redirect to home
     if (!orderId) {
       navigate('/');
       return;
     }
     
+    // Fetch order details
     const fetchOrder = async () => {
       try {
         const orderData = await getOrderById(orderId);
@@ -48,6 +52,7 @@ const OrderConfirmation = () => {
     fetchOrder();
   }, [orderId, navigate, toast]);
   
+  // Handler for downloading receipt
   const handleDownloadReceipt = () => {
     if (order) {
       downloadReceipt(order);
@@ -58,12 +63,14 @@ const OrderConfirmation = () => {
     }
   };
   
+  // Handler for printing receipt
   const handlePrintReceipt = () => {
     if (order) {
       printReceipt(order);
     }
   };
   
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -81,6 +88,7 @@ const OrderConfirmation = () => {
     );
   }
   
+  // If no order found
   if (!order) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -153,18 +161,18 @@ const OrderConfirmation = () => {
               <div className="space-y-3">
                 {order.items.map((item) => (
                   <div key={item.productId} className="flex justify-between items-center">
-                    <div className="flex gap-3">
-                      <div className="w-12 h-12 rounded overflow-hidden border border-border flex-shrink-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded border border-border overflow-hidden flex-shrink-0">
                         <img 
                           src={item.product.imageUrl} 
-                          alt={item.product.name} 
+                          alt={item.product.title} 
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{item.product.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Qty: {item.quantity} × KSh {item.product.price.toFixed(2)}
+                        <p className="font-medium">{item.product.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Qty: {item.quantity} × KSh {item.price.toLocaleString()}
                         </p>
                       </div>
                     </div>

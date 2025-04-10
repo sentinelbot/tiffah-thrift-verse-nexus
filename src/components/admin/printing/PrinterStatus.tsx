@@ -1,100 +1,158 @@
 
 import { useState, useEffect } from 'react';
-import { Printer, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { getPrinterIdForRole, checkPrinterStatus } from '@/services/printNodeService';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Printer, Check, AlertCircle, RefreshCw } from 'lucide-react';
+import { checkPrinterStatus } from '@/services/printNodeService';
+
+// Printer configuration for the different roles
+const printers = [
+  {
+    id: 'pm_printer_id',
+    name: 'Product Label Printer',
+    role: 'productManager',
+    location: 'Inventory Department'
+  },
+  {
+    id: 'op_printer_id',
+    name: 'Receipt Printer',
+    role: 'orderPreparer',
+    location: 'Order Fulfillment'
+  },
+  {
+    id: 'ds_printer_id',
+    name: 'Shipping Label Printer',
+    role: 'deliveryStaff',
+    location: 'Delivery Department'
+  }
+];
 
 const PrinterStatus = () => {
-  const { user } = useAuth();
+  const [printerStatus, setPrinterStatus] = useState<Record<string, boolean | null>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [isOnline, setIsOnline] = useState<boolean | null>(null);
-  const [printerId, setPrinterId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  useEffect(() => {
-    if (user) {
-      const id = getPrinterIdForRole(user.role);
-      setPrinterId(id);
-      checkPrinterConnection(id);
+  // Check status of all printers
+  const checkAllPrinters = async () => {
+    const refreshing = Object.keys(printerStatus).length > 0;
+    if (refreshing) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
     }
-  }, [user]);
-  
-  const checkPrinterConnection = async (id: string) => {
-    setIsLoading(true);
+    
     try {
-      const status = await checkPrinterStatus(id);
-      setIsOnline(status);
+      const statusPromises = printers.map(async (printer) => {
+        const status = await checkPrinterStatus(printer.id);
+        return { id: printer.id, status };
+      });
+      
+      const results = await Promise.all(statusPromises);
+      
+      const newStatus: Record<string, boolean> = {};
+      results.forEach(result => {
+        newStatus[result.id] = result.status;
+      });
+      
+      setPrinterStatus(newStatus);
     } catch (error) {
       console.error('Error checking printer status:', error);
-      setIsOnline(false);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
   
-  const handleRefresh = () => {
-    if (printerId) {
-      checkPrinterConnection(printerId);
-    }
-  };
+  // Check printer status on component mount
+  useEffect(() => {
+    checkAllPrinters();
+    
+    // Set up interval to check printer status every 60 seconds
+    const interval = setInterval(checkAllPrinters, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center">
-          <Printer className="mr-2 h-5 w-5" />
-          Your Printer
-        </CardTitle>
-        <CardDescription>
-          Default printer for your role
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Printer Status</CardTitle>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={checkAllPrinters} 
+          disabled={isLoading || isRefreshing}
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </Button>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-4">
           {isLoading ? (
-            <div className="flex items-center">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span>Checking printer status...</span>
-            </div>
-          ) : isOnline === null ? (
-            <div className="text-muted-foreground">
-              No printer configured
-            </div>
-          ) : isOnline ? (
-            <div className="flex items-center text-green-500">
-              <CheckCircle className="h-4 w-4 mr-2" />
-              <span>Printer is online and ready</span>
-            </div>
+            // Loading skeleton
+            <>
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2 items-center">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-5 w-40" />
+                </div>
+                <Skeleton className="h-6 w-20" />
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2 items-center">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-5 w-40" />
+                </div>
+                <Skeleton className="h-6 w-20" />
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2 items-center">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-5 w-40" />
+                </div>
+                <Skeleton className="h-6 w-20" />
+              </div>
+            </>
           ) : (
-            <div className="flex items-center text-red-500">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              <span>Printer is offline</span>
-            </div>
+            // Printer status list
+            printers.map((printer) => (
+              <div key={printer.id} className="flex items-center justify-between p-2 rounded-md border">
+                <div className="flex items-center gap-3">
+                  <div className={`rounded-full p-2 ${
+                    printerStatus[printer.id] 
+                      ? 'bg-green-500/10 text-green-500' 
+                      : 'bg-red-500/10 text-red-500'
+                  }`}>
+                    <Printer className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{printer.name}</p>
+                    <p className="text-xs text-muted-foreground">{printer.location}</p>
+                  </div>
+                </div>
+                <Badge 
+                  variant={printerStatus[printer.id] ? "default" : "destructive"}
+                  className={`flex items-center gap-1 ${
+                    printerStatus[printer.id] ? 'bg-green-500' : ''
+                  }`}
+                >
+                  {printerStatus[printer.id] ? (
+                    <>
+                      <Check className="h-3 w-3" />
+                      Online
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-3 w-3" />
+                      Offline
+                    </>
+                  )}
+                </Badge>
+              </div>
+            ))
           )}
-          
-          {printerId && (
-            <div className="text-xs text-muted-foreground mt-1">
-              Printer ID: {printerId}
-            </div>
-          )}
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRefresh} 
-            disabled={isLoading}
-            className="mt-2"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                Checking...
-              </>
-            ) : (
-              'Refresh Status'
-            )}
-          </Button>
         </div>
       </CardContent>
     </Card>
