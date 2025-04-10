@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -86,15 +85,12 @@ const Checkout = () => {
   const { user } = useAuth();
   const { cartItems, calculateCartTotal, clearCart } = useCart();
   
-  // Calculate costs
   const subtotal = calculateCartTotal();
   const shippingCost = formData.shipping.shippingMethod === "express" ? 500 : 200;
-  // VAT (16% in Kenya)
   const vatRate = 0.16;
   const vatAmount = subtotal * vatRate;
   const total = subtotal + shippingCost + vatAmount;
   
-  // Ensure cart is not empty
   if (cartItems.length === 0) {
     navigate("/cart");
     return null;
@@ -111,7 +107,6 @@ const Checkout = () => {
   };
   
   const handleNext = () => {
-    // Validate shipping info
     if (currentStep === 0) {
       const { fullName, email, phone, address, city, state, postalCode } = formData.shipping;
       if (!fullName || !email || !phone || !address || !city || !state || !postalCode) {
@@ -122,7 +117,6 @@ const Checkout = () => {
         return;
       }
       
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         toast({
@@ -132,7 +126,6 @@ const Checkout = () => {
         return;
       }
       
-      // Validate phone number (Kenyan format)
       const phoneRegex = /^(?:\+254|0)[1-9][0-9]{8}$/;
       if (!phoneRegex.test(phone)) {
         toast({
@@ -144,7 +137,6 @@ const Checkout = () => {
       }
     }
     
-    // Validate payment info
     if (currentStep === 1) {
       const { method, cardName, cardNumber, expiryDate, cvv, mpesaPhone } = formData.payment;
       
@@ -157,7 +149,6 @@ const Checkout = () => {
           return;
         }
         
-        // Validate card number
         if (!/^[0-9]{16}$/.test(cardNumber.replace(/\s/g, ""))) {
           toast({
             title: "Invalid card number",
@@ -167,7 +158,6 @@ const Checkout = () => {
           return;
         }
         
-        // Validate expiry date
         if (!/^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(expiryDate)) {
           toast({
             title: "Invalid expiry date",
@@ -177,7 +167,6 @@ const Checkout = () => {
           return;
         }
         
-        // Validate CVV
         if (!/^[0-9]{3,4}$/.test(cvv)) {
           toast({
             title: "Invalid CVV",
@@ -195,7 +184,6 @@ const Checkout = () => {
           return;
         }
         
-        // Validate Mpesa phone number (Kenyan format)
         const phoneRegex = /^(?:\+254|0)[1-9][0-9]{8}$/;
         if (!phoneRegex.test(mpesaPhone)) {
           toast({
@@ -208,7 +196,6 @@ const Checkout = () => {
       }
     }
     
-    // Validate terms acceptance
     if (currentStep === 2) {
       if (!termsAccepted) {
         toast({
@@ -232,7 +219,6 @@ const Checkout = () => {
     setIsProcessing(true);
     
     try {
-      // Prepare order items
       const orderItems = cartItems.map(item => ({
         productId: item.product.id,
         product: {
@@ -245,7 +231,6 @@ const Checkout = () => {
         price: item.product.price
       }));
       
-      // Create order
       const order = await createOrder({
         customer: {
           id: user?.id || 'guest',
@@ -265,15 +250,12 @@ const Checkout = () => {
         }
       });
       
-      // Store the created order info
       setCreatedOrder({
         id: order.id,
         orderNumber: order.orderNumber
       });
       
-      // Show payment dialog
       setPaymentDialogOpen(true);
-      
     } catch (error) {
       console.error("Error creating order:", error);
       toast({
@@ -293,14 +275,11 @@ const Checkout = () => {
       errorMessage: success ? undefined : "There was an issue processing your payment."
     });
     
-    // Close the payment dialog
     setTimeout(() => {
       setPaymentDialogOpen(false);
       
-      // Move to confirmation step
       setCurrentStep(3);
       
-      // If payment successful, clear the cart
       if (success) {
         clearCart();
       }
@@ -315,7 +294,6 @@ const Checkout = () => {
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-6">Checkout</h1>
         
-        {/* Checkout steps */}
         <div className="flex justify-between mb-8">
           {steps.map((step, index) => (
             <div 
@@ -452,7 +430,6 @@ const Checkout = () => {
           </div>
         )}
 
-        {/* Payment Processing Dialog */}
         <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
           <DialogContent className="sm:max-w-md" hideCloseButton>
             <div className="py-6">

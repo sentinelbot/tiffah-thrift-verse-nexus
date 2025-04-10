@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -22,6 +21,7 @@ import AdminAuth from '@/pages/AdminAuth';
 import NotFound from '@/pages/NotFound';
 import Unauthorized from '@/pages/Unauthorized';
 import HelpCenter from '@/pages/HelpCenter';
+import PaymentConfirmationPage from '@/pages/PaymentConfirmation';
 
 // Admin pages
 import Dashboard from '@/pages/admin/Dashboard';
@@ -118,6 +118,7 @@ function App() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
+                <Route path="/payment-confirmation" element={<PaymentConfirmationPage />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin/auth" element={<AdminAuth />} />
                 <Route path="/help" element={<HelpCenter />} />
