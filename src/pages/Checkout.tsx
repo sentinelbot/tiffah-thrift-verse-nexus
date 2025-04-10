@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '@/contexts/CartContext';
+import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,6 @@ import {
   Lock, 
   Home,
   Building,
-  CreditCardIcon,
   PhoneIcon
 } from 'lucide-react';
 
@@ -59,7 +58,7 @@ const paymentMethods = [
 ];
 
 const Checkout = () => {
-  const { items, getCartTotal, clearCart } = useCart();
+  const { items, calculateCartTotal, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -82,7 +81,7 @@ const Checkout = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const subtotal = getCartTotal();
+  const subtotal = calculateCartTotal();
   const shipping = shippingMethods.find(method => method.id === shippingMethod)?.price || 0;
   const tax = 0; // No tax for this example
   const total = subtotal + shipping + tax;
@@ -121,7 +120,7 @@ const Checkout = () => {
         // Handle successful order
         toast.success('Order placed successfully!');
         clearCart();
-        navigate(`/orders/${order.id}`);
+        navigate('/order-confirmation');
       } else {
         throw new Error('Failed to create order');
       }
