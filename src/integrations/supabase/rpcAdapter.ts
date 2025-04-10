@@ -10,7 +10,8 @@ type RpcFunctionName =
   | 'remove_user_role' 
   | 'get_delivery_staff' 
   | 'process_pending_scans' 
-  | 'get_user_scan_history';
+  | 'get_user_scan_history'
+  | 'get_scan_history'; // Adding missing function
 
 /**
  * Generic function to call RPC functions with proper typing

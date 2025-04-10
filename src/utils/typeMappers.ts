@@ -1,4 +1,3 @@
-
 import {
   SupabaseProduct,
   ProductImageSupabase,
@@ -15,7 +14,7 @@ import {
   InventoryStatus,
   StaffPerformanceData
 } from '@/types';
-import { Order, OrderItem } from '@/types/order';
+import { Order, OrderItem, OrderStatus, PaymentMethod, PaymentStatus } from '@/types/orderTypes';
 import { OrderSupabase, OrderItemSupabase } from '@/types/order';
 import { Json, ProductType } from '@/types/product';
 
@@ -103,13 +102,14 @@ export function mapSupabaseOrder(data: OrderSupabase): Order {
     id: data.id,
     orderNumber: data.order_number,
     totalAmount: Number(data.total_amount),
-    status: data.status,
-    paymentMethod: data.payment_method,
-    paymentStatus: data.payment_status,
+    status: data.status as OrderStatus,
+    paymentMethod: data.payment_method as PaymentMethod,
+    paymentStatus: data.payment_status as PaymentStatus,
     paymentTransactionId: data.payment_transaction_id,
     customerId: data.customer_id,
     createdAt: new Date(data.created_at),
-    updatedAt: data.updated_at ? new Date(data.updated_at) : undefined
+    updatedAt: data.updated_at ? new Date(data.updated_at) : undefined,
+    orderDate: new Date(data.created_at)
   };
 }
 

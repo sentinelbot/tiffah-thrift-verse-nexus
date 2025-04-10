@@ -91,6 +91,21 @@ export const getUserScanHistory = async (userId: string, limit = 20): Promise<an
 };
 
 /**
+ * Get general scan history
+ */
+export const getScanHistory = async (limit = 20): Promise<any[]> => {
+  try {
+    const data = await callRpcFunction<any[]>('get_scan_history', {
+      p_limit: limit
+    });
+    return data || [];
+  } catch (error) {
+    console.error('Error in getScanHistory:', error);
+    return [];
+  }
+};
+
+/**
  * Process pending scans that were captured offline
  */
 export const processPendingScans = async (scans: any[]): Promise<any> => {

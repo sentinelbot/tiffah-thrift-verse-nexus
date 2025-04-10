@@ -1,13 +1,12 @@
-
 import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { ProductCard } from '@/components/products/ProductCard';
+import ProductCard from '@/components/products/ProductCard';
 import { ProductType } from '@/types/product';
 import { Button } from '@/components/ui/button';
-import { ProductFilters } from '@/components/shop/ProductFilters';
-import { ProductSort } from '@/components/shop/ProductSort';
-import { EnhancedSearch } from '@/components/shop/EnhancedSearch';
-import { CustomerServiceChat } from '@/components/customer-service/CustomerServiceChat';
+import ProductFilters from '@/components/shop/ProductFilters';
+import ProductSort from '@/components/shop/ProductSort';
+import EnhancedSearch from '@/components/shop/EnhancedSearch';
+import CustomerServiceChat from '@/components/customer-service/CustomerServiceChat';
 
 // Sample data for demonstration
 const products: ProductType[] = [

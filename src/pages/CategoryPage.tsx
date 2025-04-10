@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { ProductCard } from '@/components/products/ProductCard';
+import ProductCard from '@/components/products/ProductCard';
 import { ProductType } from '@/types/product';
 
 const CategoryPage = () => {

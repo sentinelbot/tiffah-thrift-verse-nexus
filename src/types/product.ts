@@ -15,6 +15,14 @@ export interface ProductType {
   brand?: string;
 }
 
+export interface ProductImage {
+  id: string;
+  url: string;
+  alt?: string;
+  isMain: boolean;
+  displayOrder: number;
+}
+
 export interface ProductWithImages {
   id: string;
   name: string;
@@ -26,13 +34,7 @@ export interface ProductWithImages {
   size?: string;
   color?: string;
   brand?: string;
-  images: {
-    id: string;
-    url: string;
-    alt?: string;
-    isMain: boolean;
-    displayOrder: number;
-  }[];
+  images: ProductImage[];
 }
 
 export type Json = 

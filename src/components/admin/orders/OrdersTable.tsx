@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   CaretSortIcon, 
   ChevronDownIcon, 
-  DotsHorizontalIcon,
+  DotsHorizontalIcon 
 } from "@radix-ui/react-icons";
 import {
   ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -17,7 +15,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,64 +26,48 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
 import { getAllOrders } from '@/services/orderService';
-import { Order, OrderStatus } from '@/types/order';
 import { formatDate } from '@/utils/dateUtils';
 import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
 import ShippingLabelPrint from '@/components/admin/printing/ShippingLabelPrint';
 import { useNavigate } from 'react-router-dom';
+import { CustomCheckbox } from '@/components/ui/custom-checkbox';
+import { Order } from '@/types/orderTypes';
 
-interface DataTableProps {
-  data: Order[];
-}
-
-const statusColors: { [key: string]: string } = {
+const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
   processing: "bg-blue-100 text-blue-800",
   ready: "bg-indigo-100 text-indigo-800",
   outForDelivery: "bg-purple-100 text-purple-800",
   delivered: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
+  cancelled: "bg-red-100 text-red-800"
 };
 
 export const OrdersTable = () => {
   const navigate = useNavigate();
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [sorting, setSorting] = React.useState([]);
+  const [columnFilters, setColumnFilters] = React.useState([]);
+  const [columnVisibility, setColumnVisibility] = React.useState({});
   const [rowSelection, setRowSelection] = React.useState({});
-  
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['orders'],
-    queryFn: getAllOrders
-  });
-  
+
+  const { data, isLoading, isError } = useQuery('orders', getAllOrders);
+
   const columns: ColumnDef<Order>[] = [
     {
       id: "select",
       header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected()
-          }
+        <CustomCheckbox
+          checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
           className="translate-y-[2px]"
         />
       ),
       cell: ({ row }) => (
-        <Checkbox
+        <CustomCheckbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
@@ -107,13 +88,9 @@ export const OrdersTable = () => {
             Order Number
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
-      cell: ({ row }) => (
-        <div className="w-[150px]">
-          {row.getValue("orderNumber")}
-        </div>
-      ),
+      cell: ({ row }) => <div className="w-[150px]">{row.getValue("orderNumber")}</div>,
     },
     {
       accessorKey: "customer.name",
@@ -126,18 +103,16 @@ export const OrdersTable = () => {
             Customer
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => {
         const customer = row.original.customer;
         return (
           <div className="w-[200px]">
             {customer?.name}
-            <div className="text-sm text-muted-foreground">
-              {customer?.email}
-            </div>
+            <div className="text-sm text-muted-foreground">{customer?.email}</div>
           </div>
-        )
+        );
       },
     },
     {
@@ -151,7 +126,7 @@ export const OrdersTable = () => {
             Date
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => {
         const date = row.original.orderDate;
@@ -159,7 +134,7 @@ export const OrdersTable = () => {
           <div className="w-[100px]">
             {date ? formatDate(date) : "N/A"}
           </div>
-        )
+        );
       },
     },
     {
@@ -173,7 +148,7 @@ export const OrdersTable = () => {
             Amount
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => {
         const amount = row.original.totalAmount;
@@ -181,7 +156,7 @@ export const OrdersTable = () => {
           <div className="w-[100px] font-bold">
             KSh {amount?.toLocaleString()}
           </div>
-        )
+        );
       },
     },
     {
@@ -195,17 +170,15 @@ export const OrdersTable = () => {
             Status
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => {
         const status = row.original.status;
         return (
           <div className="w-[100px]">
-            <Badge className={statusColors[status]}>
-              {status}
-            </Badge>
+            <Badge className={statusColors[status]}>{status}</Badge>
           </div>
-        )
+        );
       },
     },
     {
@@ -213,7 +186,6 @@ export const OrdersTable = () => {
       header: () => <div className="text-right">Actions</div>,
       cell: ({ row }) => {
         const order = row.original;
-        
         return (
           <div className="flex justify-end gap-2">
             <OrderReceiptPrint order={order} size="icon" variant="ghost" />
@@ -231,16 +203,14 @@ export const OrdersTable = () => {
                   View Details
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  Download
-                </DropdownMenuItem>
+                <DropdownMenuItem>Download</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        )
+        );
       },
     },
-  ]
+  ];
 
   const table = useReactTable({
     data: data || [],
@@ -259,8 +229,8 @@ export const OrdersTable = () => {
       columnVisibility,
       rowSelection,
     },
-  })
-  
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -273,7 +243,7 @@ export const OrdersTable = () => {
             <TableHeader>
               {columns.map((column) => (
                 <TableHead key={column.id}>
-                  {column.header()}
+                  {column.header?.toString() || ""}
                 </TableHead>
               ))}
             </TableHeader>
@@ -293,7 +263,7 @@ export const OrdersTable = () => {
       </div>
     );
   }
-  
+
   if (isError) {
     return <div>Error fetching orders</div>;
   }
@@ -316,21 +286,19 @@ export const OrdersTable = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[200px]">
-            {columns.map((column) => {
-              if (column.getCanHide()) {
+            {table.getAllColumns().map((column) => {
+              if (typeof column.accessorFn !== 'undefined') {
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
-                    checked={table.getColumnVisibility()[column.id] !== false}
+                    checked={column.getIsVisible()}
                     onCheckedChange={(value) =>
-                      table.setColumnVisibility({
-                        [column.id]: value,
-                      })
+                      column.toggleVisibility(!!value)
                     }
                   >
-                    {column.getHeader()}
+                    {column.id}
                   </DropdownMenuCheckboxItem>
-                )
+                );
               }
               return null;
             })}
@@ -352,7 +320,7 @@ export const OrdersTable = () => {
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -383,7 +351,8 @@ export const OrdersTable = () => {
       </div>
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <div className="space-x-2">
           <Button
@@ -405,5 +374,5 @@ export const OrdersTable = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -3,16 +3,16 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import { OrdersTable } from '@/components/admin/orders/OrdersTable';
 import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
 import ShippingLabelPrint from '@/components/admin/printing/ShippingLabelPrint';
-import { Order } from '@/types/order';
+import { Order, OrderStatus, PaymentMethod, PaymentStatus } from '@/types/orderTypes';
 
 // Mock order for demonstration
 const mockOrder: Order = {
   id: "order-123",
   orderNumber: "TTS-20250409-1234",
   totalAmount: 4500,
-  status: "processing",
-  paymentMethod: "mpesa",
-  paymentStatus: "completed",
+  status: "processing" as OrderStatus,
+  paymentMethod: "mpesa" as PaymentMethod,
+  paymentStatus: "completed" as PaymentStatus,
   paymentTransactionId: "MPESA123456",
   createdAt: new Date(),
   orderDate: new Date(),
@@ -50,8 +50,8 @@ const mockOrder: Order = {
     }
   ],
   paymentInfo: {
-    method: "mpesa",
-    status: "completed",
+    method: "mpesa" as PaymentMethod,
+    status: "completed" as PaymentStatus,
     transactionId: "MPESA123456",
     amount: 4500
   },
@@ -73,12 +73,12 @@ const mockOrder: Order = {
   history: [
     {
       timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-      status: "pending",
+      status: "pending" as OrderStatus,
       note: "Order placed"
     },
     {
       timestamp: new Date(Date.now() - 1800000), // 30 minutes ago
-      status: "processing",
+      status: "processing" as OrderStatus,
       note: "Payment confirmed"
     }
   ]
