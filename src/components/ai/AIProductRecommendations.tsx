@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, ProductType } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/context/CartContext';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -120,12 +119,12 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
               <div className="flex justify-between items-center">
                 <p className="font-semibold">KSh {product.price.toFixed(2)}</p>
                 <div className="space-x-2">
-                  <button 
+                  <Button 
                     onClick={() => handleAddToCart(product)} 
                     className="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary/90"
                   >
                     Add to Cart
-                  </button>
+                  </Button>
                 </div>
               </div>
             </CardContent>

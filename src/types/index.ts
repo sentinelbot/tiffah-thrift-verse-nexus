@@ -1,81 +1,45 @@
 
-// Common Types for the Tiffah Thrift Store
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  role?: string;
-  phone?: string;
-  avatar?: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  description?: string;
-  parentId?: string;
-  slug?: string;
-  image?: string;
-}
-
+// Types for product-related functionality
 export interface Product {
   id: string;
   name: string;
+  title?: string;
   description?: string;
   price: number;
   originalPrice?: number;
   category: string;
   subCategory?: string;
-  tags?: string[];
+  condition: string;
   size?: string;
   color?: string;
   brand?: string;
-  condition: 'new' | 'likeNew' | 'good' | 'fair';
-  images?: ProductImage[];
   barcode: string;
-  status: 'available' | 'reserved' | 'sold';
-  dateAdded: Date | string;
-  lastUpdated: Date | string;
-  addedBy?: string;
+  status: string;
+  imageUrl?: string;
   featured?: boolean;
-  measurements?: {
-    chest?: number;
-    waist?: number;
-    length?: number;
-    [key: string]: number | undefined;
-  };
+  measurements?: Record<string, number>;
   inventoryTracking?: {
-    inStockDate?: Date | string;
-    reservedUntil?: Date | string;
-    soldDate?: Date | string;
+    inStockDate?: string | Date;
+    reservedUntil?: string | Date;
+    soldDate?: string | Date;
   };
 }
 
 export interface ProductImage {
-  id?: string;
+  id: string;
   url: string;
   alt?: string;
-  isMain?: boolean;
+  isMain: boolean;
+  displayOrder: number;
 }
 
-export interface CartItem {
-  id: string;
-  productId: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-  size?: string;
-  color?: string;
+export interface ProductWithImages extends Product {
+  images: ProductImage[];
 }
 
-export interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-}
+export type ProductType = Product;
 
+// Types for order-related functionality
 export type OrderStatus = 
   | 'pending'
   | 'processing'
@@ -97,34 +61,20 @@ export type PaymentStatus =
   | 'failed'
   | 'refunded';
 
-export type ShippingMethod = 
-  | 'standard'
-  | 'express'
-  | 'pickup';
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+}
 
 export interface OrderItem {
   id: string;
   orderId: string;
   productId: string;
-  product?: Product;
   quantity: number;
   price: number;
-}
-
-export interface DeliveryInfo {
-  method: ShippingMethod;
-  cost: number;
-  estimatedDelivery: Date | string;
-  actualDelivery?: Date | string;
-  trackingId?: string;
-  deliveryStaff?: string;
-}
-
-export interface PaymentInfo {
-  method: PaymentMethod;
-  transactionId?: string;
-  status: PaymentStatus;
-  amount: number;
+  product?: Product;
 }
 
 export interface ShippingAddress {
@@ -137,7 +87,24 @@ export interface ShippingAddress {
   postalCode: string;
   country: string;
   specialInstructions?: string;
-  shippingMethod: ShippingMethod;
+  shippingMethod: string;
+}
+
+export interface PaymentInfo {
+  method: PaymentMethod;
+  status: PaymentStatus;
+  transactionId?: string;
+  amount: number;
+}
+
+export interface DeliveryInfo {
+  method?: string;
+  cost?: number;
+  estimatedDelivery?: Date | string;
+  actualDelivery?: Date | string;
+  trackingId?: string;
+  deliveryStaff?: string;
+  notes?: string;
 }
 
 export interface OrderHistory {
@@ -149,98 +116,148 @@ export interface OrderHistory {
 export interface Order {
   id: string;
   orderNumber: string;
-  customer: Customer;
-  items: OrderItem[];
+  customerId?: string;
+  customer?: Customer;
+  items?: OrderItem[];
   totalAmount: number;
-  status: OrderStatus;
+  status: OrderStatus | string;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   paymentTransactionId?: string;
   paymentInfo?: PaymentInfo;
   shippingInfo?: ShippingAddress;
   deliveryInfo?: DeliveryInfo;
-  orderDate: Date | string;
   createdAt: Date | string;
+  updatedAt?: Date | string;
+  orderDate: Date | string;
   processedBy?: string;
   notes?: string;
   barcodeData?: string;
   history?: OrderHistory[];
 }
 
-export type DeliveryStatus = 
-  | 'ready'
-  | 'assigned'
-  | 'intransit'
-  | 'delivered'
-  | 'failed';
-
-export interface DeliveryAddress {
-  street: string;
-  city: string;
-  postalCode: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
-}
-
-export interface DeliveryProof {
-  photo?: string;
-  signature?: string;
-  notes?: string;
-}
-
-export interface Delivery {
+// Types for cart-related functionality
+export interface CartItem {
   id: string;
-  orderNumber: string;
-  trackingId: string;
-  customer: {
-    name: string;
-    email: string;
-    phone: string;
-  };
-  status: DeliveryStatus;
-  items: {
-    id: string;
-    name: string;
-    quantity: number;
-  }[];
-  totalAmount: number;
-  shippingMethod: ShippingMethod;
-  address: DeliveryAddress;
-  assignedAt: Date | string;
-  estimatedDelivery: Date | string;
-  actualDelivery?: Date | string;
-  pickedUpAt?: Date | string;
-  attemptedDelivery?: Date | string;
-  failureReason?: string;
-  priority: 'high' | 'normal' | 'low';
-  distance: number;
-  notes?: string;
-  deliveryProof?: DeliveryProof;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  imageUrl: string;
+  product?: Product;
+  reservedUntil?: Date;
 }
 
-export interface ScanHistory {
+export interface WishlistItem {
   id: string;
-  barcode: string;
-  scan_type: 'product' | 'order' | 'delivery' | 'unknown';
-  scan_time: Date | string;
-  location?: string;
-  result?: string;
-  status: 'success' | 'error';
-  scanned_by?: string;
-  device_info?: string;
+  productId: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  addedAt: Date;
 }
 
+// Types for analytics and reports
+export interface SalesData {
+  date: string;
+  revenue: number;
+  orders: number;
+  averageOrderValue: number;
+}
+
+export interface SalesByCategory {
+  category: string;
+  revenue: number;
+  units: number;
+  percentage: number;
+}
+
+export interface InventoryStatus {
+  category: string;
+  inStock: number;
+  lowStock: number;
+  outOfStock: number;
+  totalValue: number;
+}
+
+export interface StaffPerformanceData {
+  staffId: string;
+  name: string;
+  ordersProcessed: number;
+  itemsProcessed: number;
+  averageTimeHours: number;
+}
+
+export interface CustomerBehavior {
+  id: string;
+  name: string;
+  email: string;
+  totalSpent: number;
+  orderCount: number;
+  lastActive: Date | string;
+  averageOrderValue: number;
+  lifetimeValue: number;
+  acquisitionSource?: string;
+}
+
+export interface MarketingEffectiveness {
+  channel: string;
+  sessions: number;
+  conversions: number;
+  revenue: number;
+  cost: number;
+  roi: number;
+}
+
+export interface SystemPerformance {
+  date: string;
+  pageLoadTime: number;
+  serverResponseTime: number;
+  errorRate: number;
+  userSessions: number;
+  apiCalls: number;
+}
+
+// Types for AI and enhancement-related functionality
+export interface AIEnhancement {
+  id: string;
+  productId: string;
+  enhancementType: 'description' | 'image' | 'price' | 'category';
+  originalValue: string;
+  enhancedValue: string;
+  confidence: number;
+  createdAt: Date | string;
+  usedInProduction: boolean;
+}
+
+// Types for printing-related functionality
 export interface PrintJob {
   id: string;
   type: 'label' | 'receipt' | 'shippingLabel';
   content: string;
   printerId: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
-  createdAt: Date | string;
-  processedAt?: Date | string;
   error?: string;
   relatedId?: string;
   requestedBy?: string;
+  createdAt: Date | string;
+  processedAt?: Date | string;
+}
+
+// Types for component props
+export interface ProductLabelPrintProps {
+  product: Product;
+  onClose?: () => void;
+}
+
+export interface AIDescriptionGeneratorProps {
+  product?: Product;
+  onGenerated?: (description: string) => void;
+  onClose?: () => void;
+}
+
+export interface ProductPhotoUploadProps {
+  productId?: string;
+  onUploaded?: (urls: string[]) => void;
+  onClose?: () => void;
 }

@@ -1,201 +1,121 @@
-import {
-  SupabaseProduct,
-  ProductImageSupabase,
-  SalesDataSupabase,
-  SalesByCategorySupabase,
-  InventoryStatusSupabase,
-  StaffPerformanceSupabase
-} from '@/types/supabase';
+
 import {
   Product,
   ProductImage,
+  Order,
+  OrderItem,
+  Customer,
+  ShippingAddress,
+  DeliveryInfo,
+  PaymentInfo,
+  OrderHistory,
   SalesData,
   SalesByCategory,
   InventoryStatus,
   StaffPerformanceData
 } from '@/types';
-import { Order, OrderItem, OrderStatus, PaymentMethod, PaymentStatus } from '@/types/orderTypes';
-import { OrderSupabase, OrderItemSupabase } from '@/types/order';
-import { Json, ProductType } from '@/types/product';
 
-/**
- * Maps a Supabase product to a frontend Product
- */
-export function mapSupabaseProduct(supabaseProduct: SupabaseProduct): Product {
+// Map from database response to frontend types
+export const mapDbProductToProduct = (dbProduct: any): Product => {
   return {
-    id: supabaseProduct.id,
-    name: supabaseProduct.name,
-    description: supabaseProduct.description || '',
-    price: Number(supabaseProduct.price),
-    originalPrice: supabaseProduct.original_price ? Number(supabaseProduct.original_price) : undefined,
-    category: supabaseProduct.category,
-    subCategory: supabaseProduct.sub_category,
-    tags: supabaseProduct.tags || [],
-    size: supabaseProduct.size,
-    color: supabaseProduct.color,
-    brand: supabaseProduct.brand,
-    condition: supabaseProduct.condition,
-    barcode: supabaseProduct.barcode,
-    status: supabaseProduct.status,
-    dateAdded: new Date(supabaseProduct.created_at),
-    lastUpdated: new Date(supabaseProduct.updated_at),
-    addedBy: supabaseProduct.created_by,
-    featured: supabaseProduct.featured,
-    measurements: supabaseProduct.measurements,
-    inventoryTracking: supabaseProduct.inventory_tracking ? {
-      inStockDate: supabaseProduct.inventory_tracking.inStockDate ? new Date(supabaseProduct.inventory_tracking.inStockDate) : undefined,
-      reservedUntil: supabaseProduct.inventory_tracking.reservedUntil ? new Date(supabaseProduct.inventory_tracking.reservedUntil) : undefined,
-      soldDate: supabaseProduct.inventory_tracking.soldDate ? new Date(supabaseProduct.inventory_tracking.soldDate) : undefined,
-    } : undefined
+    id: dbProduct.id,
+    name: dbProduct.name,
+    title: dbProduct.title || dbProduct.name,
+    description: dbProduct.description,
+    price: dbProduct.price,
+    originalPrice: dbProduct.original_price,
+    category: dbProduct.category,
+    subCategory: dbProduct.sub_category,
+    condition: dbProduct.condition,
+    size: dbProduct.size,
+    color: dbProduct.color,
+    brand: dbProduct.brand,
+    barcode: dbProduct.barcode,
+    status: dbProduct.status,
+    imageUrl: dbProduct.image_url || dbProduct.images?.[0]?.url,
+    featured: dbProduct.featured
   };
-}
+};
 
-/**
- * Maps a Supabase product image to a frontend ProductImage
- */
-export function mapSupabaseProductImage(supabaseImage: ProductImageSupabase): ProductImage {
+export const mapDbProductImageToProductImage = (dbImage: any): ProductImage => {
   return {
-    id: supabaseImage.id,
-    url: supabaseImage.url,
-    alt: supabaseImage.alt,
-    isMain: supabaseImage.is_main,
-    displayOrder: supabaseImage.display_order
+    id: dbImage.id,
+    url: dbImage.url,
+    alt: dbImage.alt || '',
+    isMain: dbImage.is_main,
+    displayOrder: dbImage.display_order || 0
   };
-}
+};
 
-/**
- * Maps a frontend Product to a Supabase product format
- */
-export function mapProductToSupabase(product: Partial<Product>): Partial<SupabaseProduct> {
-  const result: Partial<SupabaseProduct> = {
-    name: product.name,
-    title: product.name, // Use name as title for compatibility
-    description: product.description,
-    price: product.price,
-    original_price: product.originalPrice,
-    category: product.category,
-    sub_category: product.subCategory,
-    tags: product.tags,
-    size: product.size,
-    color: product.color,
-    brand: product.brand,
-    condition: product.condition,
-    barcode: product.barcode,
-    status: product.status,
-    featured: product.featured,
-    measurements: product.measurements,
-    inventory_tracking: product.inventoryTracking ? {
-      inStockDate: product.inventoryTracking.inStockDate?.toISOString(),
-      reservedUntil: product.inventoryTracking.reservedUntil?.toISOString(),
-      soldDate: product.inventoryTracking.soldDate?.toISOString(),
-    } : undefined
-  };
-
-  return result;
-}
-
-/**
- * Maps Supabase order data to frontend format
- */
-export function mapSupabaseOrder(data: OrderSupabase): Order {
+export const mapDbOrderToOrder = (dbOrder: any): Order => {
   return {
-    id: data.id,
-    orderNumber: data.order_number,
-    totalAmount: Number(data.total_amount),
-    status: data.status as OrderStatus,
-    paymentMethod: data.payment_method as PaymentMethod,
-    paymentStatus: data.payment_status as PaymentStatus,
-    paymentTransactionId: data.payment_transaction_id,
-    customerId: data.customer_id,
-    createdAt: new Date(data.created_at),
-    updatedAt: data.updated_at ? new Date(data.updated_at) : undefined,
-    orderDate: new Date(data.created_at)
+    id: dbOrder.id,
+    orderNumber: dbOrder.order_number,
+    customerId: dbOrder.customer_id,
+    totalAmount: dbOrder.total_amount,
+    status: dbOrder.status,
+    paymentMethod: dbOrder.payment_method,
+    paymentStatus: dbOrder.payment_status,
+    paymentTransactionId: dbOrder.payment_transaction_id,
+    createdAt: dbOrder.created_at,
+    updatedAt: dbOrder.updated_at,
+    orderDate: dbOrder.order_date || dbOrder.created_at,
+    processedBy: dbOrder.processed_by,
+    notes: dbOrder.notes,
+    barcodeData: dbOrder.barcode_data
   };
-}
+};
 
-/**
- * Maps Supabase order item to frontend format
- */
-export function mapSupabaseOrderItem(data: OrderItemSupabase): OrderItem {
-  return {
-    id: data.id,
-    orderId: data.order_id,
-    productId: data.product_id,
-    price: Number(data.price),
-    quantity: data.quantity
-  };
-}
+// Helper function to safely convert dates
+export const toISOString = (date: string | Date | undefined): string | undefined => {
+  if (!date) return undefined;
+  if (typeof date === 'string') return date;
+  return date.toISOString();
+};
 
-/**
- * Maps Supabase sales data to frontend format
- */
-export function mapSupabaseSalesData(data: SalesDataSupabase): SalesData {
+export const mapInventoryTrackingToDb = (tracking: any): Record<string, string> => {
   return {
-    date: data.date,
-    revenue: Number(data.revenue),
-    orders: data.orders,
-    averageOrderValue: Number(data.average_order_value)
+    inStockDate: tracking.inStockDate ? toISOString(tracking.inStockDate) : undefined,
+    reservedUntil: tracking.reservedUntil ? toISOString(tracking.reservedUntil) : undefined,
+    soldDate: tracking.soldDate ? toISOString(tracking.soldDate) : undefined
   };
-}
+};
 
-/**
- * Maps Supabase sales by category to frontend format
- */
-export function mapSupabaseSalesByCategory(data: SalesByCategorySupabase): SalesByCategory {
+// More mappers as needed for analytics data
+export const mapDbSalesDataToSalesData = (dbData: any): SalesData => {
   return {
-    category: data.category,
-    revenue: Number(data.revenue),
-    units: data.units,
-    percentage: Number(data.percentage)
+    date: dbData.date,
+    revenue: dbData.revenue,
+    orders: dbData.orders,
+    averageOrderValue: dbData.average_order_value
   };
-}
+};
 
-/**
- * Maps Supabase inventory status to frontend format
- */
-export function mapSupabaseInventoryStatus(data: InventoryStatusSupabase): InventoryStatus {
+export const mapDbSalesByCategoryToSalesByCategory = (dbData: any): SalesByCategory => {
   return {
-    category: data.category,
-    inStock: data.in_stock,
-    lowStock: data.low_stock,
-    outOfStock: data.out_of_stock,
-    totalValue: Number(data.total_value)
+    category: dbData.category,
+    revenue: dbData.revenue,
+    units: dbData.units,
+    percentage: dbData.percentage
   };
-}
+};
 
-/**
- * Maps Supabase staff performance to frontend format
- */
-export function mapSupabaseStaffPerformance(data: StaffPerformanceSupabase): StaffPerformanceData {
+export const mapDbInventoryStatusToInventoryStatus = (dbData: any): InventoryStatus => {
   return {
-    staffId: data.staff_id,
-    name: data.name,
-    role: 'staff', // Default role, would be determined by querying user_roles
-    ordersProcessed: data.orders_processed,
-    itemsProcessed: data.items_processed,
-    averageTime: data.average_time_hours,
-    rating: 0 // Default value, would be calculated or fetched separately
+    category: dbData.category,
+    inStock: dbData.in_stock,
+    lowStock: dbData.low_stock,
+    outOfStock: dbData.out_of_stock,
+    totalValue: dbData.total_value
   };
-}
+};
 
-/**
- * Converts a Supabase product to a simplified ProductType
- */
-export function convertToProductType(product: any): ProductType {
+export const mapDbStaffPerformanceToStaffPerformance = (dbData: any): StaffPerformanceData => {
   return {
-    id: product.id,
-    name: product.name || product.title,
-    title: 'title' in product ? product.title : product.name,
-    price: Number(product.price),
-    originalPrice: 'original_price' in product ? Number(product.original_price) : product.originalPrice,
-    size: product.size,
-    category: product.category,
-    condition: product.condition,
-    brand: product.brand,
-    color: product.color,
-    imageUrl: product.imageUrl || product.image_url || 
-              (product.images && product.images.length > 0 ? 
-              product.images.find((img: any) => img.isMain || img.is_main)?.url || product.images[0].url : 
-              '/placeholder.svg')
+    staffId: dbData.staff_id,
+    name: dbData.name,
+    ordersProcessed: dbData.orders_processed,
+    itemsProcessed: dbData.items_processed,
+    averageTimeHours: dbData.average_time_hours
   };
-}
+};

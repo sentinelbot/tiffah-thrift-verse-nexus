@@ -2,12 +2,6 @@
 import React, { useState } from 'react';
 import StaffLayout from '@/components/layout/StaffLayout';
 import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
   Card, 
   CardContent, 
   CardDescription, 
@@ -15,8 +9,6 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -24,823 +16,712 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  ShoppingCart,
-  Search,
-  Clock,
-  CheckCircle,
-  Package as PackageIcon,
-  Truck,
-  Barcode,
-  Printer,
-  ClipboardList,
-  ListChecks,
-  PackageCheck,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  FilterX,
-  Timer,
-  Loader2
-} from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from 'sonner';
-import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
-import ShippingLabelPrint from '@/components/admin/printing/ShippingLabelPrint';
+} from '@/components/ui/table';
 import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { format } from 'date-fns';
-import { calendars } from 'lucide-react';
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PrinterIcon, CheckCircle, Truck, AlertCircle, Calendar, Package, Search, Clock, BarChart, ArrowRight, ShoppingBag, PackageCheck, ClipboardList, FileCheck2 } from 'lucide-react';
+import { Order, OrderItem, Customer } from '@/types';
+import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import OrderScanner from '@/components/barcode/OrderScanner';
+import PrintDialog from '@/components/admin/printing/PrintDialog';
+import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
 
-// Mock data for orders
-const mockOrders = [
+// Mock data
+const mockOrders: Order[] = [
   {
-    id: 'order-001',
-    orderNumber: 'TTS-20250409-1234',
+    id: '1',
+    orderNumber: 'TTS-20250410-0001',
     customer: {
-      name: 'Jane Smith',
-      email: 'jane@example.com',
+      id: '1',
+      name: 'John Doe',
+      email: 'john@example.com',
       phone: '+254712345678'
     },
     items: [
-      { id: 'prod-001', name: 'Vintage Denim Jacket', price: 2500, quantity: 1 },
-      { id: 'prod-002', name: 'Floral Summer Dress', price: 1800, quantity: 1 }
+      {
+        id: '1',
+        orderId: '1',
+        productId: 'prod1',
+        quantity: 2,
+        price: 25.99,
+        product: {
+          id: 'prod1',
+          name: 'Vintage Denim Jacket',
+          title: 'Vintage Denim Jacket',
+          price: 25.99,
+          category: 'Jackets',
+          condition: 'good',
+          barcode: 'PROD-001',
+          status: 'sold',
+          imageUrl: '/placeholder.svg'
+        }
+      },
+      {
+        id: '2',
+        orderId: '1',
+        productId: 'prod2',
+        quantity: 1,
+        price: 14.99,
+        product: {
+          id: 'prod2',
+          name: 'Floral Summer Dress',
+          title: 'Floral Summer Dress',
+          price: 14.99,
+          category: 'Dresses',
+          condition: 'likeNew',
+          barcode: 'PROD-002',
+          status: 'sold',
+          imageUrl: '/placeholder.svg'
+        }
+      }
     ],
-    totalAmount: 4300,
-    status: 'pending',
+    totalAmount: 66.97,
+    status: 'processing',
     paymentMethod: 'mpesa',
     paymentStatus: 'completed',
-    shippingMethod: 'standard',
-    shippingAddress: {
-      street: '123 Main St',
+    orderDate: new Date('2025-04-10T09:30:00Z'),
+    createdAt: new Date('2025-04-10T09:30:00Z'),
+    paymentTransactionId: 'MPE123456789',
+    notes: 'Customer requested gift wrapping',
+    shippingInfo: {
+      fullName: 'John Doe',
+      email: 'john@example.com',
+      phone: '+254712345678',
+      address: '123 Nairobi Street',
       city: 'Nairobi',
-      postalCode: '00100'
+      state: 'Nairobi',
+      postalCode: '00100',
+      country: 'Kenya',
+      shippingMethod: 'standard'
     },
-    orderDate: '2025-04-09T10:15:30',
-    estimatedDelivery: '2025-04-11T14:00:00',
-    priority: 'normal'
+    paymentInfo: {
+      method: 'mpesa',
+      status: 'completed',
+      transactionId: 'MPE123456789',
+      amount: 66.97
+    },
+    deliveryInfo: {
+      estimatedDelivery: new Date('2025-04-12T12:00:00Z'),
+      method: 'standard'
+    },
+    history: [
+      {
+        timestamp: new Date('2025-04-10T09:30:00Z'),
+        status: 'pending',
+        note: 'Order created'
+      },
+      {
+        timestamp: new Date('2025-04-10T09:35:00Z'),
+        status: 'processing',
+        note: 'Payment received'
+      }
+    ]
   },
   {
-    id: 'order-002',
-    orderNumber: 'TTS-20250409-1235',
+    id: '2',
+    orderNumber: 'TTS-20250410-0002',
     customer: {
-      name: 'Michael Brown',
-      email: 'michael@example.com',
+      id: '2',
+      name: 'Jane Smith',
+      email: 'jane@example.com',
       phone: '+254723456789'
     },
     items: [
-      { id: 'prod-003', name: 'Leather Crossbody Bag', price: 3200, quantity: 1 }
+      {
+        id: '3',
+        orderId: '2',
+        productId: 'prod3',
+        quantity: 1,
+        price: 45.00,
+        product: {
+          id: 'prod3',
+          name: 'Leather Handbag',
+          title: 'Leather Handbag',
+          price: 45.00,
+          category: 'Accessories',
+          condition: 'likeNew',
+          barcode: 'PROD-003',
+          status: 'sold',
+          imageUrl: '/placeholder.svg'
+        }
+      }
     ],
-    totalAmount: 3200,
-    status: 'processing',
+    totalAmount: 45.00,
+    status: 'ready',
     paymentMethod: 'card',
     paymentStatus: 'completed',
-    shippingMethod: 'express',
-    shippingAddress: {
-      street: '456 Oak Ave',
+    orderDate: new Date('2025-04-10T10:15:00Z'),
+    createdAt: new Date('2025-04-10T10:15:00Z'),
+    paymentTransactionId: 'CARD987654321',
+    notes: '',
+    shippingInfo: {
+      fullName: 'Jane Smith',
+      email: 'jane@example.com',
+      phone: '+254723456789',
+      address: '456 Mombasa Road',
       city: 'Nairobi',
-      postalCode: '00200'
+      state: 'Nairobi',
+      postalCode: '00200',
+      country: 'Kenya',
+      shippingMethod: 'express'
     },
-    orderDate: '2025-04-09T11:30:45',
-    estimatedDelivery: '2025-04-10T12:00:00',
-    priority: 'high'
+    paymentInfo: {
+      method: 'card',
+      status: 'completed',
+      transactionId: 'CARD987654321',
+      amount: 45.00
+    },
+    deliveryInfo: {
+      estimatedDelivery: new Date('2025-04-11T12:00:00Z'),
+      method: 'express'
+    },
+    history: [
+      {
+        timestamp: new Date('2025-04-10T10:15:00Z'),
+        status: 'pending',
+        note: 'Order created'
+      },
+      {
+        timestamp: new Date('2025-04-10T10:20:00Z'),
+        status: 'processing',
+        note: 'Payment received'
+      },
+      {
+        timestamp: new Date('2025-04-10T11:30:00Z'),
+        status: 'ready',
+        note: 'Order prepared and ready for pickup'
+      }
+    ]
   },
   {
-    id: 'order-003',
-    orderNumber: 'TTS-20250408-1232',
+    id: '3',
+    orderNumber: 'TTS-20250410-0003',
     customer: {
-      name: 'David Johnson',
-      email: 'david@example.com',
+      id: '3',
+      name: 'Robert Johnson',
+      email: 'robert@example.com',
       phone: '+254734567890'
     },
     items: [
-      { id: 'prod-005', name: 'Wool Winter Coat', price: 4500, quantity: 1 },
-      { id: 'prod-004', name: 'Classic White Sneakers', price: 2200, quantity: 1 }
+      {
+        id: '4',
+        orderId: '3',
+        productId: 'prod4',
+        quantity: 3,
+        price: 12.50,
+        product: {
+          id: 'prod4',
+          name: 'Vintage T-Shirt',
+          title: 'Vintage T-Shirt',
+          price: 12.50,
+          category: 'Tops',
+          condition: 'good',
+          barcode: 'PROD-004',
+          status: 'sold',
+          imageUrl: '/placeholder.svg'
+        }
+      },
+      {
+        id: '5',
+        orderId: '3',
+        productId: 'prod5',
+        quantity: 1,
+        price: 22.99,
+        product: {
+          id: 'prod5',
+          name: 'Linen Shorts',
+          title: 'Linen Shorts',
+          price: 22.99,
+          category: 'Bottoms',
+          condition: 'good',
+          barcode: 'PROD-005',
+          status: 'sold',
+          imageUrl: '/placeholder.svg'
+        }
+      }
     ],
-    totalAmount: 6700,
-    status: 'ready',
+    totalAmount: 60.49,
+    status: 'pending',
     paymentMethod: 'mpesa',
-    paymentStatus: 'completed',
-    shippingMethod: 'standard',
-    shippingAddress: {
-      street: '789 Pine Rd',
-      city: 'Mombasa',
-      postalCode: '80100'
-    },
-    orderDate: '2025-04-08T15:20:10',
-    estimatedDelivery: '2025-04-12T14:00:00',
-    priority: 'normal'
-  },
-  {
-    id: 'order-004',
-    orderNumber: 'TTS-20250408-1231',
-    customer: {
-      name: 'Grace Onyango',
-      email: 'grace@example.com',
-      phone: '+254745678901'
-    },
-    items: [
-      { id: 'prod-002', name: 'Floral Summer Dress', price: 1800, quantity: 2 }
-    ],
-    totalAmount: 3600,
-    status: 'outForDelivery',
-    paymentMethod: 'cash',
     paymentStatus: 'pending',
-    shippingMethod: 'standard',
-    shippingAddress: {
-      street: '321 Cedar Ln',
-      city: 'Kisumu',
-      postalCode: '40100'
-    },
-    orderDate: '2025-04-08T09:45:20',
-    estimatedDelivery: '2025-04-11T14:00:00',
-    priority: 'normal'
-  },
-  {
-    id: 'order-005',
-    orderNumber: 'TTS-20250407-1230',
-    customer: {
-      name: 'Robert Mwangi',
+    orderDate: new Date('2025-04-10T11:45:00Z'),
+    createdAt: new Date('2025-04-10T11:45:00Z'),
+    notes: 'First-time customer',
+    shippingInfo: {
+      fullName: 'Robert Johnson',
       email: 'robert@example.com',
-      phone: '+254756789012'
+      phone: '+254734567890',
+      address: '789 Kisumu Avenue',
+      city: 'Kisumu',
+      state: 'Kisumu',
+      postalCode: '40100',
+      country: 'Kenya',
+      shippingMethod: 'standard'
     },
-    items: [
-      { id: 'prod-001', name: 'Vintage Denim Jacket', price: 2500, quantity: 1 },
-      { id: 'prod-003', name: 'Leather Crossbody Bag', price: 3200, quantity: 1 }
-    ],
-    totalAmount: 5700,
-    status: 'delivered',
-    paymentMethod: 'mpesa',
-    paymentStatus: 'completed',
-    shippingMethod: 'express',
-    shippingAddress: {
-      street: '654 Elm St',
-      city: 'Nairobi',
-      postalCode: '00100'
+    paymentInfo: {
+      method: 'mpesa',
+      status: 'pending',
+      amount: 60.49
     },
-    orderDate: '2025-04-07T14:10:05',
-    estimatedDelivery: '2025-04-09T14:00:00',
-    actualDelivery: '2025-04-09T13:25:40',
-    priority: 'high'
+    deliveryInfo: {
+      estimatedDelivery: new Date('2025-04-14T12:00:00Z'),
+      method: 'standard'
+    },
+    history: [
+      {
+        timestamp: new Date('2025-04-10T11:45:00Z'),
+        status: 'pending',
+        note: 'Order created, awaiting payment'
+      }
+    ]
   }
 ];
 
-const OrderPreparer: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('orders');
+const OrderPreparer = () => {
+  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [activeTab, setActiveTab] = useState('processing');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  
-  // Filter orders based on search query and status filter
-  const filteredOrders = mockOrders.filter(order => {
-    const matchesSearch = 
-      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      order.customer.name.toLowerCase().includes(searchQuery.toLowerCase());
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Filter orders based on the active tab and search query
+  const filteredOrders = orders.filter(order => {
+    // Filter by status
+    const statusMatch = 
+      activeTab === 'all' || 
+      (activeTab === 'processing' && order.status === 'processing') ||
+      (activeTab === 'ready' && order.status === 'ready') ||
+      (activeTab === 'completed' && (order.status === 'outForDelivery' || order.status === 'delivered'));
     
-    const matchesStatus = statusFilter ? order.status === statusFilter : true;
+    // Filter by search query
+    const searchMatch = 
+      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.customer?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.customer?.email.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return matchesSearch && matchesStatus;
+    return statusMatch && searchMatch;
   });
-  
-  const handleOrderClick = (order: any) => {
-    setSelectedOrder(order);
-    setActiveTab('order-detail');
-  };
-  
-  const handleStatusChange = (orderId: string, newStatus: string) => {
-    toast.success(`Order ${orderId} status updated to ${newStatus}`);
-  };
-  
-  const handleScanBarcode = () => {
-    setIsScanning(true);
+
+  // Handle order status update
+  const updateOrderStatus = (orderId: string, status: string) => {
+    setIsLoading(true);
     
-    // Simulate a barcode scan
+    // In a real app, this would be an API call
     setTimeout(() => {
-      setIsScanning(false);
-      toast.success('Item scanned and verified successfully');
-    }, 2000);
+      const updatedOrders = orders.map(order => 
+        order.id === orderId 
+          ? { 
+              ...order, 
+              status, 
+              history: [...(order.history || []), { 
+                timestamp: new Date(),
+                status: status as any,
+                note: `Status updated to ${status}`
+              }]
+            } 
+          : order
+      );
+      
+      setOrders(updatedOrders);
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder({
+          ...selectedOrder,
+          status,
+          history: [...(selectedOrder.history || []), { 
+            timestamp: new Date(),
+            status: status as any,
+            note: `Status updated to ${status}`
+          }]
+        });
+      }
+      
+      setIsLoading(false);
+      toast.success(`Order ${orderId} status updated to ${status}`);
+    }, 500);
   };
-  
+
+  // Handle barcode scan result
+  const handleScanResult = (barcode: string) => {
+    setScannerOpen(false);
+    
+    const orderNumber = barcode.trim();
+    const foundOrder = orders.find(order => order.orderNumber === orderNumber);
+    
+    if (foundOrder) {
+      setSelectedOrder(foundOrder);
+      toast.success(`Order ${orderNumber} found!`);
+    } else {
+      toast.error(`Order ${orderNumber} not found`);
+    }
+  };
+
+  // Get status badge based on order status
   const getStatusBadge = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'pending':
-        return <Badge className="bg-yellow-500">Pending</Badge>;
+        return <Badge variant="outline" className="bg-gray-500/20 text-gray-500">Pending</Badge>;
       case 'processing':
-        return <Badge className="bg-blue-500">Processing</Badge>;
+        return <Badge variant="outline" className="bg-blue-500/20 text-blue-500">Processing</Badge>;
       case 'ready':
-        return <Badge className="bg-green-500">Ready</Badge>;
+        return <Badge variant="outline" className="bg-yellow-500/20 text-yellow-500">Ready</Badge>;
       case 'outForDelivery':
-        return <Badge className="bg-purple-500">Out for Delivery</Badge>;
+        return <Badge variant="outline" className="bg-purple-500/20 text-purple-500">Out for Delivery</Badge>;
       case 'delivered':
-        return <Badge className="bg-gray-500">Delivered</Badge>;
+        return <Badge variant="outline" className="bg-green-500/20 text-green-500">Delivered</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="bg-red-500/20 text-red-500">Cancelled</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
-  
-  const getPriorityBadge = (priority: string) => {
-    switch(priority) {
-      case 'high':
-        return <Badge className="bg-red-500">High</Badge>;
-      case 'normal':
-        return <Badge className="bg-blue-500">Normal</Badge>;
-      case 'low':
-        return <Badge className="bg-gray-500">Low</Badge>;
-      default:
-        return null;
-    }
-  };
-  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return format(date, 'PPp'); // e.g., "Apr 10, 2025, 10:15 AM"
-  };
-  
+
   return (
     <StaffLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Order Management</h1>
-            <p className="text-muted-foreground">Process and prepare orders for delivery</p>
+            <h1 className="text-3xl font-bold">Order Preparation</h1>
+            <p className="text-muted-foreground">
+              Process and prepare orders for delivery
+            </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleScanBarcode} disabled={isScanning}>
-              {isScanning ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Scanning...
-                </>
-              ) : (
-                <>
-                  <Barcode className="h-4 w-4 mr-2" />
-                  Scan Barcode
-                </>
-              )}
-            </Button>
-            <Button>
-              <ClipboardList className="h-4 w-4 mr-2" />
-              Order Report
+          
+          <div className="flex space-x-2">
+            <Button onClick={() => setScannerOpen(true)} variant="outline">
+              <Package className="mr-2 h-4 w-4" />
+              Scan Order
             </Button>
           </div>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="stats bg-blue-50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-50 shadow-sm rounded-lg">
+            <div className="flex space-x-8 p-4">
+              <div className="flex flex-col items-center">
+                <div className="text-muted-foreground text-sm">Processing</div>
+                <div className="text-2xl font-bold">{orders.filter(o => o.status === 'processing').length}</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="text-muted-foreground text-sm">Ready</div>
+                <div className="text-2xl font-bold">{orders.filter(o => o.status === 'ready').length}</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="text-muted-foreground text-sm">Today's Total</div>
+                <div className="text-2xl font-bold">{orders.length}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search orders..." 
+              className="w-[250px] pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="orders">
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Orders
-            </TabsTrigger>
-            <TabsTrigger value="processing">
-              <Clock className="h-4 w-4 mr-2" />
-              Processing
-            </TabsTrigger>
-            <TabsTrigger value="ready">
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Ready for Pickup
-            </TabsTrigger>
-            <TabsTrigger value="order-detail" disabled={!selectedOrder}>
-              <ClipboardList className="h-4 w-4 mr-2" />
-              Order Details
-            </TabsTrigger>
+            <TabsTrigger value="all">All Orders</TabsTrigger>
+            <TabsTrigger value="processing">Processing</TabsTrigger>
+            <TabsTrigger value="ready">Ready</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="orders" className="space-y-4">
+          <TabsContent value={activeTab} className="space-y-4 mt-4">
             <Card>
-              <CardHeader className="pb-3">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                  <CardTitle>All Orders</CardTitle>
-                  <div className="flex gap-2">
-                    <div className="relative w-64">
-                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search orders..."
-                        className="pl-8"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                    </div>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline">
-                          {statusFilter ? `Filter: ${statusFilter}` : "Filter"}
-                          <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-56 p-0" align="end">
-                        <div className="p-2">
-                          <div className="font-medium">Filter by Status</div>
-                        </div>
-                        <Separator />
-                        <div className="p-2 space-y-1">
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => setStatusFilter('pending')}
-                          >
-                            Pending
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => setStatusFilter('processing')}
-                          >
-                            Processing
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => setStatusFilter('ready')}
-                          >
-                            Ready
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => setStatusFilter('outForDelivery')}
-                          >
-                            Out for Delivery
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => setStatusFilter('delivered')}
-                          >
-                            Delivered
-                          </Button>
-                          <Separator className="my-1" />
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => setStatusFilter(null)}
-                          >
-                            <FilterX className="mr-2 h-4 w-4" />
-                            Clear Filter
-                          </Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Order #</TableHead>
                       <TableHead>Customer</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead>Total</TableHead>
+                      <TableHead>Items</TableHead>
+                      <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="hidden md:table-cell">Priority</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredOrders.map((order) => (
-                      <TableRow key={order.id} className="cursor-pointer" onClick={() => handleOrderClick(order)}>
-                        <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                        <TableCell>{order.customer.name}</TableCell>
-                        <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                        <TableCell>KSh {order.totalAmount}</TableCell>
-                        <TableCell>{getStatusBadge(order.status)}</TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {getPriorityBadge(order.priority)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                            <OrderReceiptPrint order={order} />
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <ChevronDown className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'processing')}>
-                                  Mark as Processing
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'ready')}>
-                                  Mark as Ready
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOrderClick(order)}>
-                                  View Details
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                    {filteredOrders.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                          No orders found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      filteredOrders.map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                          <TableCell>
+                            <div className="font-medium">{order.customer?.name}</div>
+                            <div className="text-xs text-muted-foreground">{order.customer?.email}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div>{new Date(order.orderDate).toLocaleDateString()}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(order.orderDate).toLocaleTimeString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>{order.items?.length || 0}</TableCell>
+                          <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
+                          <TableCell>{getStatusBadge(order.status)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setSelectedOrder(order)}
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
           </TabsContent>
-          
-          <TabsContent value="processing" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Orders In Progress</CardTitle>
-                <CardDescription>Process these orders to prepare for delivery</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {mockOrders
-                    .filter(order => order.status === 'processing')
-                    .map(order => (
-                      <Card key={order.id} className="overflow-hidden">
-                        <CardHeader className="p-4 pb-2 bg-muted/50">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="flex gap-2 items-center">
-                                <h3 className="font-medium">{order.orderNumber}</h3>
-                                {getPriorityBadge(order.priority)}
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(order.orderDate).toLocaleDateString()} • 
-                                {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <OrderReceiptPrint order={order} />
-                              <Button variant="secondary" size="sm" onClick={() => handleOrderClick(order)}>
-                                View
-                              </Button>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-2">
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <div className="flex gap-2 items-center">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarFallback>{order.customer.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <span>{order.customer.name}</span>
-                              </div>
-                              <span className="font-medium">KSh {order.totalAmount}</span>
-                            </div>
-                            <ScrollArea className="h-24 w-full rounded-md border p-2">
-                              {order.items.map((item, index) => (
-                                <div key={index} className="flex justify-between py-1">
-                                  <span>{item.quantity}x {item.name}</span>
-                                  <span>KSh {item.price * item.quantity}</span>
-                                </div>
-                              ))}
-                            </ScrollArea>
-                            <div className="flex justify-end gap-2 mt-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleScanBarcode()}
-                                disabled={isScanning}
-                              >
-                                {isScanning ? (
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                  <Barcode className="h-4 w-4 mr-2" />
-                                )}
-                                Scan Items
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleStatusChange(order.id, 'ready')}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Mark as Ready
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  
-                  {mockOrders.filter(order => order.status === 'processing').length === 0 && (
-                    <div className="text-center py-10">
-                      <PackageIcon className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium">No Orders In Progress</h3>
-                      <p className="text-muted-foreground">
-                        All orders have been processed or are awaiting processing.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="ready" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Ready for Pickup</CardTitle>
-                <CardDescription>These orders are ready for delivery staff pickup</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {mockOrders
-                    .filter(order => order.status === 'ready')
-                    .map(order => (
-                      <Card key={order.id} className="overflow-hidden">
-                        <CardHeader className="p-4 pb-2 bg-primary/10">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="flex gap-2 items-center">
-                                <h3 className="font-medium">{order.orderNumber}</h3>
-                                {getStatusBadge(order.status)}
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(order.orderDate).toLocaleDateString()} • 
-                                {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <ShippingLabelPrint order={order} />
-                              <Button variant="secondary" size="sm" onClick={() => handleOrderClick(order)}>
-                                View
-                              </Button>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-2">
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <div className="flex gap-2 items-center">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarFallback>{order.customer.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <span>{order.customer.name}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm">
-                                <Timer className="h-4 w-4 text-muted-foreground" />
-                                <span>Delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                            <div className="border p-2 rounded-md">
-                              <div className="flex justify-between items-center">
-                                <div>
-                                  <p className="font-medium">Delivery Address:</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.postalCode}
-                                  </p>
-                                </div>
-                                <Badge>{order.shippingMethod}</Badge>
-                              </div>
-                            </div>
-                            <div className="flex justify-end gap-2 mt-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => toast.success(`Notified delivery staff for order ${order.orderNumber}`)}
-                              >
-                                <Truck className="h-4 w-4 mr-2" />
-                                Notify Delivery
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleStatusChange(order.id, 'outForDelivery')}
-                              >
-                                <PackageCheck className="h-4 w-4 mr-2" />
-                                Mark as Picked Up
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  
-                  {mockOrders.filter(order => order.status === 'ready').length === 0 && (
-                    <div className="text-center py-10">
-                      <CheckCircle className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium">No Orders Ready for Pickup</h3>
-                      <p className="text-muted-foreground">
-                        All prepared orders have been picked up by delivery staff.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="order-detail" className="space-y-4">
-            {selectedOrder && (
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        Order {selectedOrder.orderNumber}
-                        {getStatusBadge(selectedOrder.status)}
-                      </CardTitle>
-                      <CardDescription>
-                        Placed on {formatDate(selectedOrder.orderDate)}
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <OrderReceiptPrint order={selectedOrder} />
-                      <ShippingLabelPrint order={selectedOrder} />
-                      <Button variant="outline" onClick={() => setActiveTab('orders')}>
-                        Back to Orders
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Customer</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarFallback>{selectedOrder.customer.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{selectedOrder.customer.name}</p>
-                            <p className="text-sm text-muted-foreground">{selectedOrder.customer.email}</p>
-                            <p className="text-sm text-muted-foreground">{selectedOrder.customer.phone}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Shipping</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-1">
-                          <div className="flex justify-between">
-                            <p className="font-medium">Address:</p>
-                            <Badge>{selectedOrder.shippingMethod}</Badge>
-                          </div>
-                          <p className="text-sm">
-                            {selectedOrder.customer.name}<br />
-                            {selectedOrder.shippingAddress.street}<br />
-                            {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.postalCode}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-2">
-                            Estimated Delivery: {formatDate(selectedOrder.estimatedDelivery)}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Payment</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-1">
-                          <div className="flex justify-between">
-                            <p className="font-medium">Method:</p>
-                            <Badge className={selectedOrder.paymentStatus === 'completed' ? 'bg-green-500' : 'bg-yellow-500'}>
-                              {selectedOrder.paymentStatus}
-                            </Badge>
-                          </div>
-                          <p className="text-sm capitalize">{selectedOrder.paymentMethod}</p>
-                          
-                          <div className="flex justify-between mt-2">
-                            <p className="font-medium">Total:</p>
-                            <p className="font-medium">KSh {selectedOrder.totalAmount}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">Order Items</h3>
-                    <Card>
-                      <CardContent className="p-0">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Item</TableHead>
-                              <TableHead>Price</TableHead>
-                              <TableHead>Quantity</TableHead>
-                              <TableHead className="text-right">Total</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {selectedOrder.items.map((item: any, index: number) => (
-                              <TableRow key={index}>
-                                <TableCell className="font-medium">{item.name}</TableCell>
-                                <TableCell>KSh {item.price}</TableCell>
-                                <TableCell>{item.quantity}</TableCell>
-                                <TableCell className="text-right">KSh {item.price * item.quantity}</TableCell>
-                              </TableRow>
-                            ))}
-                            <TableRow>
-                              <TableCell colSpan={3} className="text-right font-medium">Subtotal</TableCell>
-                              <TableCell className="text-right">KSh {selectedOrder.totalAmount}</TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">Order Processing</h3>
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <div className="font-medium">Current Status: {getStatusBadge(selectedOrder.status)}</div>
-                            <div className="flex gap-2">
-                              {selectedOrder.status === 'pending' && (
-                                <Button onClick={() => handleStatusChange(selectedOrder.id, 'processing')}>
-                                  <Clock className="h-4 w-4 mr-2" />
-                                  Start Processing
-                                </Button>
-                              )}
-                              
-                              {selectedOrder.status === 'processing' && (
-                                <Button onClick={() => handleStatusChange(selectedOrder.id, 'ready')}>
-                                  <PackageCheck className="h-4 w-4 mr-2" />
-                                  Mark as Ready
-                                </Button>
-                              )}
-                              
-                              {selectedOrder.status === 'ready' && (
-                                <Button onClick={() => handleStatusChange(selectedOrder.id, 'outForDelivery')}>
-                                  <Truck className="h-4 w-4 mr-2" />
-                                  Mark as Picked Up
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <Separator />
-                          
-                          <div className="space-y-2">
-                            <div className="font-medium">Processing Checklist</div>
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" className="h-6 w-6" onClick={handleScanBarcode}>
-                                  <Barcode className="h-4 w-4" />
-                                </Button>
-                                <span>Scan and verify all items</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" className="h-6 w-6">
-                                  <ListChecks className="h-4 w-4" />
-                                </Button>
-                                <span>Check item condition</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" className="h-6 w-6">
-                                  <PackageIcon className="h-4 w-4" />
-                                </Button>
-                                <span>Package items securely</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" className="h-6 w-6">
-                                  <Printer className="h-4 w-4" />
-                                </Button>
-                                <span>Print shipping label</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button variant="outline" onClick={() => setActiveTab('orders')}>
-                    Back to Orders
-                  </Button>
-                  {selectedOrder.status === 'pending' && (
-                    <Button onClick={() => handleStatusChange(selectedOrder.id, 'processing')}>
-                      Start Processing
-                    </Button>
-                  )}
-                </CardFooter>
-              </Card>
-            )}
-          </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Order Detail Dialog */}
+      {selectedOrder && (
+        <Dialog open={Boolean(selectedOrder)} onOpenChange={open => !open && setSelectedOrder(null)}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Order {selectedOrder.orderNumber}</span>
+                {getStatusBadge(selectedOrder.status)}
+              </DialogTitle>
+              <DialogDescription>
+                Placed on {new Date(selectedOrder.orderDate).toLocaleString()}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Customer and Order Info */}
+              <div className="grid grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Customer</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="font-medium">{selectedOrder.customer?.name}</div>
+                      <div className="text-sm text-muted-foreground">{selectedOrder.customer?.email}</div>
+                      <div className="text-sm text-muted-foreground">{selectedOrder.customer?.phone}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Shipping Address</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1 text-sm">
+                      <div>{selectedOrder.shippingInfo?.fullName}</div>
+                      <div>{selectedOrder.shippingInfo?.address}</div>
+                      <div>{selectedOrder.shippingInfo?.city}, {selectedOrder.shippingInfo?.state} {selectedOrder.shippingInfo?.postalCode}</div>
+                      <div>{selectedOrder.shippingInfo?.country}</div>
+                      {selectedOrder.shippingInfo?.specialInstructions && (
+                        <div className="text-orange-600 mt-2">
+                          Note: {selectedOrder.shippingInfo.specialInstructions}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Order Items */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Order Items</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Barcode</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedOrder.items?.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="flex items-center space-x-2">
+                            <div 
+                              className="h-10 w-10 rounded bg-gray-100 bg-cover bg-center"
+                              style={{backgroundImage: `url(${item.product?.imageUrl || '/placeholder.svg'})`}}
+                            />
+                            <div>
+                              <div className="font-medium">{item.product?.name}</div>
+                              <div className="text-xs text-muted-foreground">{item.product?.category}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {item.product?.barcode}
+                          </TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-right font-medium">
+                          Subtotal
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ${selectedOrder.totalAmount.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+              
+              {/* Order History */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Order Timeline</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {selectedOrder.history?.map((entry, index) => (
+                      <div key={index} className="flex">
+                        <div className="mr-4 flex flex-col items-center">
+                          <div className="h-2 w-2 rounded-full bg-primary"></div>
+                          {index < (selectedOrder.history?.length || 0) - 1 && (
+                            <div className="h-12 w-0.5 bg-border"></div>
+                          )}
+                        </div>
+                        <div className="space-y-1 pt-0.5">
+                          <div className="text-sm font-medium">{entry.status}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(entry.timestamp).toLocaleString()}
+                          </div>
+                          {entry.note && (
+                            <div className="text-xs">{entry.note}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <DialogFooter className="flex justify-between items-center">
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={() => setPrintDialogOpen(true)}>
+                  <PrinterIcon className="mr-2 h-4 w-4" />
+                  Print Receipt
+                </Button>
+              </div>
+              
+              <div className="flex space-x-2">
+                {selectedOrder.status === 'processing' && (
+                  <Button 
+                    onClick={() => updateOrderStatus(selectedOrder.id, 'ready')}
+                    disabled={isLoading}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Ready
+                  </Button>
+                )}
+                
+                {selectedOrder.status === 'ready' && (
+                  <Button 
+                    onClick={() => updateOrderStatus(selectedOrder.id, 'outForDelivery')}
+                    disabled={isLoading}
+                  >
+                    <Truck className="mr-2 h-4 w-4" />
+                    Send to Delivery
+                  </Button>
+                )}
+                
+                {(selectedOrder.status === 'pending' || selectedOrder.status === 'processing') && (
+                  <Button 
+                    variant="destructive"
+                    onClick={() => updateOrderStatus(selectedOrder.id, 'cancelled')}
+                    disabled={isLoading}
+                  >
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    Cancel Order
+                  </Button>
+                )}
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      
+      {/* Barcode Scanner Dialog */}
+      <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Scan Order Barcode</DialogTitle>
+            <DialogDescription>
+              Scan or enter the order barcode to quickly find the order
+            </DialogDescription>
+          </DialogHeader>
+          
+          <OrderScanner onScan={handleScanResult} />
+          
+          <DialogFooter className="sm:justify-start">
+            <Button variant="secondary" onClick={() => setScannerOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Print Dialog */}
+      <Dialog open={printDialogOpen} onOpenChange={setPrintDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Print Order Receipt</DialogTitle>
+            <DialogDescription>
+              Select a printer to print the order receipt
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <PrintDialog>
+              <OrderReceiptPrint order={selectedOrder} />
+            </PrintDialog>
+          )}
+          
+          <DialogFooter className="sm:justify-start">
+            <Button variant="secondary" onClick={() => setPrintDialogOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </StaffLayout>
   );
 };

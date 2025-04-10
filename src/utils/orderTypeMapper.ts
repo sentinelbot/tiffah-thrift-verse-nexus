@@ -1,5 +1,5 @@
 
-import { Order, Customer, OrderItem, ShippingAddress, DeliveryInfo, PaymentInfo, OrderHistory } from '@/types';
+import { Order, Customer, OrderItem, ShippingAddress, DeliveryInfo, PaymentInfo, OrderHistory, Product } from '@/types';
 
 // This utility maps database response to our type interfaces
 export const orderServiceHelper = (data: any[]): Order[] => {
@@ -49,9 +49,13 @@ const mapOrderItems = (items: any[]): OrderItem[] => {
     productId: item.product_id,
     product: item.product ? {
       id: item.product.id,
+      name: item.product.name,
       title: item.product.name,
       price: item.product.price,
-      imageUrl: item.product.images?.[0]?.url || '/placeholder.svg'
+      imageUrl: item.product.images?.[0]?.url || '/placeholder.svg',
+      category: item.product.category || 'Unknown',
+      condition: item.product.condition || 'Unknown',
+      barcode: item.product.barcode || ''
     } : undefined,
     quantity: item.quantity,
     price: item.price
