@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -12,7 +11,7 @@ import { ShoppingBag, AlertCircle, Receipt, Truck } from 'lucide-react';
 import { printOrderReceipt } from '@/services/printNodeService';
 import BarcodeScanner from './BarcodeScanner';
 import { formatDateTime } from '@/utils/formatters';
-import { Order } from '@/types/order';
+import { Order, OrderStatus } from '@/types/order';
 
 const OrderScanner = () => {
   const { user } = useAuth();
@@ -70,7 +69,7 @@ const OrderScanner = () => {
           }
         ],
         totalAmount: 3700,
-        status: 'pending',
+        status: 'pending' as OrderStatus,
         paymentInfo: {
           method: 'mpesa',
           status: 'completed',
@@ -93,7 +92,7 @@ const OrderScanner = () => {
         history: [
           {
             timestamp: new Date(),
-            status: 'pending',
+            status: 'pending' as OrderStatus,
             note: 'Order created',
             updatedBy: user.id
           }
@@ -155,36 +154,36 @@ const OrderScanner = () => {
     }
   };
 
-  const handleUpdateStatus = async (newStatus: string) => {
+  const handleUpdateStatus = async (newStatus: OrderStatus) => {
     if (!scannedOrder || !user) return;
     
     toast.success(`Order status updated to ${newStatus}`);
     setScannedOrder({
       ...scannedOrder,
-      status: newStatus as any,
+      status: newStatus,
       history: [
         ...scannedOrder.history,
         {
           timestamp: new Date(),
-          status: newStatus as any,
+          status: newStatus,
           updatedBy: user.id
         }
       ]
     });
   };
 
-  const getNextStatusOptions = (currentStatus: string) => {
+  const getNextStatusOptions = (currentStatus: OrderStatus): OrderStatus[] => {
     switch (currentStatus) {
       case 'pending':
-        return ['processing'];
+        return ['processing'] as OrderStatus[];
       case 'processing':
-        return ['ready'];
+        return ['ready'] as OrderStatus[];
       case 'ready':
-        return ['outForDelivery'];
+        return ['outForDelivery'] as OrderStatus[];
       case 'outForDelivery':
-        return ['delivered'];
+        return ['delivered'] as OrderStatus[];
       default:
-        return [];
+        return [] as OrderStatus[];
     }
   };
 

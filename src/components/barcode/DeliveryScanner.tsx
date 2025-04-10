@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -106,19 +105,19 @@ const DeliveryScanner = () => {
         history: [
           {
             timestamp: new Date(),
-            status: 'pending',
+            status: 'pending' as OrderStatus,
             note: 'Order created',
             updatedBy: user.id
           },
           {
             timestamp: new Date(Date.now() - 3600000),
-            status: 'processing',
+            status: 'processing' as OrderStatus,
             note: 'Order processing',
             updatedBy: user.id
           },
           {
             timestamp: new Date(Date.now() - 1800000),
-            status: 'ready',
+            status: 'ready' as OrderStatus,
             note: 'Order ready for delivery',
             updatedBy: user.id
           }
@@ -203,7 +202,7 @@ const DeliveryScanner = () => {
           ...scannedOrder.history,
           {
             timestamp: new Date(),
-            status: 'outForDelivery',
+            status: 'outForDelivery' as OrderStatus,
             note: 'Picked up for delivery',
             updatedBy: user.id
           }
@@ -242,7 +241,7 @@ const DeliveryScanner = () => {
           ...scannedOrder.history,
           {
             timestamp: new Date(),
-            status: 'delivered',
+            status: 'delivered' as OrderStatus,
             note: `Delivered to ${recipientName}${deliveryNotes ? `: ${deliveryNotes}` : ''}`,
             updatedBy: user.id
           }
