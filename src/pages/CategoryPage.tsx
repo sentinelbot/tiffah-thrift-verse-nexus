@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout';
+import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import { ProductType } from '@/types/product';
 import { Button } from '@/components/ui/button';
@@ -39,7 +38,7 @@ const mockProducts: ProductType[] = [
 ];
 
 const CategoryPage = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { categoryId } = useParams<{ categoryId: string }>();
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -52,7 +51,7 @@ const CategoryPage = () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // Filter products by category
-        const categoryName = slug ? decodeURIComponent(slug) : '';
+        const categoryName = categoryId ? decodeURIComponent(categoryId) : '';
         const filteredProducts = mockProducts.filter(
           product => product.category?.toLowerCase() === categoryName.toLowerCase()
         );
@@ -66,9 +65,9 @@ const CategoryPage = () => {
     };
     
     fetchProductsByCategory();
-  }, [slug]);
+  }, [categoryId]);
   
-  const categoryName = slug ? decodeURIComponent(slug) : '';
+  const categoryName = categoryId ? decodeURIComponent(categoryId) : '';
   
   return (
     <Layout>
@@ -87,7 +86,7 @@ const CategoryPage = () => {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href={`/category/${slug}`}>{categoryName}</BreadcrumbLink>
+              <BreadcrumbLink href={`/category/${categoryId}`}>{categoryName}</BreadcrumbLink>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>

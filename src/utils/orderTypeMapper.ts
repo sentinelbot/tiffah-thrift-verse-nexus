@@ -19,7 +19,7 @@ export const convertOrderType = (order: OrderType1): OrderType2 => {
       transactionId: order.paymentTransactionId || '',
       amount: order.totalAmount
     },
-    shippingInfo: order.shippingInfo || {},
+    shippingInfo: order.shippingInfo || {} as ShippingInfo,
     deliveryInfo: order.deliveryInfo || {
       estimatedDelivery: new Date(),
     },
@@ -83,7 +83,7 @@ export const orderServiceHelper = (dbOrders: any[]): OrderType1[] => {
       transactionId: order.payment_transaction_id || order.paymentTransactionId,
       amount: Number(order.total_amount || order.totalAmount)
     } as PaymentInfo,
-    shippingInfo: order.shippingInfo || {},
+    shippingInfo: order.shippingInfo || {} as ShippingInfo,
     deliveryInfo: {
       estimatedDelivery: order.deliveryInfo?.estimatedDelivery ? 
         new Date(order.deliveryInfo.estimatedDelivery) : new Date(),

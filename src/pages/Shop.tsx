@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Layout } from '@/components/layout/Layout';
+import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import { ProductType } from '@/types/product';
 import ProductFilters, { FilterState } from '@/components/shop/ProductFilters';
@@ -182,41 +181,32 @@ const Shop = () => {
   
   const [filteredProducts, setFilteredProducts] = useState<ProductType[]>(mockProducts);
   
-  // Filter and sort products
   useEffect(() => {
-    // Apply filters
     let filtered = mockProducts.filter(product => {
-      // Category filter
       if (filters.categories.length > 0 && !filters.categories.includes(product.category || '')) {
         return false;
       }
       
-      // Size filter
       if (filters.sizes.length > 0 && !filters.sizes.includes(product.size || '')) {
         return false;
       }
       
-      // Brand filter
       if (filters.brands.length > 0 && !filters.brands.includes(product.brand || '')) {
         return false;
       }
       
-      // Condition filter
       if (filters.conditions.length > 0 && !filters.conditions.includes(product.condition || '')) {
         return false;
       }
       
-      // Color filter
       if (filters.colors.length > 0 && !filters.colors.includes(product.color || '')) {
         return false;
       }
       
-      // Price range filter
       if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {
         return false;
       }
       
-      // Search filter
       if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
@@ -224,7 +214,6 @@ const Shop = () => {
       return true;
     });
     
-    // Apply sorting
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'priceAsc':
@@ -237,14 +226,13 @@ const Shop = () => {
           return b.name.localeCompare(a.name);
         case 'newest':
         default:
-          return 0; // In a real app, would sort by date
+          return 0;
       }
     });
     
     setFilteredProducts(filtered);
   }, [filters, sortBy, searchQuery]);
-
-  // Update filters when search changes
+  
   useEffect(() => {
     setFilters(prev => ({ ...prev, search: searchQuery }));
   }, [searchQuery]);
@@ -362,7 +350,6 @@ const Shop = () => {
                       <ProductCard 
                         key={product.id} 
                         product={product} 
-                        viewMode={viewMode}
                       />
                     ))}
                   </div>
