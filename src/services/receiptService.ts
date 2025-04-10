@@ -1,4 +1,5 @@
-import { Order } from '@/types/order';
+
+import { Order } from '@/types';
 import { formatPrice } from '@/utils/formatters';
 import { toast } from 'sonner';
 import { printOrderReceipt } from './printNodeService';

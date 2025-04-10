@@ -62,6 +62,19 @@ export interface DeliveryInfo {
   actualDelivery?: Date;
   trackingId?: string;
   deliveryStaff?: string;
+  pickedUpBy?: string;
+  pickedUpAt?: string;
+  deliveredBy?: string;
+  deliveredAt?: string;
+  recipientName?: string;
+  notes?: string;
+}
+
+export interface OrderHistory {
+  timestamp: Date;
+  status: OrderStatus;
+  note?: string;
+  updatedBy?: string;
 }
 
 export interface Order {
@@ -80,15 +93,10 @@ export interface Order {
   deliveryInfo: DeliveryInfo;
   orderDate: Date;
   notes?: string;
-  history: {
-    timestamp: Date;
-    status: OrderStatus;
-    note?: string;
-    updatedBy?: string;
-  }[];
+  history: OrderHistory[];
 }
 
-// Update the Product interface to align with the database structure
+// Define the Product interface to align with database structure and UI needs
 export interface Product {
   id: string;
   name: string;
@@ -114,6 +122,14 @@ export interface Product {
     length?: number;
   };
   tags?: string[];
+  
+  // Fields to maintain compatibility with database structure
+  original_price?: number;
+  sub_category?: string;
+  date_added?: string;
+  last_updated?: string;
+  added_by?: string;
+  inventory_tracking?: any;
 }
 
 export interface User {
@@ -133,6 +149,19 @@ export interface Profile {
   role?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+}
+
+export interface PrintJob {
+  id: string;
+  type: 'receipt' | 'label' | 'shipping';
+  content: string;
+  printerId: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  createdAt: Date;
+  processedAt?: Date;
+  error?: string;
+  relatedId?: string;
+  requestedBy: string;
 }
 
 export * from './analytics';

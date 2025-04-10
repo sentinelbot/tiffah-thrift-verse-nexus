@@ -26,3 +26,41 @@ export const generateUniqueBarcode = (): string => {
   
   return `TTS-${year}${month}${day}-${random}`;
 };
+
+// Validate a barcode format
+export const isValidBarcode = (barcode: string): boolean => {
+  // Basic validation for TTS-YYYYMMDD-XXXX format
+  const barcodePattern = /^TTS-\d{8}-\d{4}$/;
+  return barcodePattern.test(barcode);
+};
+
+// Generate a product barcode with a specific prefix
+export const generateProductBarcode = (): string => {
+  // Format: TTS-P-YYYYMMDD-XXXX 
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const random = Math.floor(1000 + Math.random() * 9000);
+  
+  return `TTS-P-${year}${month}${day}-${random}`;
+};
+
+// Generate an order barcode with a specific prefix
+export const generateOrderBarcode = (): string => {
+  // Format: TTS-O-YYYYMMDD-XXXX 
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const random = Math.floor(1000 + Math.random() * 9000);
+  
+  return `TTS-O-${year}${month}${day}-${random}`;
+};
+
+// Extract type from barcode
+export const getBarcodeType = (barcode: string): 'product' | 'order' | 'unknown' => {
+  if (barcode.startsWith('TTS-P-')) return 'product';
+  if (barcode.startsWith('TTS-O-')) return 'order';
+  return 'unknown';
+};
