@@ -1,84 +1,56 @@
 
-import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { hasAnyRole, hasPermission } from '@/utils/authUtils';
-import { Loader2 } from 'lucide-react';
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { ReactNode } from "react";
+import { toast } from "sonner";
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requiredRoles?: string[];
-  requiredPermission?: string;
-  redirectTo?: string;
+export interface ProtectedRouteProps {
+  allowedRoles: string[];
+  children?: ReactNode;
+  redirectPath?: string;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
-  requiredRoles,
-  requiredPermission,
-  redirectTo = '/auth',
-}) => {
+const ProtectedRoute = ({ allowedRoles, children, redirectPath = "/auth" }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const location = useLocation();
-
-  useEffect(() => {
-    const checkAccess = async () => {
-      // Not authenticated
-      if (!user) {
-        setIsAuthorized(false);
-        return;
-      }
-
-      // Just need authentication, no specific roles or permissions
-      if (!requiredRoles && !requiredPermission) {
-        setIsAuthorized(true);
-        return;
-      }
-
-      // Check roles if specified
-      if (requiredRoles && requiredRoles.length > 0) {
-        const hasRole = await hasAnyRole(user.id, requiredRoles);
-        if (hasRole) {
-          setIsAuthorized(true);
-          return;
-        }
-      }
-
-      // Check permission if specified
-      if (requiredPermission) {
-        const hasRequiredPermission = await hasPermission(user.id, requiredPermission);
-        if (hasRequiredPermission) {
-          setIsAuthorized(true);
-          return;
-        }
-      }
-
-      // Not authorized
-      setIsAuthorized(false);
-    };
-
-    if (!isLoading) {
-      checkAccess();
-    }
-  }, [user, isLoading, requiredRoles, requiredPermission]);
-
-  // While checking authentication, show a loading spinner
-  if (isLoading || isAuthorized === null) {
+  
+  // Show a loading state while authentication status is being determined
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-muted-foreground">Verifying access...</p>
+        </div>
       </div>
     );
   }
-
-  // If not authenticated or not authorized, redirect to login
-  if (!isAuthorized) {
-    return <Navigate to={redirectTo} state={{ from: location }} replace />;
+  
+  // If user is not logged in, redirect to login
+  if (!user) {
+    // Save the attempted URL for redirecting after login
+    const from = location.pathname + location.search;
+    toast.error("Please sign in to access this page");
+    return <Navigate to={`${redirectPath}?from=${encodeURIComponent(from)}`} replace />;
   }
-
-  // If authenticated and authorized, render the children
-  return <>{children}</>;
+  
+  // If user doesn't have required role, redirect to appropriate section
+  if (!allowedRoles.includes(user.role)) {
+    // Redirect to the appropriate section based on user role
+    if (user.role === 'admin') {
+      toast.info("Redirecting to admin dashboard based on your role");
+      return <Navigate to="/admin" replace />;
+    } else if (['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role)) {
+      toast.info("Redirecting to staff dashboard based on your role");
+      return <Navigate to="/staff" replace />;
+    } else {
+      toast.error("You don't have permission to access this page");
+      return <Navigate to="/unauthorized" replace />;
+    }
+  }
+  
+  // Render children or Outlet
+  return children ? <>{children}</> : <Outlet />;
 };
 
 export default ProtectedRoute;
