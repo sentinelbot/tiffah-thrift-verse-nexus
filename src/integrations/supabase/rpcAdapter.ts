@@ -11,7 +11,7 @@ type RpcFunctionName =
   | 'get_delivery_staff' 
   | 'process_pending_scans' 
   | 'get_user_scan_history'
-  | 'get_scan_history'; // Adding missing function
+  | 'get_scan_history';
 
 /**
  * Generic function to call RPC functions with proper typing
@@ -24,7 +24,10 @@ export const callRpcFunction = async <T>(
   params?: any
 ): Promise<T | null> => {
   try {
-    const { data, error } = await supabase.rpc(functionName, params);
+    // Type assertion to make TypeScript happy
+    const rpcFunction = functionName as any;
+    
+    const { data, error } = await supabase.rpc(rpcFunction, params);
     
     if (error) {
       console.error(`Error calling RPC function ${functionName}:`, error);

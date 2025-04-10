@@ -3,7 +3,6 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   CaretSortIcon, 
-  ChevronDownIcon, 
   DotsHorizontalIcon 
 } from "@radix-ui/react-icons";
 import {
@@ -36,6 +35,7 @@ import ShippingLabelPrint from '@/components/admin/printing/ShippingLabelPrint';
 import { useNavigate } from 'react-router-dom';
 import { CustomCheckbox } from '@/components/ui/custom-checkbox';
 import { Order } from '@/types/orderTypes';
+import { ChevronDownIcon } from 'lucide-react';
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -48,12 +48,15 @@ const statusColors = {
 
 export const OrdersTable = () => {
   const navigate = useNavigate();
-  const [sorting, setSorting] = React.useState([]);
-  const [columnFilters, setColumnFilters] = React.useState([]);
+  const [sorting, setSorting] = React.useState<any>([]);
+  const [columnFilters, setColumnFilters] = React.useState<any>([]);
   const [columnVisibility, setColumnVisibility] = React.useState({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const { data, isLoading, isError } = useQuery('orders', getAllOrders);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['orders'],
+    queryFn: getAllOrders
+  });
 
   const columns: ColumnDef<Order>[] = [
     {
@@ -176,7 +179,7 @@ export const OrdersTable = () => {
         const status = row.original.status;
         return (
           <div className="w-[100px]">
-            <Badge className={statusColors[status]}>{status}</Badge>
+            <Badge className={statusColors[status as keyof typeof statusColors]}>{status}</Badge>
           </div>
         );
       },
@@ -188,8 +191,8 @@ export const OrdersTable = () => {
         const order = row.original;
         return (
           <div className="flex justify-end gap-2">
-            <OrderReceiptPrint order={order} size="icon" variant="ghost" />
-            <ShippingLabelPrint order={order} size="icon" variant="ghost" />
+            <OrderReceiptPrint order={order as any} size="icon" variant="ghost" />
+            <ShippingLabelPrint order={order as any} size="icon" variant="ghost" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -212,7 +215,7 @@ export const OrdersTable = () => {
     },
   ];
 
-  const table = useReactTable({
+  const table = useReactTable<Order>({
     data: data || [],
     columns,
     onSortingChange: setSorting,
@@ -286,22 +289,17 @@ export const OrdersTable = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[200px]">
-            {table.getAllColumns().map((column) => {
-              if (typeof column.accessorFn !== 'undefined') {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              }
-              return null;
-            })}
+            {table.getAllColumns().filter(column => column.getCanHide()).map((column) => (
+              <DropdownMenuCheckboxItem
+                key={column.id}
+                checked={column.getIsVisible()}
+                onCheckedChange={(value) =>
+                  column.toggleVisibility(!!value)
+                }
+              >
+                {column.id}
+              </DropdownMenuCheckboxItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

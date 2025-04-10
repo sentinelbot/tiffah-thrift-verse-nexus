@@ -23,17 +23,7 @@ export interface ProductImage {
   displayOrder: number;
 }
 
-export interface ProductWithImages {
-  id: string;
-  name: string;
-  title?: string;
-  price: number;
-  originalPrice?: number;
-  category?: string;
-  condition?: string;
-  size?: string;
-  color?: string;
-  brand?: string;
+export interface ProductWithImages extends ProductType {
   images: ProductImage[];
 }
 

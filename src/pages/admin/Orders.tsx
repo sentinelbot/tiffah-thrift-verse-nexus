@@ -94,8 +94,8 @@ const Orders = () => {
             <p className="text-muted-foreground">Manage customer orders</p>
           </div>
           <div className="flex gap-2">
-            <OrderReceiptPrint order={mockOrder} />
-            <ShippingLabelPrint order={mockOrder} />
+            <OrderReceiptPrint order={mockOrder as any} />
+            <ShippingLabelPrint order={mockOrder as any} />
           </div>
         </div>
         

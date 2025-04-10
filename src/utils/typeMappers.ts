@@ -122,8 +122,7 @@ export function mapSupabaseOrderItem(data: OrderItemSupabase): OrderItem {
     orderId: data.order_id,
     productId: data.product_id,
     price: Number(data.price),
-    quantity: data.quantity,
-    createdAt: data.created_at ? new Date(data.created_at) : undefined
+    quantity: data.quantity
   };
 }
 

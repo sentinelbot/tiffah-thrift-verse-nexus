@@ -20,8 +20,16 @@ export const getAllOrders = async (): Promise<Order[]> => {
       return [];
     }
 
+    // Cast to Order[] to satisfy TypeScript
     return data.map(order => ({
-      ...order,
+      id: order.id,
+      orderNumber: order.order_number,
+      totalAmount: Number(order.total_amount),
+      status: order.status as OrderStatus,
+      paymentMethod: order.payment_method as PaymentMethod,
+      paymentStatus: order.payment_status,
+      paymentTransactionId: order.payment_transaction_id,
+      customerId: order.customer_id,
       createdAt: new Date(order.created_at),
       updatedAt: order.updated_at ? new Date(order.updated_at) : undefined,
       orderDate: new Date(order.created_at),
@@ -29,6 +37,46 @@ export const getAllOrders = async (): Promise<Order[]> => {
     })) as Order[];
   } catch (error) {
     console.error('Error in getAllOrders:', error);
+    return [];
+  }
+};
+
+/**
+ * Get orders for a specific customer
+ */
+export const getCustomerOrders = async (customerId: string): Promise<Order[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        items:order_items(*, product:products(*))
+      `)
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching customer orders:', error);
+      return [];
+    }
+
+    // Cast to Order[] to satisfy TypeScript
+    return data.map(order => ({
+      id: order.id,
+      orderNumber: order.order_number,
+      totalAmount: Number(order.total_amount),
+      status: order.status as OrderStatus,
+      paymentMethod: order.payment_method as PaymentMethod,
+      paymentStatus: order.payment_status,
+      paymentTransactionId: order.payment_transaction_id,
+      customerId: order.customer_id,
+      createdAt: new Date(order.created_at),
+      updatedAt: order.updated_at ? new Date(order.updated_at) : undefined,
+      orderDate: new Date(order.created_at),
+      items: order.items || [],
+    })) as Order[];
+  } catch (error) {
+    console.error('Error in getCustomerOrders:', error);
     return [];
   }
 };
@@ -55,8 +103,16 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
       return null;
     }
     
+    // Cast to Order to satisfy TypeScript
     return {
-      ...data,
+      id: data.id,
+      orderNumber: data.order_number,
+      totalAmount: Number(data.total_amount),
+      status: data.status as OrderStatus,
+      paymentMethod: data.payment_method as PaymentMethod,
+      paymentStatus: data.payment_status,
+      paymentTransactionId: data.payment_transaction_id,
+      customerId: data.customer_id,
       createdAt: new Date(data.created_at),
       updatedAt: data.updated_at ? new Date(data.updated_at) : undefined,
       orderDate: new Date(data.created_at),
@@ -79,16 +135,16 @@ export const createOrder = async (orderData: any): Promise<Order | null> => {
       id: `order-${Date.now()}`,
       orderNumber: `TTS-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 10000)}`,
       totalAmount: orderData.totalAmount,
-      status: 'pending',
+      status: 'pending' as OrderStatus,
       paymentMethod: orderData.paymentMethod as PaymentMethod,
       paymentStatus: 'pending',
       customerId: orderData.customerId,
-      customer: orderData.customer,
-      items: orderData.items,
       createdAt: new Date(),
       orderDate: new Date(),
       shippingInfo: orderData.shippingInfo,
-      paymentInfo: orderData.paymentInfo
+      paymentInfo: orderData.paymentInfo,
+      customer: orderData.customer,
+      items: orderData.items,
     };
     
     return mockOrder;
