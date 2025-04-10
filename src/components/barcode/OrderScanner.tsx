@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import BarcodeScanner from './BarcodeScanner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

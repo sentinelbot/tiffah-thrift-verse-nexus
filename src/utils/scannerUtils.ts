@@ -1,179 +1,142 @@
 import Quagga from '@ericblade/quagga2';
 import { toast } from 'sonner';
 
-// Define proper types for Quagga configuration
-interface ScannerConfig {
-  inputStream: {
-    name?: string;
-    type?: 'ImageStream' | 'VideoStream' | 'LiveStream';
-    willReadFrequently?: boolean;
-    target?: string | Element;
-    constraints?: MediaTrackConstraints;
-    area?: {
-      top: string;
-      right: string;
-      left: string;
-      bottom: string;
-    };
-    singleChannel?: boolean;
-    sequence?: boolean;
-  };
-  locator: {
-    patchSize: string;
-    halfSample: boolean;
-  };
-  numOfWorkers: number;
-  decoder: {
-    readers: string[]; // Using string[] since we're passing string values
-  };
-  locate: boolean;
-}
-
-export const initScanner = (elementId: string, callback: (result: any) => void): Promise<void> => {
-  // We'll use the any type here to work around the Quagga types issue
-  const config: any = {
-    inputStream: {
-      name: 'Live',
-      type: 'LiveStream',
-      target: document.getElementById(elementId) as HTMLElement,
-      constraints: {
-        width: { min: 450 },
-        height: { min: 300 },
-        facingMode: 'environment',
-        aspectRatio: { min: 1, max: 2 }
+// Initialize the barcode scanner
+export const initScanner = async (elementId: string, onDetect: (result: { code: string }) => void) => {
+  try {
+    await Quagga.init({
+      inputStream: {
+        name: 'Live',
+        type: 'LiveStream',
+        target: document.getElementById(elementId) as HTMLElement,
+        constraints: {
+          width: 480,
+          height: 320,
+          facingMode: 'environment',
+        },
       },
-    },
-    locator: {
-      patchSize: 'medium',
-      halfSample: true
-    },
-    numOfWorkers: 4,
-    decoder: {
-      readers: [
-        'code_128_reader',
-        'ean_reader',
-        'ean_8_reader',
-        'code_39_reader',
-        'code_93_reader',
-        'upc_reader',
-        'upc_e_reader'
-      ]
-    },
-    locate: true
-  };
+      decoder: {
+        readers: ['code_128_reader', 'ean_reader', 'ean_8_reader', 'code_39_reader', 'code_39_vin_reader'],
+      },
+      locate: true,
+    });
 
-  return new Promise((resolve, reject) => {
-    Quagga.init(config, (err: any) => {
-      if (err) {
-        console.error('Error initializing scanner:', err);
-        toast.error('Failed to initialize scanner. Please check camera permissions.');
-        reject(err);
-        return;
-      }
+    Quagga.start();
 
-      Quagga.start();
-      resolve();
-
-      // Register callback for when a barcode is detected
-      Quagga.onDetected((data: any) => {
-        if (data && data.codeResult) {
-          // Play beep sound
-          const audio = new Audio('/sounds/beep.mp3');
-          audio.play().catch(e => console.error('Could not play beep:', e));
-          callback(data.codeResult);
-        }
-      });
-
-      // Process frames for debugging in development
-      if (process.env.NODE_ENV === 'development') {
-        Quagga.onProcessed((result: any) => {
-          const drawingCtx = Quagga.canvas.ctx.overlay;
-          const drawingCanvas = Quagga.canvas.dom.overlay;
-
-          if (result) {
-            if (result.boxes) {
-              drawingCtx.clearRect(
-                0,
-                0,
-                Number(drawingCanvas.getAttribute('width')),
-                Number(drawingCanvas.getAttribute('height'))
-              );
-              result.boxes.filter((box: any) => box !== result.box).forEach((box: any) => {
-                Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, drawingCtx, {
-                  color: 'green',
-                  lineWidth: 2
-                });
-              });
-            }
-
-            if (result.box) {
-              Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, {
-                color: '#00F',
-                lineWidth: 2
-              });
-            }
-
-            if (result.codeResult && result.codeResult.code) {
-              Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, drawingCtx, {
-                color: 'red',
-                lineWidth: 3
-              });
-            }
-          }
+    Quagga.onDetected((result) => {
+      if (result.codeResult.code) {
+        // Play beep sound
+        const audio = new Audio('/sounds/beep.mp3');
+        audio.play().catch(() => {
+          // Ignore audio play errors
         });
+        
+        onDetect({ code: result.codeResult.code });
       }
     });
-  });
+
+    return true;
+  } catch (error) {
+    console.error('Failed to initialize scanner:', error);
+    return false;
+  }
 };
 
-export const stopScanner = (): void => {
+// Stop the barcode scanner
+export const stopScanner = () => {
   Quagga.stop();
 };
 
-// Additional utility functions for scanner-related operations
+// Check if online
 export const isOnline = (): boolean => {
   return navigator.onLine;
 };
 
-export const processProductScan = (code: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    // Simulate product scan processing
+// Process product scan
+export const processProductScan = async (code: string): Promise<boolean> => {
+  // In a real app, this would make an API call to the backend
+  try {
     console.log(`Processing product scan: ${code}`);
-    setTimeout(() => {
-      resolve(true);
-    }, 500);
-  });
+    
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Mock successful scan
+    return true;
+  } catch (error) {
+    console.error('Error processing product scan:', error);
+    return false;
+  }
 };
 
-export const processOrderScan = (code: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    // Simulate order scan processing
+// Process order scan
+export const processOrderScan = async (code: string): Promise<boolean> => {
+  // In a real app, this would make an API call to the backend
+  try {
     console.log(`Processing order scan: ${code}`);
-    setTimeout(() => {
-      resolve(true);
-    }, 500);
-  });
+    
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Mock successful scan
+    return true;
+  } catch (error) {
+    console.error('Error processing order scan:', error);
+    return false;
+  }
 };
 
-export const processDeliveryScan = (code: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    // Simulate delivery scan processing
+// Process delivery scan
+export const processDeliveryScan = async (code: string): Promise<boolean> => {
+  // In a real app, this would make an API call to the backend
+  try {
     console.log(`Processing delivery scan: ${code}`);
-    setTimeout(() => {
-      resolve(true);
-    }, 500);
-  });
+    
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Mock successful scan
+    return true;
+  } catch (error) {
+    console.error('Error processing delivery scan:', error);
+    return false;
+  }
 };
 
-export const syncScans = async (offlineScans: any[]): Promise<{synced: number, failed: number}> => {
-  // Simulate syncing offline scans
-  console.log(`Syncing ${offlineScans.length} offline scans`);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        synced: offlineScans.length,
-        failed: 0
-      });
-    }, 1000);
-  });
+// Save scan to history (localStorage for now, would be database in real app)
+export const saveScanToHistory = (scanType: 'product' | 'order' | 'delivery', code: string): void => {
+  try {
+    const history = localStorage.getItem('scanHistory') 
+      ? JSON.parse(localStorage.getItem('scanHistory') as string) 
+      : [];
+    
+    history.unshift({
+      id: `scan-${Date.now()}`,
+      type: scanType,
+      code,
+      timestamp: new Date().toISOString(),
+      status: 'success'
+    });
+    
+    // Keep only the 50 most recent scans
+    if (history.length > 50) {
+      history.pop();
+    }
+    
+    localStorage.setItem('scanHistory', JSON.stringify(history));
+  } catch (error) {
+    console.error('Error saving scan history:', error);
+  }
+};
+
+// Get scan history from localStorage
+export const getScanHistory = () => {
+  try {
+    return localStorage.getItem('scanHistory') 
+      ? JSON.parse(localStorage.getItem('scanHistory') as string) 
+      : [];
+  } catch (error) {
+    console.error('Error retrieving scan history:', error);
+    return [];
+  }
 };
