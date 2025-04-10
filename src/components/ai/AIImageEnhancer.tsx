@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,14 +8,20 @@ import { toast } from 'sonner';
 
 interface AIImageEnhancerProps {
   initialImageUrl?: string;
+  imageUrl?: string;
   onImageEnhanced?: (enhancedImageUrl: string) => void;
+  onEnhancedImage?: (enhancedUrl: string) => void;
+  onBackgroundRemoved?: (processedUrl: string) => void;
 }
 
 const AIImageEnhancer = ({
   initialImageUrl = '',
-  onImageEnhanced
+  imageUrl = '',
+  onImageEnhanced,
+  onEnhancedImage,
+  onBackgroundRemoved
 }: AIImageEnhancerProps) => {
-  const [originalImage, setOriginalImage] = useState<string>(initialImageUrl);
+  const [originalImage, setOriginalImage] = useState<string>(initialImageUrl || imageUrl);
   const [enhancedImage, setEnhancedImage] = useState<string>('');
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
@@ -54,6 +59,9 @@ const AIImageEnhancer = ({
         if (onImageEnhanced) {
           onImageEnhanced(result.url);
         }
+        if (onEnhancedImage) {
+          onEnhancedImage(result.url);
+        }
         toast.success("Image enhanced successfully");
       } else {
         toast.error("Failed to enhance image");
@@ -79,6 +87,12 @@ const AIImageEnhancer = ({
         setEnhancedImage(result);
         if (onImageEnhanced) {
           onImageEnhanced(result);
+        }
+        if (onEnhancedImage) {
+          onEnhancedImage(result);
+        }
+        if (onBackgroundRemoved) {
+          onBackgroundRemoved(result);
         }
         toast.success("Background removed successfully");
       } else {
