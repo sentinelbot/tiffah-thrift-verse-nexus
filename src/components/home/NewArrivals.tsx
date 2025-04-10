@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ProductCard, { ProductType } from "../products/ProductCard";
@@ -11,6 +10,7 @@ const newArrivals: ProductType[] = [
   {
     id: "1",
     title: "Vintage Denim Jacket",
+    name: "Vintage Denim Jacket",
     price: 45.99,
     originalPrice: 65.00,
     category: "Clothing",

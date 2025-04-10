@@ -55,7 +55,7 @@ export const initBarcodeScanner = (scannerElement: HTMLElement, onDetect: (barco
   const config = { ...defaultConfig, ...scannerConfig };
 
   // Initialize the scanner
-  Quagga.init(config, (err) => {
+  Quagga.init(config as any, (err) => {
     if (err) {
       console.error("Error initializing barcode scanner:", err);
       return;
@@ -131,4 +131,180 @@ export const checkCameraAvailability = async (): Promise<boolean> => {
 // Generate a unique identifier for the scan
 export const generateScanId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+};
+
+// Added missing functions for BarcodeScanner
+export const initScanner = (containerId: string, callbacks: { onDetected: (result: any) => void, onError: (error: any) => void }) => {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error('Scanner container not found:', containerId);
+    return () => {};
+  }
+
+  try {
+    const scanner = initBarcodeScanner(
+      container, 
+      (barcode) => {
+        callbacks.onDetected({ codeResult: { code: barcode } });
+      }
+    );
+    
+    return () => {
+      if (scanner && scanner.stop) {
+        scanner.stop();
+      }
+    };
+  } catch (error) {
+    callbacks.onError(error);
+    return () => {};
+  }
+};
+
+// Check if device is online
+export const isOnline = (): boolean => {
+  return navigator.onLine;
+};
+
+// Sync offline scans
+export const syncScans = async (): Promise<{ synced: number }> => {
+  // In a real app, this would retrieve locally stored scans and send them to the server
+  console.log('Syncing offline scans...');
+  
+  // Placeholder implementation
+  // This would normally get data from IndexedDB or localStorage
+  const pendingScans = localStorage.getItem('pendingScans') 
+    ? JSON.parse(localStorage.getItem('pendingScans') || '[]') 
+    : [];
+  
+  if (pendingScans.length === 0) {
+    return { synced: 0 };
+  }
+  
+  // Clear pending scans
+  localStorage.setItem('pendingScans', JSON.stringify([]));
+  
+  return { synced: pendingScans.length };
+};
+
+// Process product scans
+export const processProductScan = async (
+  code: string, 
+  userId: string, 
+  userRole: string, 
+  isOnlineStatus: boolean
+): Promise<{ status: string; result?: any }> => {
+  console.log(`Processing product scan: ${code}`);
+  
+  if (!isOnlineStatus) {
+    // Store scan for later sync
+    const pendingScans = localStorage.getItem('pendingScans')
+      ? JSON.parse(localStorage.getItem('pendingScans') || '[]')
+      : [];
+    
+    pendingScans.push({
+      type: 'product',
+      code,
+      userId,
+      userRole,
+      timestamp: new Date().toISOString()
+    });
+    
+    localStorage.setItem('pendingScans', JSON.stringify(pendingScans));
+    return { status: 'pending-sync' };
+  }
+  
+  // In a real app, this would make an API call to validate the product barcode
+  // For demo purposes, simulate a successful scan
+  return { 
+    status: 'success',
+    result: {
+      id: `PROD-${code}`,
+      name: `Sample Product ${code}`,
+      price: 29.99,
+      status: 'available'
+    }
+  };
+};
+
+// Process order scans
+export const processOrderScan = async (
+  code: string, 
+  userId: string, 
+  userRole: string, 
+  isOnlineStatus: boolean
+): Promise<{ status: string; result?: any }> => {
+  console.log(`Processing order scan: ${code}`);
+  
+  if (!isOnlineStatus) {
+    // Store scan for later sync
+    const pendingScans = localStorage.getItem('pendingScans')
+      ? JSON.parse(localStorage.getItem('pendingScans') || '[]')
+      : [];
+    
+    pendingScans.push({
+      type: 'order',
+      code,
+      userId,
+      userRole,
+      timestamp: new Date().toISOString()
+    });
+    
+    localStorage.setItem('pendingScans', JSON.stringify(pendingScans));
+    return { status: 'pending-sync' };
+  }
+  
+  // In a real app, this would make an API call to validate the order barcode
+  // For demo purposes, simulate a successful scan
+  return { 
+    status: 'success',
+    result: {
+      id: `ORD-${code}`,
+      orderNumber: `TTS-20250410-${code}`,
+      status: 'processing',
+      items: [
+        { id: 'item1', name: 'Vintage Denim Jacket', quantity: 1 },
+        { id: 'item2', name: 'Leather Bag', quantity: 1 }
+      ]
+    }
+  };
+};
+
+// Process delivery scans
+export const processDeliveryScan = async (
+  code: string, 
+  userId: string, 
+  userRole: string, 
+  isOnlineStatus: boolean
+): Promise<{ status: string; result?: any }> => {
+  console.log(`Processing delivery scan: ${code}`);
+  
+  if (!isOnlineStatus) {
+    // Store scan for later sync
+    const pendingScans = localStorage.getItem('pendingScans')
+      ? JSON.parse(localStorage.getItem('pendingScans') || '[]')
+      : [];
+    
+    pendingScans.push({
+      type: 'delivery',
+      code,
+      userId,
+      userRole,
+      timestamp: new Date().toISOString()
+    });
+    
+    localStorage.setItem('pendingScans', JSON.stringify(pendingScans));
+    return { status: 'pending-sync' };
+  }
+  
+  // In a real app, this would make an API call to validate the delivery barcode
+  // For demo purposes, simulate a successful scan
+  return { 
+    status: 'success',
+    result: {
+      id: `DEL-${code}`,
+      orderNumber: `TTS-20250410-${code}`,
+      status: 'outForDelivery',
+      deliveryTime: new Date().toISOString()
+    }
+  };
 };

@@ -3,210 +3,171 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
 
 /**
- * Checks if the current user has a specific role
- * @param role Role to check for
- * @returns Boolean indicating if user has the specified role
+ * Checks if a user has a specific role
+ * @param userId - The user's ID
+ * @param role - The role to check for
+ * @returns Promise<boolean> - Whether the user has the role
  */
-export const hasRole = async (role: string): Promise<boolean> => {
+export const hasRole = async (userId: string, role: string): Promise<boolean> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .rpc('has_role', { user_id: userId, role_name: role });
     
-    if (userError || !userData.user) {
-      return false;
-    }
-
-    const { data, error } = await supabase.rpc('has_role', { 
-      required_role: role 
-    });
-
     if (error) {
-      console.error('Error checking role:', error);
+      console.error('Error checking user role:', error);
       return false;
     }
-
-    return !!data;
+    
+    return data || false;
   } catch (error) {
-    console.error('Error in hasRole:', error);
+    console.error('Error in hasRole function:', error);
     return false;
   }
 };
 
 /**
- * Checks if the current user has any of the specified roles
- * @param roles Array of roles to check for
- * @returns Boolean indicating if user has any of the specified roles
+ * Gets all roles for a user
+ * @param userId - The user's ID
+ * @returns Promise<string[]> - Array of role names
  */
-export const hasAnyRole = async (roles: string[]): Promise<boolean> => {
+export const getUserRoles = async (userId: string): Promise<string[]> => {
   try {
-    for (const role of roles) {
-      const hasUserRole = await hasRole(role);
-      if (hasUserRole) {
-        return true;
-      }
-    }
-    return false;
-  } catch (error) {
-    console.error('Error in hasAnyRole:', error);
-    return false;
-  }
-};
-
-/**
- * Gets all roles for the current user
- * @returns Array of role names
- */
-export const getUserRoles = async (): Promise<string[]> => {
-  try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .rpc('get_user_roles', { user_id: userId });
     
-    if (userError || !userData.user) {
-      return [];
-    }
-
-    // Call the function to get user roles
-    const { data, error } = await supabase.rpc('get_user_roles');
-
     if (error) {
-      console.error('Error fetching user roles:', error);
+      console.error('Error getting user roles:', error);
       return [];
     }
-
-    // The function returns an array of roles
-    return data || [];
+    
+    // If there are no roles, data might be null or undefined
+    if (!data) {
+      return [];
+    }
+    
+    // Ensure we're working with an array of strings
+    return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error('Error in getUserRoles:', error);
+    console.error('Error in getUserRoles function:', error);
     return [];
   }
 };
 
 /**
- * Add a role to the current user
- * @param role Role to add
- * @returns Boolean indicating success
+ * Adds a role to a user
+ * @param userId - The user's ID
+ * @param role - The role to add
+ * @returns Promise<boolean> - Whether the operation was successful
  */
-export const addRole = async (userId: string, role: string): Promise<boolean> => {
+export const addUserRole = async (userId: string, role: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('add_user_role', { 
-      p_user_id: userId, 
-      p_role: role 
-    });
-
+    const { data, error } = await supabase
+      .rpc('add_user_role', { user_id: userId, role_name: role });
+    
     if (error) {
-      console.error('Error adding role:', error);
+      console.error('Error adding user role:', error);
       return false;
     }
-
+    
     return true;
   } catch (error) {
-    console.error('Error in addRole:', error);
+    console.error('Error in addUserRole function:', error);
     return false;
   }
 };
 
 /**
- * Remove a role from the current user
- * @param role Role to remove
- * @returns Boolean indicating success
+ * Removes a role from a user
+ * @param userId - The user's ID
+ * @param role - The role to remove
+ * @returns Promise<boolean> - Whether the operation was successful
  */
-export const removeRole = async (userId: string, role: string): Promise<boolean> => {
+export const removeUserRole = async (userId: string, role: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('remove_user_role', { 
-      p_user_id: userId, 
-      p_role: role 
-    });
-
+    const { data, error } = await supabase
+      .rpc('remove_user_role', { user_id: userId, role_name: role });
+    
     if (error) {
-      console.error('Error removing role:', error);
+      console.error('Error removing user role:', error);
       return false;
     }
-
+    
     return true;
   } catch (error) {
-    console.error('Error in removeRole:', error);
+    console.error('Error in removeUserRole function:', error);
     return false;
   }
 };
 
 /**
- * Get all delivery staff users
- * @returns Array of delivery staff users
+ * Gets all delivery staff
+ * @returns Promise<User[]> - Array of delivery staff
  */
 export const getDeliveryStaff = async (): Promise<User[]> => {
   try {
-    const { data, error } = await supabase.rpc('get_delivery_staff');
-
+    const { data, error } = await supabase
+      .rpc('get_delivery_staff');
+    
     if (error) {
-      console.error('Error fetching delivery staff:', error);
+      console.error('Error getting delivery staff:', error);
       return [];
     }
-
-    if (!data) return [];
-
-    return data.map((item: any) => ({
-      id: item.id,
-      name: item.name || 'Unknown',
-      email: item.email || '',
+    
+    // Ensure we have a valid array of users
+    return Array.isArray(data) ? data.map(user => ({
+      id: user.id,
+      email: user.email,
+      name: user.name || user.email.split('@')[0],
       role: 'deliveryStaff'
-    }));
+    })) : [];
   } catch (error) {
-    console.error('Error in getDeliveryStaff:', error);
+    console.error('Error in getDeliveryStaff function:', error);
     return [];
   }
 };
 
 /**
- * Complete scan synchronization
+ * Process all pending barcode scans
+ * @param userId - The user's ID
+ * @returns Promise<{ processed: number }> - Number of processed scans
  */
-export const completeScanSync = async (scans: any[]): Promise<{synced: number, failed: number}> => {
-  let synced = 0;
-  let failed = 0;
-
+export const processPendingScans = async (userId: string): Promise<{ processed: number }> => {
   try {
-    // Call the RPC function to process scans
-    const { data, error } = await supabase.rpc('process_pending_scans', { 
-      scans_json: JSON.stringify(scans) 
-    });
+    const { data, error } = await supabase
+      .rpc('process_pending_scans', { user_id: userId });
     
     if (error) {
-      console.error('Error syncing scans:', error);
-      failed = scans.length;
-    } else if (data) {
-      synced = data.processed || 0;
-      failed = scans.length - synced;
+      console.error('Error processing pending scans:', error);
+      return { processed: 0 };
     }
     
-    return { synced, failed };
+    // Return the number of processed scans
+    return { processed: data?.processed || 0 };
   } catch (error) {
-    console.error('Error in completeScanSync:', error);
-    return { synced, failed: scans.length - synced };
+    console.error('Error in processPendingScans function:', error);
+    return { processed: 0 };
   }
 };
 
 /**
- * Get scan history for the current user
+ * Gets scan history for a user
+ * @param userId - The user's ID
+ * @returns Promise<any[]> - Array of scan history items
  */
-export const getScanHistory = async (limit = 20): Promise<any[]> => {
+export const getUserScanHistory = async (userId: string): Promise<any[]> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .rpc('get_user_scan_history', { user_id: userId });
     
-    if (userError || !userData.user) {
-      return [];
-    }
-
-    // Call the function to get scan history
-    const { data, error } = await supabase.rpc('get_user_scan_history', { 
-      p_user_id: userData.user.id,
-      p_limit: limit
-    });
-
     if (error) {
-      console.error('Error fetching scan history:', error);
+      console.error('Error getting user scan history:', error);
       return [];
     }
-
-    return data || [];
+    
+    // Ensure we have a valid array
+    return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error('Error in getScanHistory:', error);
+    console.error('Error in getUserScanHistory function:', error);
     return [];
   }
 };

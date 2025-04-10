@@ -1,7 +1,14 @@
 
 import { Link } from "react-router-dom";
 import ProductCardActions from "./ProductCardActions";
-import { ProductType } from "@/types";
+import { ProductType as BaseProductType } from "@/types";
+
+export interface ProductType extends BaseProductType {
+  originalPrice?: number;
+  size?: string;
+  category?: string;
+  condition?: string;
+}
 
 interface ProductCardProps {
   product: ProductType;
