@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -215,6 +216,4 @@ export interface Profile {
   loyaltyPoints?: number;
   created_at?: string;
   updated_at?: string;
-  // Not including address_book, email_preferences and preferences here
-  // as we handle them separately in the useProfile hook
 }
