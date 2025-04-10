@@ -1,13 +1,9 @@
-
+import * as React from "react";
 import {
   Toast,
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
-
-import {
-  useToast as useToastPrimitive,
-} from "@radix-ui/react-toast"
 
 const TOAST_LIMIT = 5
 const TOAST_REMOVE_DELAY = 1000000
@@ -146,7 +142,7 @@ function addToRemoveQueue(toastId: string) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast(props: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
