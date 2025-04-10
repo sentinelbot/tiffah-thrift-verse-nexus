@@ -1,32 +1,9 @@
 
-export type OrderStatus = 
-  | 'pending' 
-  | 'processing' 
-  | 'ready' 
-  | 'outForDelivery' 
-  | 'delivered' 
-  | 'cancelled';
-
 export type PaymentMethod = 'mpesa' | 'card' | 'paypal' | 'cash';
 
-export type PaymentStatus = 
-  | 'pending' 
-  | 'processing' 
-  | 'completed' 
-  | 'failed' 
-  | 'refunded';
+export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
 
-export interface OrderItem {
-  productId: string;
-  product: {
-    id: string;
-    title: string;
-    price: number;
-    imageUrl: string;
-  };
-  quantity: number;
-  price: number;
-}
+export type OrderStatus = 'pending' | 'processing' | 'ready' | 'outForDelivery' | 'delivered' | 'cancelled';
 
 export interface ShippingInfo {
   fullName: string;
@@ -38,7 +15,6 @@ export interface ShippingInfo {
   postalCode: string;
   country: string;
   shippingMethod: 'standard' | 'express';
-  specialInstructions?: string;
 }
 
 export interface PaymentInfo {
@@ -49,10 +25,24 @@ export interface PaymentInfo {
 }
 
 export interface DeliveryInfo {
-  estimatedDelivery?: Date;
+  method?: string;
+  cost?: number;
+  estimatedDelivery: Date;
   actualDelivery?: Date;
   trackingId?: string;
   deliveryStaff?: string;
+}
+
+export interface OrderItem {
+  productId: string;
+  product: {
+    id: string;
+    title: string;
+    price: number;
+    imageUrl: string;
+  };
+  quantity: number;
+  price: number;
 }
 
 export interface Order {
@@ -71,10 +61,19 @@ export interface Order {
   deliveryInfo: DeliveryInfo;
   orderDate: Date;
   notes?: string;
-  history: {
-    timestamp: Date;
-    status: OrderStatus;
-    note?: string;
-    updatedBy?: string;
-  }[];
+}
+
+export interface OrderCreateInput {
+  customer: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  items: OrderItem[];
+  totalAmount: number;
+  paymentInfo: Omit<PaymentInfo, 'transactionId'>;
+  shippingInfo: ShippingInfo;
+  deliveryInfo: {
+    estimatedDelivery: Date;
+  };
 }

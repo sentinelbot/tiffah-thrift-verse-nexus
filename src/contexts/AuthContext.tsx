@@ -5,14 +5,19 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'customer' | 'admin' | 'staff';
+  role: 'customer' | 'admin' | 'staff' | 'productManager' | 'orderPreparer' | 'deliveryStaff';
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isLoading: boolean; // Added for consistency with references
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  signIn: (email: string, password: string) => Promise<boolean>; // Alias for login
+  signOut: () => void; // Alias for logout
+  signUp: (email: string, password: string, name: string) => Promise<boolean>;
+  updateProfile: (data: Partial<User>) => Promise<boolean>;
   isAuthenticated: boolean;
 }
 
@@ -44,12 +49,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Mock different user roles for testing purposes
+      let role: User['role'] = 'customer';
+      
+      if (email.includes('admin')) {
+        role = 'admin';
+      } else if (email.includes('product')) {
+        role = 'productManager';
+      } else if (email.includes('order')) {
+        role = 'orderPreparer';
+      } else if (email.includes('delivery')) {
+        role = 'deliveryStaff';
+      } else if (email.includes('staff')) {
+        role = 'staff';
+      }
+      
       // Mock user for demo purposes
       const mockUser: User = {
         id: '1',
-        name: 'Demo User',
+        name: email.split('@')[0],
         email: email,
-        role: 'customer'
+        role: role
       };
       
       setUser(mockUser);
@@ -67,12 +87,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     localStorage.removeItem('user');
   };
+  
+  const signUp = async (email: string, password: string, name: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // In a real app, this would call an API to create a user
+      const mockUser: User = {
+        id: Math.random().toString(36).substring(2, 9),
+        name: name,
+        email: email,
+        role: 'customer'
+      };
+      
+      setUser(mockUser);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      return true;
+    } catch (error) {
+      console.error('Signup failed:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const updateProfile = async (data: Partial<User>): Promise<boolean> => {
+    try {
+      setLoading(true);
+      
+      if (!user) return false;
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return true;
+    } catch (error) {
+      console.error('Profile update failed:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const value = {
     user,
     loading,
+    isLoading: loading, // Alias for consistent naming
     login,
     logout,
+    signIn: login, // Alias for consistent naming
+    signOut: logout, // Alias for consistent naming
+    signUp,
+    updateProfile,
     isAuthenticated: !!user
   };
 

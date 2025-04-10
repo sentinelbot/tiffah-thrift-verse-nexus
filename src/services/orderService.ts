@@ -1,271 +1,133 @@
 
-import { Order, OrderStatus, PaymentMethod } from '@/types/order';
+import { Order, OrderCreateInput, OrderStatus } from '@/types/order';
+import { toast } from 'sonner';
 
-// Generate a unique order number in format TTS-YYYYMMDD-XXXX
-export const generateOrderNumber = (): string => {
-  const now = new Date();
-  const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const randomPart = Math.floor(1000 + Math.random() * 9000);
-  return `TTS-${datePart}-${randomPart}`;
+// Generate a random order number in the format TTS-YYYYMMDD-XXXX
+const generateOrderNumber = (): string => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const random = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+  
+  return `TTS-${year}${month}${day}-${random}`;
 };
 
-// Mock API functions - these would connect to your backend in production
-export const createOrder = async (orderData: Partial<Order>): Promise<Order> => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
+// Create a new order
+export const createOrder = async (orderData: OrderCreateInput): Promise<Order> => {
+  // This would be an actual API call in production
+  console.log('Creating order:', orderData);
   
-  // In a real app, this would be a POST request to your API
-  console.log('Creating order with data:', orderData);
-  
-  // Mock successful response
-  return {
-    id: Math.random().toString(36).substring(2, 15),
-    orderNumber: generateOrderNumber(),
-    orderDate: new Date(),
-    status: 'pending',
-    history: [
-      {
-        timestamp: new Date(),
-        status: 'pending',
-        note: 'Order created',
-      }
-    ],
-    ...orderData
-  } as Order;
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const newOrder: Order = {
+      id: Math.random().toString(36).substring(2, 15),
+      orderNumber: generateOrderNumber(),
+      customer: orderData.customer,
+      items: orderData.items,
+      totalAmount: orderData.totalAmount,
+      status: 'pending',
+      paymentInfo: orderData.paymentInfo,
+      shippingInfo: orderData.shippingInfo,
+      deliveryInfo: orderData.deliveryInfo,
+      orderDate: new Date()
+    };
+    
+    // In production, this would be stored in the database
+    // For now, we'll store it in localStorage for demo purposes
+    const savedOrders = localStorage.getItem('tiffah-orders');
+    const orders = savedOrders ? JSON.parse(savedOrders) : [];
+    orders.push(newOrder);
+    localStorage.setItem('tiffah-orders', JSON.stringify(orders));
+    
+    return newOrder;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    toast.error('Failed to create order');
+    throw error;
+  }
 };
 
+// Get an order by ID
+export const getOrderById = async (orderId: string): Promise<Order | null> => {
+  console.log('Fetching order:', orderId);
+  
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Retrieve from localStorage for demo purposes
+    const savedOrders = localStorage.getItem('tiffah-orders');
+    if (!savedOrders) return null;
+    
+    const orders: Order[] = JSON.parse(savedOrders);
+    const order = orders.find(o => o.id === orderId);
+    
+    return order || null;
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    toast.error('Failed to fetch order details');
+    return null;
+  }
+};
+
+// Get all orders for a customer
+export const getCustomerOrders = async (customerId: string): Promise<Order[]> => {
+  console.log('Fetching orders for customer:', customerId);
+  
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Retrieve from localStorage for demo purposes
+    const savedOrders = localStorage.getItem('tiffah-orders');
+    if (!savedOrders) return [];
+    
+    const orders: Order[] = JSON.parse(savedOrders);
+    return orders.filter(o => o.customer.id === customerId);
+  } catch (error) {
+    console.error('Error fetching customer orders:', error);
+    toast.error('Failed to fetch your order history');
+    return [];
+  }
+};
+
+// Update order status
 export const updateOrderStatus = async (
   orderId: string, 
-  status: OrderStatus, 
-  note?: string
-): Promise<Order> => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 800));
+  status: OrderStatus,
+  notes?: string
+): Promise<boolean> => {
+  console.log(`Updating order ${orderId} status to ${status}`);
   
-  // In a real app, this would be a PUT request to your API
-  console.log(`Updating order ${orderId} to status: ${status}`);
-  
-  // Mock successful response
-  return {
-    id: orderId,
-    status,
-    history: [
-      // Previous history would be included in real implementation
-      {
-        timestamp: new Date(),
-        status,
-        note,
-      }
-    ]
-  } as Order;
-};
-
-export const getOrderById = async (orderId: string): Promise<Order> => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // In a real app, this would be a GET request to your API
-  console.log(`Fetching order ${orderId}`);
-  
-  // Mock successful response
-  return {
-    id: orderId,
-    orderNumber: 'TTS-20250409-1234',
-    customer: {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com'
-    },
-    items: [
-      {
-        productId: '1',
-        product: {
-          id: '1',
-          title: 'Vintage Denim Jacket',
-          price: 59.99,
-          imageUrl: '/placeholder.svg'
-        },
-        quantity: 1,
-        price: 59.99
-      }
-    ],
-    totalAmount: 59.99,
-    status: 'processing',
-    paymentInfo: {
-      method: 'mpesa',
-      status: 'completed',
-      transactionId: 'MPE1234567',
-      amount: 59.99
-    },
-    shippingInfo: {
-      fullName: 'John Doe',
-      email: 'john@example.com',
-      phone: '0712345678',
-      address: '123 Main St',
-      city: 'Nairobi',
-      state: 'Nairobi',
-      postalCode: '00100',
-      country: 'Kenya',
-      shippingMethod: 'standard'
-    },
-    deliveryInfo: {
-      estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    },
-    orderDate: new Date(),
-    history: [
-      {
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        status: 'pending',
-        note: 'Order created',
-      },
-      {
-        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
-        status: 'processing',
-        note: 'Payment confirmed',
-        updatedBy: 'system'
-      }
-    ]
-  } as Order;
-};
-
-export const getCustomerOrders = async (customerId: string): Promise<Order[]> => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // In a real app, this would be a GET request to your API
-  console.log(`Fetching orders for customer ${customerId}`);
-  
-  // Mock successful response with a list of orders
-  return [
-    {
-      id: '1',
-      orderNumber: 'TTS-20250409-1234',
-      customer: {
-        id: customerId,
-        name: 'John Doe',
-        email: 'john@example.com'
-      },
-      items: [
-        {
-          productId: '1',
-          product: {
-            id: '1',
-            title: 'Vintage Denim Jacket',
-            price: 59.99,
-            imageUrl: '/placeholder.svg'
-          },
-          quantity: 1,
-          price: 59.99
-        }
-      ],
-      totalAmount: 59.99,
-      status: 'delivered',
-      paymentInfo: {
-        method: 'mpesa',
-        status: 'completed',
-        transactionId: 'MPE1234567',
-        amount: 59.99
-      },
-      shippingInfo: {
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        phone: '0712345678',
-        address: '123 Main St',
-        city: 'Nairobi',
-        state: 'Nairobi',
-        postalCode: '00100',
-        country: 'Kenya',
-        shippingMethod: 'standard'
-      },
-      deliveryInfo: {
-        estimatedDelivery: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        actualDelivery: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      },
-      orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      history: [
-        {
-          timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-          status: 'pending',
-          note: 'Order created',
-        },
-        {
-          timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-          status: 'processing',
-          note: 'Payment confirmed',
-        },
-        {
-          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-          status: 'ready',
-          note: 'Order ready for delivery',
-        },
-        {
-          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          status: 'outForDelivery',
-          note: 'Order out for delivery',
-        },
-        {
-          timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          status: 'delivered',
-          note: 'Order delivered',
-        }
-      ]
-    },
-    {
-      id: '2',
-      orderNumber: 'TTS-20250408-5678',
-      customer: {
-        id: customerId,
-        name: 'John Doe',
-        email: 'john@example.com'
-      },
-      items: [
-        {
-          productId: '2',
-          product: {
-            id: '2',
-            title: 'Classic White Shirt',
-            price: 29.99,
-            imageUrl: '/placeholder.svg'
-          },
-          quantity: 2,
-          price: 59.98
-        }
-      ],
-      totalAmount: 59.98,
-      status: 'processing',
-      paymentInfo: {
-        method: 'card',
-        status: 'completed',
-        transactionId: 'CARD9876543',
-        amount: 59.98
-      },
-      shippingInfo: {
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        phone: '0712345678',
-        address: '123 Main St',
-        city: 'Nairobi',
-        state: 'Nairobi',
-        postalCode: '00100',
-        country: 'Kenya',
-        shippingMethod: 'express'
-      },
-      deliveryInfo: {
-        estimatedDelivery: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-      },
-      orderDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      history: [
-        {
-          timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          status: 'pending',
-          note: 'Order created',
-        },
-        {
-          timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000),
-          status: 'processing',
-          note: 'Payment confirmed',
-        }
-      ]
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 600));
+    
+    // Retrieve from localStorage for demo purposes
+    const savedOrders = localStorage.getItem('tiffah-orders');
+    if (!savedOrders) return false;
+    
+    const orders: Order[] = JSON.parse(savedOrders);
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    
+    if (orderIndex === -1) return false;
+    
+    // Update the order status
+    orders[orderIndex].status = status;
+    if (notes) {
+      orders[orderIndex].notes = notes;
     }
-  ];
+    
+    // Save back to localStorage
+    localStorage.setItem('tiffah-orders', JSON.stringify(orders));
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    toast.error('Failed to update order status');
+    return false;
+  }
 };
