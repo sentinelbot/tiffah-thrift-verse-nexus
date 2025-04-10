@@ -1,4 +1,3 @@
-
 import { Order } from '@/types';
 import { formatPrice } from '@/utils/formatters';
 
@@ -90,4 +89,29 @@ export const downloadReceipt = (order: Order): void => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, 0);
+};
+
+/**
+ * Print receipt directly to browser's print dialog
+ * @param order Order data
+ */
+export const printReceipt = (order: Order): void => {
+  const html = generateReceiptHTML(order);
+  
+  // Create a new window with the receipt HTML
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Print the window after a short delay to ensure content is loaded
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  } else {
+    console.error('Unable to open print window. Please check if pop-ups are blocked.');
+    alert('Unable to open print window. Please check if pop-ups are blocked.');
+  }
 };

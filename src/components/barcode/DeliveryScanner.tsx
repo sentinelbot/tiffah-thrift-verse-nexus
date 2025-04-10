@@ -22,7 +22,7 @@ import { Truck, AlertCircle, MapPin, Camera, Check } from 'lucide-react';
 import BarcodeScanner from './BarcodeScanner';
 import { printShippingLabel } from '@/services/printNodeService';
 import { formatDateTime } from '@/utils/formatters';
-import { Order } from '@/types/order';
+import { Order, OrderStatus } from '@/types/order';
 
 const DeliveryScanner = () => {
   const { user } = useAuth();
@@ -83,7 +83,7 @@ const DeliveryScanner = () => {
           }
         ],
         totalAmount: 3700,
-        status: 'ready',
+        status: 'ready' as OrderStatus,
         paymentInfo: {
           method: 'mpesa',
           status: 'completed',
@@ -193,7 +193,7 @@ const DeliveryScanner = () => {
       // Update local state to simulate database update
       const updatedOrder = {
         ...scannedOrder,
-        status: 'outForDelivery',
+        status: 'outForDelivery' as OrderStatus,
         deliveryInfo: {
           ...scannedOrder.deliveryInfo,
           pickedUpBy: user.id,
@@ -230,7 +230,7 @@ const DeliveryScanner = () => {
       // Update local state to simulate database update
       const updatedOrder = {
         ...scannedOrder,
-        status: 'delivered',
+        status: 'delivered' as OrderStatus,
         deliveryInfo: {
           ...scannedOrder.deliveryInfo,
           deliveredBy: user.id,
