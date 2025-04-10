@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, CartItem as CartItemType } from '@/types';
 
@@ -74,7 +75,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const addToCart = (product: Product | CartItemType, quantity: number) => {
     setItems(currentItems => {
       // Check if the product already exists in the cart
-      const productId = 'id' in product ? product.id : product.product.id;
+      const productId = 'id' in product ? product.id : '';
       const existingItemIndex = currentItems.findIndex(item => item.product.id === productId);
 
       // Set reservation expiry to 15 minutes from now
