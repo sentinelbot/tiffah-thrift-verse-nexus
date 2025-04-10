@@ -63,9 +63,17 @@ export const useAddresses = () => {
     
     try {
       // For now, simulate adding an address
+      // Ensure all required fields from Address type are included
       const newAddress: Address = {
         id: Math.random().toString(36).substring(2, 15),
-        ...addressData,
+        fullName: addressData.fullName,
+        street: addressData.street,
+        city: addressData.city,
+        state: addressData.state,
+        postalCode: addressData.postalCode,
+        country: addressData.country,
+        phone: addressData.phone || "",
+        isDefault: addressData.isDefault || false,
       };
       
       // If this is the first address or marked as default, 
@@ -94,9 +102,17 @@ export const useAddresses = () => {
       // For now, simulate updating an address
       const updatedAddresses = addresses.map(addr => {
         if (addr.id === id) {
+          // Ensure all required fields from Address type are included
           return {
             ...addr,
-            ...addressData,
+            fullName: addressData.fullName,
+            street: addressData.street,
+            city: addressData.city,
+            state: addressData.state,
+            postalCode: addressData.postalCode,
+            country: addressData.country,
+            phone: addressData.phone || addr.phone,
+            isDefault: addressData.isDefault,
           };
         }
         
