@@ -22,14 +22,12 @@ export const hasRole = async (userId: string, requiredRole: string): Promise<boo
     
     // If not found in profile, check the user_roles table
     const { data: userRoles, error: rolesError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', requiredRole);
+      .rpc('has_role', { required_role: requiredRole })
+      .single();
     
     if (rolesError) throw rolesError;
     
-    return userRoles && userRoles.length > 0;
+    return userRoles || false;
   } catch (error) {
     console.error('Error checking role:', error);
     return false;
@@ -54,16 +52,13 @@ export const hasAnyRole = async (userId: string, roles: string[]): Promise<boole
       return true;
     }
     
-    // Then check user_roles
-    const { data: userRoles, error: rolesError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .in('role', roles);
+    // Then check for each role individually
+    for (const role of roles) {
+      const hasUserRole = await hasRole(userId, role);
+      if (hasUserRole) return true;
+    }
     
-    if (rolesError) throw rolesError;
-    
-    return userRoles && userRoles.length > 0;
+    return false;
   } catch (error) {
     console.error('Error checking roles:', error);
     return false;
@@ -88,16 +83,15 @@ export const getUserRoles = async (userId: string): Promise<string[]> => {
       roles.push(profile.role);
     }
     
-    // Get roles from user_roles
-    const { data: userRoles, error: rolesError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId);
+    // Get custom function to retrieve roles
+    const { data: customRoles, error: customRolesError } = await supabase
+      .rpc('get_user_roles', { user_id: userId });
     
-    if (!rolesError && userRoles) {
-      userRoles.forEach(row => {
-        if (!roles.includes(row.role)) {
-          roles.push(row.role);
+    if (!customRolesError && customRoles) {
+      // If the function returns an array of roles
+      customRoles.forEach((role: string) => {
+        if (!roles.includes(role)) {
+          roles.push(role);
         }
       });
     }
@@ -115,18 +109,11 @@ export const getUserRoles = async (userId: string): Promise<string[]> => {
 export const getRolePermissions = async (role: string): Promise<string[]> => {
   try {
     const { data, error } = await supabase
-      .from('role_permissions')
-      .select(`
-        permission_id,
-        permissions (
-          name
-        )
-      `)
-      .eq('role', role);
+      .rpc('get_role_permissions', { role_name: role });
     
     if (error) throw error;
     
-    return data.map(item => item.permissions.name);
+    return data || [];
   } catch (error) {
     console.error('Error getting role permissions:', error);
     return [];
@@ -138,18 +125,17 @@ export const getRolePermissions = async (role: string): Promise<string[]> => {
  */
 export const hasPermission = async (userId: string, permissionName: string): Promise<boolean> => {
   try {
-    // Get all user roles
-    const userRoles = await getUserRoles(userId);
+    // Use RPC function to check permission
+    const { data, error } = await supabase
+      .rpc('has_permission', { 
+        user_id: userId,
+        permission: permissionName 
+      })
+      .single();
     
-    // Check permissions for each role
-    for (const role of userRoles) {
-      const permissions = await getRolePermissions(role);
-      if (permissions.includes(permissionName)) {
-        return true;
-      }
-    }
+    if (error) throw error;
     
-    return false;
+    return data || false;
   } catch (error) {
     console.error('Error checking permission:', error);
     return false;
@@ -162,8 +148,10 @@ export const hasPermission = async (userId: string, permissionName: string): Pro
 export const assignRoleToUser = async (userId: string, role: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('user_roles')
-      .insert({ user_id: userId, role });
+      .rpc('assign_role_to_user', { 
+        user_id: userId, 
+        role_name: role 
+      });
     
     return !error;
   } catch (error) {
@@ -178,10 +166,10 @@ export const assignRoleToUser = async (userId: string, role: string): Promise<bo
 export const removeRoleFromUser = async (userId: string, role: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId)
-      .eq('role', role);
+      .rpc('remove_role_from_user', { 
+        user_id: userId, 
+        role_name: role 
+      });
     
     return !error;
   } catch (error) {
