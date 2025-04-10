@@ -1,215 +1,180 @@
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Mail, MessageSquare, Phone, Bell } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface NotificationPreferencesState {
-  email: {
-    orderUpdates: boolean;
-    promotions: boolean;
-    priceDrops: boolean;
-    backInStock: boolean;
-    loyaltyUpdates: boolean;
-  };
-  sms: {
-    orderUpdates: boolean;
-    promotions: boolean;
-  };
-  whatsapp: {
-    orderUpdates: boolean;
-    promotions: boolean;
-  };
-  inApp: {
-    orderUpdates: boolean;
-    promotions: boolean;
-    priceDrops: boolean;
-    backInStock: boolean;
-    loyaltyUpdates: boolean;
-  };
-}
+import { Button } from '@/components/ui/button';
+import { Bell, Mail, ShoppingBag, Percent, Tag, Save } from 'lucide-react';
 
 const NotificationPreferences = () => {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [preferences, setPreferences] = useState<NotificationPreferencesState>({
-    email: {
-      orderUpdates: true,
-      promotions: true,
-      priceDrops: true,
-      backInStock: true,
-      loyaltyUpdates: true,
-    },
-    sms: {
-      orderUpdates: false,
-      promotions: false,
-    },
-    whatsapp: {
-      orderUpdates: false,
-      promotions: false,
-    },
-    inApp: {
-      orderUpdates: true,
-      promotions: true,
-      priceDrops: true,
-      backInStock: true,
-      loyaltyUpdates: true,
-    },
+  const [preferences, setPreferences] = useState({
+    emailMarketing: false,
+    emailPromotions: false,
+    emailOrderUpdates: true,
+    smsOrderUpdates: false,
+    smsDelivery: true,
+    emailNewsletter: false,
+    smsPromotions: false,
+    emailProductAlerts: false,
   });
-
-  useEffect(() => {
-    if (!user) return;
-
-    // In a real app, you would fetch the user's notification preferences from the database
-    const fetchPreferences = async () => {
-      setLoading(true);
-      try {
-        // This is mock data - in production you would fetch from a database
-        // const { data, error } = await supabase
-        //   .from('notification_preferences')
-        //   .select('*')
-        //   .eq('user_id', user.id)
-        //   .single();
-        //
-        // if (error) throw error;
-        // if (data) setPreferences(data.preferences);
-
-        // Mock delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching notification preferences:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchPreferences();
-  }, [user]);
-
-  const updatePreference = (
-    channel: keyof NotificationPreferencesState,
-    type: string,
-    value: boolean
-  ) => {
+  
+  const [saving, setSaving] = useState(false);
+  
+  const handleChange = (key: string, value: boolean) => {
     setPreferences(prev => ({
       ...prev,
-      [channel]: {
-        ...prev[channel],
-        [type]: value,
-      },
+      [key]: value
     }));
   };
-
-  const savePreferences = async () => {
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      // In a real app, you would save the preferences to the database
-      // const { error } = await supabase
-      //   .from('notification_preferences')
-      //   .upsert({
-      //     user_id: user.id,
-      //     preferences: preferences,
-      //     updated_at: new Date()
-      //   });
-      //
-      // if (error) throw error;
-
-      // Mock delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+  
+  const handleSave = () => {
+    setSaving(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setSaving(false);
       toast.success('Notification preferences saved');
-      setLoading(false);
-    } catch (error) {
-      console.error('Error saving notification preferences:', error);
-      toast.error('Failed to save preferences');
-      setLoading(false);
-    }
+    }, 1000);
   };
-
-  const PreferenceSection = ({
-    title,
-    icon,
-    channel,
-  }: {
-    title: string;
-    icon: React.ReactNode;
-    channel: keyof NotificationPreferencesState;
-  }) => (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        {icon}
-        <h3 className="font-medium">{title}</h3>
-      </div>
-      <div className="grid gap-3">
-        {Object.entries(preferences[channel]).map(([type, enabled]) => (
-          <div key={`${channel}-${type}`} className="flex items-center justify-between">
-            <Label htmlFor={`${channel}-${type}`} className="text-sm">
-              {type === 'orderUpdates'
-                ? 'Order Updates'
-                : type === 'priceDrops'
-                ? 'Price Drop Alerts'
-                : type === 'backInStock'
-                ? 'Back in Stock Alerts'
-                : type === 'loyaltyUpdates'
-                ? 'Loyalty Program Updates'
-                : 'Promotions & Sales'}
-            </Label>
-            <Switch
-              id={`${channel}-${type}`}
-              checked={enabled}
-              onCheckedChange={(value) => updatePreference(channel, type, value)}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Notification Preferences</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          Notification Preferences
+        </CardTitle>
         <CardDescription>
-          Choose how and when you'd like to be notified
+          Customize how and when you receive notifications
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <PreferenceSection
-          title="Email Notifications"
-          icon={<Mail className="h-5 w-5" />}
-          channel="email"
-        />
+      <CardContent className="space-y-4">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-medium flex items-center gap-2 mb-2">
+              <Mail className="h-4 w-4" />
+              Email Notifications
+            </h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="email-marketing" className="text-sm flex items-center gap-2">
+                  <ShoppingBag className="h-3 w-3 text-muted-foreground" />
+                  Marketing emails
+                </label>
+                <Switch
+                  id="email-marketing"
+                  checked={preferences.emailMarketing}
+                  onCheckedChange={(checked) => handleChange('emailMarketing', checked)}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <label htmlFor="email-promotions" className="text-sm flex items-center gap-2">
+                  <Percent className="h-3 w-3 text-muted-foreground" />
+                  Promotions and discounts
+                </label>
+                <Switch
+                  id="email-promotions"
+                  checked={preferences.emailPromotions}
+                  onCheckedChange={(checked) => handleChange('emailPromotions', checked)}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <label htmlFor="email-order-updates" className="text-sm flex items-center gap-2">
+                  <ShoppingBag className="h-3 w-3 text-muted-foreground" />
+                  Order status updates
+                </label>
+                <Switch
+                  id="email-order-updates"
+                  checked={preferences.emailOrderUpdates}
+                  onCheckedChange={(checked) => handleChange('emailOrderUpdates', checked)}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <label htmlFor="email-newsletter" className="text-sm flex items-center gap-2">
+                  <Mail className="h-3 w-3 text-muted-foreground" />
+                  Weekly newsletter
+                </label>
+                <Switch
+                  id="email-newsletter"
+                  checked={preferences.emailNewsletter}
+                  onCheckedChange={(checked) => handleChange('emailNewsletter', checked)}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <label htmlFor="email-product-alerts" className="text-sm flex items-center gap-2">
+                  <Tag className="h-3 w-3 text-muted-foreground" />
+                  Price drop alerts
+                </label>
+                <Switch
+                  id="email-product-alerts"
+                  checked={preferences.emailProductAlerts}
+                  onCheckedChange={(checked) => handleChange('emailProductAlerts', checked)}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-medium flex items-center gap-2 mb-2">
+              <Bell className="h-4 w-4" />
+              SMS Notifications
+            </h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="sms-order-updates" className="text-sm flex items-center gap-2">
+                  <ShoppingBag className="h-3 w-3 text-muted-foreground" />
+                  Order status updates
+                </label>
+                <Switch
+                  id="sms-order-updates"
+                  checked={preferences.smsOrderUpdates}
+                  onCheckedChange={(checked) => handleChange('smsOrderUpdates', checked)}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <label htmlFor="sms-delivery" className="text-sm flex items-center gap-2">
+                  <ShoppingBag className="h-3 w-3 text-muted-foreground" />
+                  Delivery notifications
+                </label>
+                <Switch
+                  id="sms-delivery"
+                  checked={preferences.smsDelivery}
+                  onCheckedChange={(checked) => handleChange('smsDelivery', checked)}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <label htmlFor="sms-promotions" className="text-sm flex items-center gap-2">
+                  <Percent className="h-3 w-3 text-muted-foreground" />
+                  Promotions and discounts
+                </label>
+                <Switch
+                  id="sms-promotions"
+                  checked={preferences.smsPromotions}
+                  onCheckedChange={(checked) => handleChange('smsPromotions', checked)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
         
-        <PreferenceSection
-          title="SMS Notifications"
-          icon={<Phone className="h-5 w-5" />}
-          channel="sms"
-        />
-        
-        <PreferenceSection
-          title="WhatsApp Notifications"
-          icon={<MessageSquare className="h-5 w-5" />}
-          channel="whatsapp"
-        />
-        
-        <PreferenceSection
-          title="In-App Notifications"
-          icon={<Bell className="h-5 w-5" />}
-          channel="inApp"
-        />
-        
-        <Button 
-          className="w-full mt-4" 
-          onClick={savePreferences}
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : 'Save Preferences'}
+        <Button className="w-full" onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <>
+              <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Save Preferences
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>

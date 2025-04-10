@@ -1,135 +1,179 @@
 
-import React, { useState, useEffect } from 'react';
-import { getCustomerOrders } from '@/services/orderService';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getCustomerOrders } from '@/services/orderService';
 import { Order } from '@/types/orderTypes';
-import { convertOrderType } from '@/utils/orderTypeMapper';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
-import { Package } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Loader2, Package, ExternalLink, AlertCircle } from 'lucide-react';
+import { formatDate } from '@/utils/dateUtils';
+import { useNavigate } from 'react-router-dom';
 
-// Helper function to format dates
-const formatDate = (date: Date): string => {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
-
-const OrderHistory: React.FC = () => {
+const OrderHistory = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchOrders = async () => {
-      if (user?.id) {
-        try {
-          setLoading(true);
-          const fetchedOrders = await getCustomerOrders(user.id);
-          setOrders(fetchedOrders || []);
-        } catch (error) {
-          console.error('Error fetching orders:', error);
-        } finally {
-          setLoading(false);
-        }
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const customerOrders = await getCustomerOrders(user.id);
+        setOrders(customerOrders);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setError('Could not load your orders. Please try again later.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchOrders();
   }, [user]);
 
-  if (loading) {
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-500/20 text-yellow-600">Pending</Badge>;
+      case 'processing':
+        return <Badge variant="outline" className="bg-blue-500/20 text-blue-600">Processing</Badge>;
+      case 'ready':
+        return <Badge variant="outline" className="bg-purple-500/20 text-purple-600">Ready</Badge>;
+      case 'outForDelivery':
+        return <Badge variant="outline" className="bg-indigo-500/20 text-indigo-600">Out for Delivery</Badge>;
+      case 'delivered':
+        return <Badge variant="outline" className="bg-green-500/20 text-green-600">Delivered</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="bg-red-500/20 text-red-600">Cancelled</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getPaymentBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-500/20 text-yellow-600">Pending</Badge>;
+      case 'completed':
+        return <Badge variant="outline" className="bg-green-500/20 text-green-600">Paid</Badge>;
+      case 'failed':
+        return <Badge variant="outline" className="bg-red-500/20 text-red-600">Failed</Badge>;
+      case 'refunded':
+        return <Badge variant="outline" className="bg-purple-500/20 text-purple-600">Refunded</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((_, i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-4 w-[150px]" />
-              <Skeleton className="h-3 w-[100px]" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-[120px]" />
-                  <Skeleton className="h-3 w-[80px]" />
-                </div>
-                <Skeleton className="h-8 w-[100px]" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-center space-y-2">
+          <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
+          <p className="text-destructive">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Order History</CardTitle>
-          <CardDescription>You haven't placed any orders yet.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center py-8">
-          <Package className="h-16 w-16 text-muted-foreground mb-4" />
-          <p className="text-center text-muted-foreground mb-4">
-            Your order history will appear here once you've made a purchase.
-          </p>
-          <Link to="/shop">
-            <Button>Start Shopping</Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="text-center py-10">
+        <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-lg font-medium mb-2">No orders yet</h3>
+        <p className="text-muted-foreground mb-4">When you place orders, they will appear here.</p>
+        <Button onClick={() => navigate('/shop')}>
+          Start Shopping
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Order History</CardTitle>
-          <CardDescription>View and track your orders</CardDescription>
-        </CardHeader>
-      </Card>
-      
+    <div className="space-y-6">
       {orders.map((order) => (
-        <Card key={order.id}>
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-base">Order #{order.orderNumber}</CardTitle>
-                <CardDescription>Placed on {formatDate(order.orderDate)}</CardDescription>
+        <Card key={order.id} className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="p-4 border-b bg-muted/20">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="font-medium">Order #{order.orderNumber}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Placed on {formatDate(order.createdAt)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {getStatusBadge(order.status)}
+                  {getPaymentBadge(order.paymentStatus)}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate(`/orders/${order.id}`)}
+                  >
+                    View Details
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <Badge 
-                variant={
-                  order.status === 'delivered' ? 'default' : 
-                  order.status === 'cancelled' ? 'destructive' : 
-                  'secondary'
-                }
-              >
-                {order.status}
-              </Badge>
             </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-medium">KSh {order.totalAmount.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">{order.items?.length || 0} items</p>
+            
+            <div className="p-4">
+              <div className="space-y-3">
+                {order.items?.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3">
+                    <div className="h-16 w-16 rounded bg-muted flex-shrink-0 overflow-hidden">
+                      {item.product?.imageUrl && (
+                        <img 
+                          src={item.product.imageUrl} 
+                          alt={item.product.title}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium truncate">{item.product?.title}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Quantity: {item.quantity} × KSh {item.price.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">KSh {(item.price * item.quantity).toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <Link to={`/order/${order.id}`}>
-                <Button variant="outline" size="sm">View Details</Button>
-              </Link>
+              
+              <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Amount</p>
+                  <p className="text-lg font-bold">KSh {order.totalAmount.toLocaleString()}</p>
+                </div>
+                
+                {order.deliveryInfo?.estimatedDelivery && (
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Estimated Delivery</p>
+                    <p className="font-medium">{formatDate(order.deliveryInfo.estimatedDelivery)}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

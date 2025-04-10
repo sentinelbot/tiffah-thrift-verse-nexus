@@ -1,116 +1,180 @@
 
 import React, { useState, useEffect } from 'react';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getScanHistory } from '@/utils/authUtils'; 
-import { formatDate } from '@/utils/dateUtils';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Package, ShoppingBag, Truck, Search, FileText, Download } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+
+// Mock scan history data
+const mockScanHistory = [
+  {
+    id: '1',
+    barcode: 'TTS-PROD-001',
+    scanType: 'product',
+    timestamp: new Date().toISOString(),
+    location: 'Warehouse',
+    deviceInfo: 'Mobile App',
+    result: 'Vintage Denim Jacket'
+  },
+  {
+    id: '2',
+    barcode: 'TTS-ORDER-123',
+    scanType: 'order',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    location: 'Packing Area',
+    deviceInfo: 'Mobile App',
+    result: 'Order #TTS-20230101-1234'
+  },
+  {
+    id: '3',
+    barcode: 'TTS-DEL-456',
+    scanType: 'delivery',
+    timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+    location: 'Delivery Van',
+    deviceInfo: 'Mobile App',
+    result: 'Delivery Confirmed'
+  },
+  {
+    id: '4',
+    barcode: 'TTS-PROD-002',
+    scanType: 'product',
+    timestamp: new Date(Date.now() - 3600000 * 3).toISOString(),
+    location: 'Store Front',
+    deviceInfo: 'Desktop Scanner',
+    result: 'Floral Summer Dress'
+  },
+];
 
 const ScanHistory = () => {
-  const [scanHistory, setScanHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchScanHistory = async () => {
-      setLoading(true);
-      try {
-        const history = await getScanHistory(50);
-        setScanHistory(history || []);
-      } catch (error) {
-        console.error("Error fetching scan history:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchScanHistory();
-  }, []);
-
-  // Render scan type with appropriate styling
-  const renderScanType = (type) => {
-    const typeBadgeColors = {
-      product: "bg-blue-100 text-blue-800",
-      order: "bg-purple-100 text-purple-800",
-      delivery: "bg-green-100 text-green-800",
-      unknown: "bg-gray-100 text-gray-800"
-    };
-
-    const badgeColor = typeBadgeColors[type] || typeBadgeColors.unknown;
-    
-    return (
-      <Badge className={badgeColor}>
-        {type}
-      </Badge>
+  const [searchQuery, setSearchQuery] = useState('');
+  const [scanHistory, setScanHistory] = useState(mockScanHistory);
+  
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Filter scan history based on search query
+    const filtered = mockScanHistory.filter(scan => 
+      scan.barcode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      scan.result.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      scan.location.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    setScanHistory(filtered);
   };
-
-  // Loading state
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Scans</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Empty state
-  if (scanHistory.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Scans</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="p-8 text-center">
-            <p className="text-muted-foreground">No scan history found.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  
+  const handleDownloadHistory = () => {
+    // In a real app, this would create a CSV and trigger a download
+    const csvContent = 'data:text/csv;charset=utf-8,' 
+      + 'Barcode,Type,Timestamp,Location,Device,Result\n'
+      + scanHistory.map(scan => 
+          `${scan.barcode},${scan.scanType},${scan.timestamp},${scan.location},${scan.deviceInfo},${scan.result}`
+        ).join('\n');
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'scan_history.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const getScanTypeIcon = (type: string) => {
+    switch (type) {
+      case 'product':
+        return <Package className="h-4 w-4 text-blue-500" />;
+      case 'order':
+        return <ShoppingBag className="h-4 w-4 text-purple-500" />;
+      case 'delivery':
+        return <Truck className="h-4 w-4 text-green-500" />;
+      default:
+        return <FileText className="h-4 w-4 text-gray-500" />;
+    }
+  };
+  
+  const getScanTypeBadge = (type: string) => {
+    switch (type) {
+      case 'product':
+        return <Badge variant="outline" className="bg-blue-500/20 text-blue-700">Product</Badge>;
+      case 'order':
+        return <Badge variant="outline" className="bg-purple-500/20 text-purple-700">Order</Badge>;
+      case 'delivery':
+        return <Badge variant="outline" className="bg-green-500/20 text-green-700">Delivery</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Recent Scans</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <div>
+          <CardTitle>Scan History</CardTitle>
+          <CardDescription>Recent barcode scans across all devices</CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleDownloadHistory}>
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Scan Time</TableHead>
-              <TableHead>Barcode</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Result</TableHead>
-              <TableHead>Scanned By</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {scanHistory.map((scan) => (
-              <TableRow key={scan.id}>
-                <TableCell>{formatDate(new Date(scan.scan_time))}</TableCell>
-                <TableCell className="font-mono">{scan.barcode}</TableCell>
-                <TableCell>{renderScanType(scan.scan_type)}</TableCell>
-                <TableCell>{scan.scan_result || "N/A"}</TableCell>
-                <TableCell>{scan.scanned_by_name || "Unknown"}</TableCell>
+        <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search scans..." 
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button type="submit">Search</Button>
+        </form>
+        
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Barcode</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Timestamp</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Result</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {scanHistory.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-6">
+                    No scan history found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                scanHistory.map((scan) => (
+                  <TableRow key={scan.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center">
+                        {getScanTypeIcon(scan.scanType)}
+                        <span className="ml-2">{scan.barcode}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getScanTypeBadge(scan.scanType)}</TableCell>
+                    <TableCell>{new Date(scan.timestamp).toLocaleString()}</TableCell>
+                    <TableCell>{scan.location}</TableCell>
+                    <TableCell>{scan.result}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

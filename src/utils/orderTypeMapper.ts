@@ -13,6 +13,17 @@ export const convertOrderType = (order: OrderType1): OrderType2 => {
     paymentStatus: order.paymentStatus as any,
     paymentMethod: order.paymentMethod as any,
     items: order.items || [], // Ensure items is never undefined
+    paymentInfo: order.paymentInfo || {
+      method: order.paymentMethod,
+      status: order.paymentStatus,
+      transactionId: order.paymentTransactionId || '',
+      amount: order.totalAmount
+    },
+    shippingInfo: order.shippingInfo || {},
+    deliveryInfo: order.deliveryInfo || {
+      estimatedDelivery: new Date(),
+    },
+    history: order.history || []
   };
 };
 
