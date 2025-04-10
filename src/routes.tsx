@@ -2,7 +2,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import Index from "./pages/Index";
-import ProductDetails from "./pages/ProductDetails"; // Changed from ProductDetailPage
+import ProductDetails from "./pages/ProductDetails"; 
 import TrackOrderPage from "./pages/TrackOrderPage";
 import Products from "./pages/admin/Products";
 import ProductForm from "./pages/admin/ProductForm";
@@ -11,6 +11,14 @@ import ProductManager from "./pages/staff/ProductManager";
 import InventoryManagement from "./pages/admin/InventoryManagement";
 import Orders from "./pages/admin/Orders";
 import Printing from "./pages/admin/Printing";
+import StaffCommunications from "./pages/admin/StaffCommunications";
+import OrderPreparer from "./pages/staff/OrderPreparer";
+import DeliveryStaff from "./pages/staff/DeliveryStaff";
+import StaffDashboard from "./pages/staff/Dashboard";
+import Marketing from "./pages/admin/Marketing";
+import Communications from "./pages/staff/Communications";
+import AdminRoutes from "./routes/AdminRoutes";
+import StaffRoutes from "./routes/StaffRoutes";
 
 export const router = createBrowserRouter([
   {
@@ -23,7 +31,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "product/:id",
-        element: <ProductDetails />, // Changed from ProductDetailPage
+        element: <ProductDetails />,
       },
       {
         path: "track",
@@ -31,6 +39,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "admin",
+        element: <AdminRoutes />,
         children: [
           {
             index: true,
@@ -60,14 +69,39 @@ export const router = createBrowserRouter([
             path: "printing",
             element: <Printing />,
           },
+          {
+            path: "communications",
+            element: <StaffCommunications />,
+          },
+          {
+            path: "marketing",
+            element: <Marketing />,
+          },
         ],
       },
       {
         path: "staff",
+        element: <StaffRoutes />,
         children: [
+          {
+            index: true,
+            element: <StaffDashboard />,
+          },
           {
             path: "product-manager",
             element: <ProductManager />,
+          },
+          {
+            path: "order-preparer",
+            element: <OrderPreparer />,
+          },
+          {
+            path: "delivery",
+            element: <DeliveryStaff />,
+          },
+          {
+            path: "communications",
+            element: <Communications />,
           },
         ],
       },
