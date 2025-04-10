@@ -15,28 +15,25 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   Home,
-  Users,
-  ShoppingCart,
   Package,
+  ShoppingCart,
   Truck,
-  BarChart2,
+  Barcode,
+  MessageSquare,
   Settings,
   UserCircle,
   LogOut,
   Menu,
   LayoutDashboard,
-  Megaphone,
-  Store,
-  Boxes,
-  Barcode,
 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 
-interface AdminLayoutProps {
+interface StaffLayoutProps {
   children: React.ReactNode;
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -44,75 +41,65 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     try {
       await signOut();
       toast.success('Signed out successfully');
-      navigate('/admin/auth');
+      navigate('/auth');
     } catch (error) {
       toast.error('Failed to sign out');
     }
   };
 
+  // Determine staff role for conditional menu items
+  const isProductManager = user?.role === 'productManager';
+  const isOrderPreparer = user?.role === 'orderPreparer';
+  const isDeliveryStaff = user?.role === 'deliveryStaff';
+  const isAdmin = user?.role === 'admin';
+
   // Define navigation items
   const navItems = [
     {
       name: 'Dashboard',
-      path: '/admin',
+      path: '/staff/dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
-    },
-    {
-      name: 'Users',
-      path: '/admin/users',
-      icon: <Users className="h-5 w-5" />,
-    },
-    {
-      name: 'User Management',
-      path: '/admin/user-management',
-      icon: <UserCircle className="h-5 w-5" />,
-    },
-    {
-      name: 'Orders',
-      path: '/admin/orders',
-      icon: <ShoppingCart className="h-5 w-5" />,
+      visible: true,
     },
     {
       name: 'Products',
-      path: '/admin/products',
+      path: '/staff/products',
       icon: <Package className="h-5 w-5" />,
+      visible: isProductManager || isAdmin,
+    },
+    {
+      name: 'Orders',
+      path: '/staff/orders',
+      icon: <ShoppingCart className="h-5 w-5" />,
+      visible: isOrderPreparer || isAdmin,
     },
     {
       name: 'Deliveries',
-      path: '/admin/deliveries',
+      path: '/staff/deliveries',
       icon: <Truck className="h-5 w-5" />,
+      visible: isDeliveryStaff || isAdmin,
     },
     {
-      name: 'Inventory',
-      path: '/admin/inventory',
-      icon: <Boxes className="h-5 w-5" />,
-    },
-    {
-      name: 'Scanning',
-      path: '/admin/scanning',
+      name: 'Barcode Scanner',
+      path: '/staff/scanning',
       icon: <Barcode className="h-5 w-5" />,
+      visible: true,
     },
     {
-      name: 'Reports',
-      path: '/admin/reports',
-      icon: <BarChart2 className="h-5 w-5" />,
-    },
-    {
-      name: 'Marketing',
-      path: '/admin/marketing',
-      icon: <Megaphone className="h-5 w-5" />,
-    },
-    {
-      name: 'Store',
-      path: '/admin/store',
-      icon: <Store className="h-5 w-5" />,
+      name: 'Communications',
+      path: '/staff/communications',
+      icon: <MessageSquare className="h-5 w-5" />,
+      visible: true,
     },
     {
       name: 'Settings',
-      path: '/admin/settings',
+      path: '/staff/settings',
       icon: <Settings className="h-5 w-5" />,
+      visible: true,
     },
   ];
+
+  const visibleNavItems = navItems.filter(item => item.visible);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -120,16 +107,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <div className="hidden lg:block w-64 border-r">
         <div className="flex flex-col h-full">
           <div className="p-4 border-b">
-            <h1 className="text-xl font-bold text-primary">Tiffah Admin</h1>
+            <h1 className="text-xl font-bold text-primary">Tiffah Staff Portal</h1>
           </div>
           
-          <div className="flex-grow py-4 overflow-y-auto">
-            <nav className="space-y-1 px-2">
-              {navItems.map((item) => (
+          <div className="flex-grow py-4">
+            <nav className="space-y-1">
+              {visibleNavItems.map((item) => (
                 <Button
                   key={item.name}
                   variant={window.location.pathname === item.path ? "secondary" : "ghost"}
-                  className="w-full justify-start"
+                  className="w-full justify-start px-4"
                   onClick={() => navigate(item.path)}
                 >
                   {item.icon}
@@ -159,19 +146,19 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="lg:hidden p-0">
+                <SheetContent side="left" className="lg:hidden w-64 p-0">
                   <div className="flex flex-col h-full">
                     <div className="p-4 border-b">
-                      <h1 className="text-xl font-bold text-primary">Tiffah Admin</h1>
+                      <h1 className="text-xl font-bold text-primary">Tiffah Staff Portal</h1>
                     </div>
                     
-                    <div className="flex-grow py-4 overflow-y-auto">
-                      <nav className="space-y-1 px-2">
-                        {navItems.map((item) => (
+                    <div className="flex-grow py-4">
+                      <nav className="space-y-1">
+                        {visibleNavItems.map((item) => (
                           <Button
                             key={item.name}
                             variant={window.location.pathname === item.path ? "secondary" : "ghost"}
-                            className="w-full justify-start"
+                            className="w-full justify-start px-4"
                             onClick={() => navigate(item.path)}
                           >
                             {item.icon}
@@ -190,7 +177,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   </div>
                 </SheetContent>
               </Sheet>
-              <h1 className="text-lg font-semibold lg:hidden">Tiffah Admin</h1>
+              <h1 className="text-lg font-semibold lg:hidden">Tiffah Staff</h1>
             </div>
             
             <div className="flex items-center gap-2">
@@ -198,21 +185,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="" alt={user?.name || "Admin"} />
-                      <AvatarFallback>{user?.name?.substring(0, 2).toUpperCase() || "A"}</AvatarFallback>
+                      <AvatarImage src="" alt={user?.name || "User"} />
+                      <AvatarFallback>{user?.name?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>
                     <div className="flex flex-col">
-                      <span>{user?.name || "Admin User"}</span>
+                      <span>{user?.name}</span>
                       <span className="text-xs text-muted-foreground">{user?.email}</span>
-                      <span className="text-xs text-muted-foreground">Administrator</span>
+                      <span className="text-xs text-muted-foreground capitalize">{user?.role}</span>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
+                  <DropdownMenuItem onClick={() => navigate('/account')}>
+                    <UserCircle className="h-4 w-4 mr-2" /> Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/staff/settings')}>
                     <Settings className="h-4 w-4 mr-2" /> Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -226,7 +216,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </header>
         
         {/* Main Content */}
-        <main className="flex-grow p-4 md:p-6">
+        <main className="flex-grow">
           {children}
         </main>
       </div>
@@ -234,4 +224,4 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   );
 };
 
-export default AdminLayout;
+export default StaffLayout;

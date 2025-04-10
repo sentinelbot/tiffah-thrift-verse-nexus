@@ -1,553 +1,456 @@
 
 import React from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import {
-  ArrowUpRight,
-  ArrowDownRight,
+  BarChart3,
+  TrendingUp,
   ShoppingBag,
   Users,
-  Package,
   Truck,
-  CreditCard,
-  DollarSign,
-  CalendarDays,
-  ArrowRight,
-  TrendingUp,
-  TrendingDown,
-  Layers,
-  AlertCircle,
+  Package,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight,
   Clock,
-  CheckCircle,
-  BarChart2,
-  PieChart,
-  LineChart,
-  BarChart
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  
+  // Summary analytics data for the dashboard
+  const summaryData = {
+    revenue: {
+      total: 'KSh 325,400',
+      change: '+12.5%',
+      trend: 'up',
+      period: 'from last month'
+    },
+    orders: {
+      total: 137,
+      change: '+18.2%',
+      trend: 'up',
+      period: 'from last month'
+    },
+    customers: {
+      total: 945,
+      change: '+6.8%',
+      trend: 'up',
+      period: 'from last month'
+    },
+    avgOrderValue: {
+      total: 'KSh 2,375',
+      change: '-2.3%',
+      trend: 'down',
+      period: 'from last month'
+    }
+  };
+  
+  // Recent orders data
+  const recentOrders = [
+    {
+      id: 'TTS-20250410-1584',
+      customer: 'Sarah Johnson',
+      amount: 'KSh 4,250',
+      status: 'processing',
+      items: 3,
+      date: '15 min ago',
+    },
+    {
+      id: 'TTS-20250410-1583',
+      customer: 'Michael Kimani',
+      amount: 'KSh 1,800',
+      status: 'delivered',
+      items: 1,
+      date: '1 hour ago',
+    },
+    {
+      id: 'TTS-20250410-1582',
+      customer: 'Amina Wanjiku',
+      amount: 'KSh 7,500',
+      status: 'ready',
+      items: 5,
+      date: '2 hours ago',
+    },
+    {
+      id: 'TTS-20250409-1581',
+      customer: 'David Omondi',
+      amount: 'KSh 3,200',
+      status: 'outForDelivery',
+      items: 2,
+      date: '5 hours ago',
+    },
+    {
+      id: 'TTS-20250409-1580',
+      customer: 'Lucy Mwangi',
+      amount: 'KSh 2,750',
+      status: 'delivered',
+      items: 2,
+      date: '8 hours ago',
+    }
+  ];
+  
+  // Inventory status data
+  const inventoryStatus = {
+    totalItems: 2540,
+    lowStock: 124,
+    outOfStock: 37,
+    categories: [
+      { name: 'Dresses', count: 320, percentage: 85 },
+      { name: 'Jackets', count: 245, percentage: 72 },
+      { name: 'Shoes', count: 410, percentage: 90 },
+      { name: 'Bags', count: 185, percentage: 60 },
+      { name: 'T-Shirts', count: 375, percentage: 78 },
+    ]
+  };
+  
+  // Pending tasks data
+  const pendingTasks = [
+    { id: 1, task: 'Process 18 new product uploads', icon: <Package className="h-4 w-4" /> },
+    { id: 2, task: 'Review 5 order cancellation requests', icon: <ShoppingBag className="h-4 w-4" /> },
+    { id: 3, task: 'Schedule 3 pending deliveries', icon: <Truck className="h-4 w-4" /> },
+    { id: 4, task: 'Verify 8 customer account requests', icon: <Users className="h-4 w-4" /> },
+    { id: 5, task: 'Prepare end of month sales report', icon: <BarChart3 className="h-4 w-4" /> },
+  ];
+
+  // Get status color based on order status
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'processing':
+        return 'text-yellow-500 bg-yellow-100 dark:bg-yellow-900/30';
+      case 'ready':
+        return 'text-blue-500 bg-blue-100 dark:bg-blue-900/30';
+      case 'outForDelivery':
+        return 'text-purple-500 bg-purple-100 dark:bg-purple-900/30';
+      case 'delivered':
+        return 'text-green-500 bg-green-100 dark:bg-green-900/30';
+      case 'cancelled':
+        return 'text-red-500 bg-red-100 dark:bg-red-900/30';
+      default:
+        return 'text-gray-500 bg-gray-100 dark:bg-gray-800';
+    }
+  };
+
+  // Format status label
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case 'outForDelivery':
+        return 'Out for Delivery';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
             <p className="text-muted-foreground">
-              Welcome back to your admin dashboard
+              Welcome back! Here's what's happening with your store today.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => window.location.reload()}>Refresh Data</Button>
-            <Button variant="outline">
-              <CalendarDays className="mr-2 h-4 w-4" />
-              Apr 10 - Apr 16, 2025
+            <Button variant="outline" size="sm">
+              <Calendar className="h-4 w-4 mr-2" />
+              Today
+            </Button>
+            <Button variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
         </div>
-        
-        {/* Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Revenue
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">KSh 452,675</div>
-              <div className="flex items-center pt-1 text-xs text-muted-foreground">
-                <span className="text-green-500 flex gap-0.5 items-center">
-                  <ArrowUpRight className="h-3 w-3" />
-                  +15.8%
-                </span>
-                <span className="ml-1">from last month</span>
-              </div>
+              <div className="text-2xl font-bold">{summaryData.revenue.total}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                <span className={`inline-flex items-center ${summaryData.revenue.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                  {summaryData.revenue.trend === 'up' ? (
+                    <ArrowUpRight className="h-3 w-3 mr-1" />
+                  ) : (
+                    <ArrowDownRight className="h-3 w-3 mr-1" />
+                  )}
+                  {summaryData.revenue.change}
+                </span>{' '}
+                {summaryData.revenue.period}
+              </p>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Orders
-              </CardTitle>
-              <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+              <ShoppingBag className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">246</div>
-              <div className="flex items-center pt-1 text-xs text-muted-foreground">
-                <span className="text-red-500 flex gap-0.5 items-center">
-                  <ArrowDownRight className="h-3 w-3" />
-                  -2.5%
-                </span>
-                <span className="ml-1">from last month</span>
-              </div>
+              <div className="text-2xl font-bold">{summaryData.orders.total}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                <span className={`inline-flex items-center ${summaryData.orders.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                  {summaryData.orders.trend === 'up' ? (
+                    <ArrowUpRight className="h-3 w-3 mr-1" />
+                  ) : (
+                    <ArrowDownRight className="h-3 w-3 mr-1" />
+                  )}
+                  {summaryData.orders.change}
+                </span>{' '}
+                {summaryData.orders.period}
+              </p>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Active Customers
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+              <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,402</div>
-              <div className="flex items-center pt-1 text-xs text-muted-foreground">
-                <span className="text-green-500 flex gap-0.5 items-center">
-                  <ArrowUpRight className="h-3 w-3" />
-                  +24.3%
-                </span>
-                <span className="ml-1">from last month</span>
-              </div>
+              <div className="text-2xl font-bold">{summaryData.customers.total}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                <span className={`inline-flex items-center ${summaryData.customers.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                  {summaryData.customers.trend === 'up' ? (
+                    <ArrowUpRight className="h-3 w-3 mr-1" />
+                  ) : (
+                    <ArrowDownRight className="h-3 w-3 mr-1" />
+                  )}
+                  {summaryData.customers.change}
+                </span>{' '}
+                {summaryData.customers.period}
+              </p>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Inventory Value
-              </CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Avg. Order Value</CardTitle>
+              <ShoppingBag className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">KSh 935,250</div>
-              <div className="flex items-center pt-1 text-xs text-muted-foreground">
-                <span className="text-green-500 flex gap-0.5 items-center">
-                  <ArrowUpRight className="h-3 w-3" />
-                  +8.2%
-                </span>
-                <span className="ml-1">from last month</span>
-              </div>
+              <div className="text-2xl font-bold">{summaryData.avgOrderValue.total}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                <span className={`inline-flex items-center ${summaryData.avgOrderValue.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                  {summaryData.avgOrderValue.trend === 'up' ? (
+                    <ArrowUpRight className="h-3 w-3 mr-1" />
+                  ) : (
+                    <ArrowDownRight className="h-3 w-3 mr-1" />
+                  )}
+                  {summaryData.avgOrderValue.change}
+                </span>{' '}
+                {summaryData.avgOrderValue.period}
+              </p>
             </CardContent>
           </Card>
         </div>
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          {/* Sales Chart */}
-          <Card className="col-span-7 lg:col-span-4">
-            <CardHeader>
-              <CardTitle>Sales Overview</CardTitle>
-              <CardDescription>
-                Daily orders and revenue from April 1-16, 2025
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <div className="h-[300px] flex items-center justify-center">
-                <BarChart className="h-16 w-16 text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">Sales chart goes here</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="overview">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="inventory">Inventory</TabsTrigger>
+            <TabsTrigger value="customers">Customers</TabsTrigger>
+          </TabsList>
           
-          {/* Recent Activity */}
-          <Card className="col-span-7 lg:col-span-3">
-            <CardHeader className="pb-3">
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Latest transactions and system events
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="max-h-[300px] overflow-auto">
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full p-2 bg-green-100 text-green-600">
-                    <ShoppingBag className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">New order #TTS-20250416-0067</p>
-                    <p className="text-xs text-muted-foreground">
-                      Customer: Maria Garcia - KSh 8,350
-                    </p>
-                    <p className="text-xs text-muted-foreground">5 minutes ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full p-2 bg-yellow-100 text-yellow-600">
-                    <Truck className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Order ready for delivery</p>
-                    <p className="text-xs text-muted-foreground">
-                      Order #TTS-20250416-0060 - 3 items
-                    </p>
-                    <p className="text-xs text-muted-foreground">43 minutes ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full p-2 bg-blue-100 text-blue-600">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">New customer registered</p>
-                    <p className="text-xs text-muted-foreground">
-                      James Wilson - james.wilson@example.com
-                    </p>
-                    <p className="text-xs text-muted-foreground">1 hour ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full p-2 bg-purple-100 text-purple-600">
-                    <Package className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">New inventory added</p>
-                    <p className="text-xs text-muted-foreground">
-                      15 new items - KSh 42,350 total value
-                    </p>
-                    <p className="text-xs text-muted-foreground">3 hours ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full p-2 bg-green-100 text-green-600">
-                    <CreditCard className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Payment received</p>
-                    <p className="text-xs text-muted-foreground">
-                      Order #TTS-20250416-0053 - KSh 12,800
-                    </p>
-                    <p className="text-xs text-muted-foreground">5 hours ago</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="ghost" className="w-full">
-                View All Activity
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-        
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* Inventory Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Inventory Status</CardTitle>
-              <CardDescription>
-                Product stock levels by category
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium text-sm">Dresses</span>
-                      <Badge variant="outline">124 items</Badge>
-                    </div>
-                    <span className="text-sm">75%</span>
-                  </div>
-                  <Progress value={75} className="h-2" />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium text-sm">Pants</span>
-                      <Badge variant="outline">86 items</Badge>
-                    </div>
-                    <span className="text-sm">62%</span>
-                  </div>
-                  <Progress value={62} className="h-2" />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium text-sm">Shirts</span>
-                      <Badge variant="outline">210 items</Badge>
-                    </div>
-                    <span className="text-sm">94%</span>
-                  </div>
-                  <Progress value={94} className="h-2" />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium text-sm">Jackets</span>
-                      <Badge variant="outline">52 items</Badge>
-                    </div>
-                    <span className="text-sm">45%</span>
-                  </div>
-                  <Progress value={45} className="h-2" />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium text-sm">Accessories</span>
-                      <Badge variant="outline">168 items</Badge>
-                    </div>
-                    <span className="text-sm">78%</span>
-                  </div>
-                  <Progress value={78} className="h-2" />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                View Inventory Report
-              </Button>
-            </CardFooter>
-          </Card>
-          
-          {/* Recent Orders */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Orders</CardTitle>
-              <CardDescription>
-                Latest customer orders
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              {/* Recent Orders */}
+              <Card className="md:col-span-3">
+                <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Order #TTS-20250416-0067</p>
-                    <p className="text-xs text-muted-foreground">Maria Garcia • 5 min ago</p>
+                    <CardTitle>Recent Orders</CardTitle>
+                    <CardDescription>Latest 5 orders from your store</CardDescription>
                   </div>
-                  <Badge>Pending</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Order #TTS-20250416-0066</p>
-                    <p className="text-xs text-muted-foreground">John Smith • 32 min ago</p>
+                  <Button variant="ghost" size="sm" onClick={() => navigate('/admin/orders')}>
+                    View All
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {recentOrders.map((order) => (
+                      <div key={order.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-shrink-0">
+                            <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                              <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="font-medium">{order.customer}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm text-muted-foreground">{order.id}</p>
+                              <span className="text-sm text-muted-foreground">•</span>
+                              <p className="text-sm text-muted-foreground">{order.items} items</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p>{order.amount}</p>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              <span>{order.date}</span>
+                            </div>
+                          </div>
+                          <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                            {formatStatus(order.status)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <Badge>Processing</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Order #TTS-20250416-0065</p>
-                    <p className="text-xs text-muted-foreground">Robert Johnson • 1 hour ago</p>
+                </CardContent>
+              </Card>
+              
+              {/* Pending Tasks */}
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Pending Tasks</CardTitle>
+                  <CardDescription>Tasks that require your attention</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {pendingTasks.map((task) => (
+                      <div key={task.id} className="flex items-start gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          {task.icon}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm">{task.task}</p>
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                  <Badge>Ready</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Order #TTS-20250416-0064</p>
-                    <p className="text-xs text-muted-foreground">Lisa Wong • 2 hours ago</p>
-                  </div>
-                  <Badge>Out for Delivery</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Order #TTS-20250416-0063</p>
-                    <p className="text-xs text-muted-foreground">Alex Brown • 3 hours ago</p>
-                  </div>
-                  <Badge variant="outline" className="bg-green-500/20 text-green-600">Delivered</Badge>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                View All Orders
-              </Button>
-            </CardFooter>
-          </Card>
-          
-          {/* Staff Performance */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Staff Performance</CardTitle>
-              <CardDescription>
-                Top performing staff members
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarFallback>JD</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">Jane Doe</p>
-                      <Badge variant="outline" className="bg-green-500/20 text-green-600">Product Manager</Badge>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Inventory Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Inventory Status</CardTitle>
+                <CardDescription>Current stock levels by category</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Package className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Items</p>
+                        <p className="text-2xl font-bold">{inventoryStatus.totalItems}</p>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center text-xs text-muted-foreground">
-                      <span>Products Processed: 253</span>
-                      <span className="text-green-500 font-medium">+12%</span>
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+                        <Package className="h-5 w-5 text-yellow-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Low Stock Items</p>
+                        <p className="text-2xl font-bold">{inventoryStatus.lowStock}</p>
+                      </div>
                     </div>
-                    <Progress value={92} className="h-1" />
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarFallback>JS</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">John Smith</p>
-                      <Badge variant="outline" className="bg-blue-500/20 text-blue-600">Order Preparer</Badge>
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                        <Package className="h-5 w-5 text-red-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Out of Stock Items</p>
+                        <p className="text-2xl font-bold">{inventoryStatus.outOfStock}</p>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center text-xs text-muted-foreground">
-                      <span>Orders Processed: 142</span>
-                      <span className="text-green-500 font-medium">+8%</span>
-                    </div>
-                    <Progress value={86} className="h-1" />
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarFallback>RJ</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">Robert Johnson</p>
-                      <Badge variant="outline" className="bg-indigo-500/20 text-indigo-600">Delivery Staff</Badge>
-                    </div>
-                    <div className="flex justify-between items-center text-xs text-muted-foreground">
-                      <span>Deliveries: 95</span>
-                      <span className="text-green-500 font-medium">+15%</span>
-                    </div>
-                    <Progress value={78} className="h-1" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                View Full Staff Report
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-        
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          {/* System Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>System Status</CardTitle>
-              <CardDescription>
-                Operational metrics for the platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Server Uptime</p>
-                    <p className="text-xl font-bold">99.98%</p>
-                    <Badge variant="outline" className="bg-green-500/20 text-green-600">Healthy</Badge>
                   </div>
                   
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Response Time</p>
-                    <p className="text-xl font-bold">235ms</p>
-                    <Badge variant="outline" className="bg-green-500/20 text-green-600">Good</Badge>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Error Rate</p>
-                    <p className="text-xl font-bold">0.03%</p>
-                    <Badge variant="outline" className="bg-green-500/20 text-green-600">Low</Badge>
+                  <div className="md:col-span-2 space-y-4">
+                    {inventoryStatus.categories.map((category) => (
+                      <div key={category.name}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-medium">{category.name}</p>
+                          <p className="text-sm text-muted-foreground">{category.count} items</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Progress value={category.percentage} className="h-2 flex-1" />
+                          <span className="text-sm text-muted-foreground w-10 text-right">
+                            {category.percentage}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-sm font-medium">System Load</div>
-                    <div className="text-sm">42%</div>
-                  </div>
-                  <Progress value={42} className="h-2" />
-                </div>
-                
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-sm font-medium">Database Performance</div>
-                    <div className="text-sm">89%</div>
-                  </div>
-                  <Progress value={89} className="h-2" />
-                </div>
-                
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-sm font-medium">Storage Capacity</div>
-                    <div className="text-sm">56%</div>
-                  </div>
-                  <Progress value={56} className="h-2" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
           
-          {/* Alert Center */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Alert Center</CardTitle>
-              <CardDescription>
-                Important notifications requiring attention
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-yellow-700">Low Stock Alert</h4>
-                    <p className="text-sm text-yellow-600">12 products are below minimum stock threshold</p>
-                    <Button variant="link" className="h-auto p-0 text-yellow-700">View products</Button>
-                  </div>
+          <TabsContent value="orders">
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Management</CardTitle>
+                <CardDescription>Manage and track customer orders</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-4">Detailed order content will be displayed here</p>
+                  <Button onClick={() => navigate('/admin/orders')}>
+                    Go to Orders
+                  </Button>
                 </div>
-                
-                <div className="flex items-start gap-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-red-700">Failed Deliveries</h4>
-                    <p className="text-sm text-red-600">3 deliveries failed in the last 24 hours</p>
-                    <Button variant="link" className="h-auto p-0 text-red-700">Review failures</Button>
-                  </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="inventory">
+            <Card>
+              <CardHeader>
+                <CardTitle>Inventory Management</CardTitle>
+                <CardDescription>Track and manage your product inventory</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-4">Detailed inventory content will be displayed here</p>
+                  <Button onClick={() => navigate('/admin/products')}>
+                    Go to Products
+                  </Button>
                 </div>
-                
-                <div className="flex items-start gap-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <Clock className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-blue-700">Pending Approvals</h4>
-                    <p className="text-sm text-blue-600">5 new products waiting for approval</p>
-                    <Button variant="link" className="h-auto p-0 text-blue-700">Review now</Button>
-                  </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="customers">
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Management</CardTitle>
+                <CardDescription>Manage customer accounts and information</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-4">Detailed customer content will be displayed here</p>
+                  <Button onClick={() => navigate('/admin/users')}>
+                    Go to Customers
+                  </Button>
                 </div>
-                
-                <div className="flex items-start gap-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                  <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-green-700">System Update Completed</h4>
-                    <p className="text-sm text-green-600">The latest system update has been successfully installed</p>
-                    <Button variant="link" className="h-auto p-0 text-green-700">View details</Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
