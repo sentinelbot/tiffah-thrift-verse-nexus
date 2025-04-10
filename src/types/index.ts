@@ -23,6 +23,8 @@ export interface Product {
     reservedUntil?: string | Date;
     soldDate?: string | Date;
   };
+  images?: ProductImage[];
+  tags?: string[];
 }
 
 export interface ProductImage {
@@ -146,6 +148,7 @@ export interface CartItem {
   imageUrl: string;
   product?: Product;
   reservedUntil?: Date;
+  image?: string; // Added for compatibility with existing code
 }
 
 export interface WishlistItem {
@@ -155,6 +158,9 @@ export interface WishlistItem {
   price: number;
   imageUrl: string;
   addedAt: Date;
+  originalPrice?: number;
+  size?: string;
+  addedOn?: Date; // Added for compatibility with existing code
 }
 
 // Types for analytics and reports
@@ -186,6 +192,7 @@ export interface StaffPerformanceData {
   ordersProcessed: number;
   itemsProcessed: number;
   averageTimeHours: number;
+  role?: string; // Added for compatibility with existing code
 }
 
 export interface CustomerBehavior {
@@ -198,6 +205,11 @@ export interface CustomerBehavior {
   averageOrderValue: number;
   lifetimeValue: number;
   acquisitionSource?: string;
+  count?: number; // Added for compatibility with existing components
+  averageSpend?: number; // Added for compatibility with existing components
+  repeatRate?: number; // Added for compatibility with existing components
+  averageItemsPerOrder?: number; // Added for compatibility with existing components
+  metric?: string; // Added for compatibility with existing code
 }
 
 export interface MarketingEffectiveness {
@@ -207,6 +219,7 @@ export interface MarketingEffectiveness {
   revenue: number;
   cost: number;
   roi: number;
+  visits?: number; // Added for compatibility with existing code
 }
 
 export interface SystemPerformance {
@@ -216,6 +229,8 @@ export interface SystemPerformance {
   errorRate: number;
   userSessions: number;
   apiCalls: number;
+  userSatisfaction?: number; // Added for compatibility with existing components
+  metric?: string; // Added for compatibility with existing code
 }
 
 // Types for AI and enhancement-related functionality
@@ -260,4 +275,23 @@ export interface ProductPhotoUploadProps {
   productId?: string;
   onUploaded?: (urls: string[]) => void;
   onClose?: () => void;
+}
+
+export interface PrintDialogProps {
+  title: string;
+  description: string;
+  previewContent: React.ReactNode;
+  onPrint: () => void;
+  onDownload?: () => void;
+  children?: React.ReactNode;
+}
+
+// User type for authentication
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role?: string;
+  phone?: string;
+  avatarUrl?: string;
 }

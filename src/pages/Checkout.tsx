@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useNavigate } from 'react-router-dom';
@@ -58,7 +57,7 @@ const paymentMethods = [
 ];
 
 const Checkout = () => {
-  const { items, calculateCartTotal, clearCart } = useCart();
+  const { items, subtotal, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -81,7 +80,6 @@ const Checkout = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const subtotal = calculateCartTotal();
   const shipping = shippingMethods.find(method => method.id === shippingMethod)?.price || 0;
   const tax = 0; // No tax for this example
   const total = subtotal + shipping + tax;
@@ -101,7 +99,7 @@ const Checkout = () => {
       const orderData = {
         customerId: user?.id || 'guest',
         items: items.map(item => ({
-          productId: item.id,
+          productId: item.productId,
           price: item.price,
           quantity: item.quantity
         })),

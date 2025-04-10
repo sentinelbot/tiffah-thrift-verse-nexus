@@ -1,729 +1,514 @@
 
 import React, { useState } from 'react';
 import StaffLayout from '@/components/layout/StaffLayout';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PrinterIcon, CheckCircle, Truck, AlertCircle, Calendar, Package, Search, Clock, BarChart, ArrowRight, ShoppingBag, PackageCheck, ClipboardList, FileCheck2 } from 'lucide-react';
-import { Order, OrderItem, Customer } from '@/types';
-import { toast } from 'sonner';
-import { useForm } from 'react-hook-form';
-import OrderScanner from '@/components/barcode/OrderScanner';
-import PrintDialog from '@/components/admin/printing/PrintDialog';
-import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
+import { PrintDialog } from '@/components/admin/printing/PrintDialog';
+import { Order } from '@/types';
+import { BarcodeScanner } from '@/components/barcode/BarcodeScanner';
+import { OrderScanner } from '@/components/barcode/OrderScanner';
 
-// Mock data
+// Mock data for orders
 const mockOrders: Order[] = [
   {
-    id: '1',
-    orderNumber: 'TTS-20250410-0001',
+    id: 'ord-001',
+    orderNumber: 'TTS-20250408-0001',
+    totalAmount: 4500,
+    status: 'pending',
+    paymentMethod: 'mpesa',
+    paymentStatus: 'completed',
+    createdAt: new Date(2025, 3, 8, 10, 30),
+    orderDate: new Date(2025, 3, 8, 10, 30),
     customer: {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+254712345678'
+      id: 'cust-001',
+      name: 'Jane Smith',
+      email: 'jane@example.com'
     },
     items: [
       {
-        id: '1',
-        orderId: '1',
-        productId: 'prod1',
-        quantity: 2,
-        price: 25.99,
+        id: 'item-001',
+        orderId: 'ord-001',
+        productId: 'prod-001',
+        quantity: 1,
+        price: 2500,
         product: {
-          id: 'prod1',
+          id: 'prod-001',
           name: 'Vintage Denim Jacket',
-          title: 'Vintage Denim Jacket',
-          price: 25.99,
+          price: 2500,
           category: 'Jackets',
           condition: 'good',
-          barcode: 'PROD-001',
-          status: 'sold',
+          barcode: 'PROD001',
+          status: 'available',
           imageUrl: '/placeholder.svg'
         }
       },
       {
-        id: '2',
-        orderId: '1',
-        productId: 'prod2',
+        id: 'item-002',
+        orderId: 'ord-001',
+        productId: 'prod-002',
         quantity: 1,
-        price: 14.99,
+        price: 2000,
         product: {
-          id: 'prod2',
-          name: 'Floral Summer Dress',
-          title: 'Floral Summer Dress',
-          price: 14.99,
-          category: 'Dresses',
+          id: 'prod-002',
+          name: 'Leather Boots',
+          price: 2000,
+          category: 'Footwear',
           condition: 'likeNew',
-          barcode: 'PROD-002',
-          status: 'sold',
+          barcode: 'PROD002',
+          status: 'available',
           imageUrl: '/placeholder.svg'
         }
       }
     ],
-    totalAmount: 66.97,
-    status: 'processing',
-    paymentMethod: 'mpesa',
-    paymentStatus: 'completed',
-    orderDate: new Date('2025-04-10T09:30:00Z'),
-    createdAt: new Date('2025-04-10T09:30:00Z'),
-    paymentTransactionId: 'MPE123456789',
-    notes: 'Customer requested gift wrapping',
     shippingInfo: {
-      fullName: 'John Doe',
-      email: 'john@example.com',
+      fullName: 'Jane Smith',
+      email: 'jane@example.com',
       phone: '+254712345678',
-      address: '123 Nairobi Street',
+      address: '123 Main St',
       city: 'Nairobi',
       state: 'Nairobi',
       postalCode: '00100',
       country: 'Kenya',
       shippingMethod: 'standard'
-    },
-    paymentInfo: {
-      method: 'mpesa',
-      status: 'completed',
-      transactionId: 'MPE123456789',
-      amount: 66.97
-    },
-    deliveryInfo: {
-      estimatedDelivery: new Date('2025-04-12T12:00:00Z'),
-      method: 'standard'
-    },
-    history: [
-      {
-        timestamp: new Date('2025-04-10T09:30:00Z'),
-        status: 'pending',
-        note: 'Order created'
-      },
-      {
-        timestamp: new Date('2025-04-10T09:35:00Z'),
-        status: 'processing',
-        note: 'Payment received'
-      }
-    ]
+    }
   },
   {
-    id: '2',
-    orderNumber: 'TTS-20250410-0002',
+    id: 'ord-002',
+    orderNumber: 'TTS-20250407-0002',
+    totalAmount: 3000,
+    status: 'processing',
+    paymentMethod: 'card',
+    paymentStatus: 'completed',
+    createdAt: new Date(2025, 3, 7, 15, 45),
+    orderDate: new Date(2025, 3, 7, 15, 45),
     customer: {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '+254723456789'
+      id: 'cust-002',
+      name: 'John Doe',
+      email: 'john@example.com'
     },
     items: [
       {
-        id: '3',
-        orderId: '2',
-        productId: 'prod3',
+        id: 'item-003',
+        orderId: 'ord-002',
+        productId: 'prod-003',
         quantity: 1,
-        price: 45.00,
+        price: 1800,
         product: {
-          id: 'prod3',
-          name: 'Leather Handbag',
-          title: 'Leather Handbag',
-          price: 45.00,
-          category: 'Accessories',
+          id: 'prod-003',
+          name: 'Silk Blouse',
+          price: 1800,
+          category: 'Tops',
           condition: 'likeNew',
-          barcode: 'PROD-003',
-          status: 'sold',
+          barcode: 'PROD003',
+          status: 'available',
+          imageUrl: '/placeholder.svg'
+        }
+      },
+      {
+        id: 'item-004',
+        orderId: 'ord-002',
+        productId: 'prod-004',
+        quantity: 1,
+        price: 1200,
+        product: {
+          id: 'prod-004',
+          name: 'Cotton Scarf',
+          price: 1200,
+          category: 'Accessories',
+          condition: 'new',
+          barcode: 'PROD004',
+          status: 'available',
           imageUrl: '/placeholder.svg'
         }
       }
     ],
-    totalAmount: 45.00,
-    status: 'ready',
-    paymentMethod: 'card',
-    paymentStatus: 'completed',
-    orderDate: new Date('2025-04-10T10:15:00Z'),
-    createdAt: new Date('2025-04-10T10:15:00Z'),
-    paymentTransactionId: 'CARD987654321',
-    notes: '',
     shippingInfo: {
-      fullName: 'Jane Smith',
-      email: 'jane@example.com',
+      fullName: 'John Doe',
+      email: 'john@example.com',
       phone: '+254723456789',
-      address: '456 Mombasa Road',
+      address: '456 Oak St',
       city: 'Nairobi',
       state: 'Nairobi',
       postalCode: '00200',
       country: 'Kenya',
       shippingMethod: 'express'
-    },
-    paymentInfo: {
-      method: 'card',
-      status: 'completed',
-      transactionId: 'CARD987654321',
-      amount: 45.00
-    },
-    deliveryInfo: {
-      estimatedDelivery: new Date('2025-04-11T12:00:00Z'),
-      method: 'express'
-    },
-    history: [
-      {
-        timestamp: new Date('2025-04-10T10:15:00Z'),
-        status: 'pending',
-        note: 'Order created'
-      },
-      {
-        timestamp: new Date('2025-04-10T10:20:00Z'),
-        status: 'processing',
-        note: 'Payment received'
-      },
-      {
-        timestamp: new Date('2025-04-10T11:30:00Z'),
-        status: 'ready',
-        note: 'Order prepared and ready for pickup'
-      }
-    ]
+    }
   },
   {
-    id: '3',
-    orderNumber: 'TTS-20250410-0003',
+    id: 'ord-003',
+    orderNumber: 'TTS-20250406-0003',
+    totalAmount: 5500,
+    status: 'ready',
+    paymentMethod: 'mpesa',
+    paymentStatus: 'completed',
+    createdAt: new Date(2025, 3, 6, 9, 15),
+    orderDate: new Date(2025, 3, 6, 9, 15),
     customer: {
-      id: '3',
-      name: 'Robert Johnson',
-      email: 'robert@example.com',
-      phone: '+254734567890'
+      id: 'cust-003',
+      name: 'Mary Johnson',
+      email: 'mary@example.com'
     },
     items: [
       {
-        id: '4',
-        orderId: '3',
-        productId: 'prod4',
-        quantity: 3,
-        price: 12.50,
+        id: 'item-005',
+        orderId: 'ord-003',
+        productId: 'prod-005',
+        quantity: 1,
+        price: 3500,
         product: {
-          id: 'prod4',
-          name: 'Vintage T-Shirt',
-          title: 'Vintage T-Shirt',
-          price: 12.50,
-          category: 'Tops',
+          id: 'prod-005',
+          name: 'Designer Handbag',
+          price: 3500,
+          category: 'Bags',
           condition: 'good',
-          barcode: 'PROD-004',
-          status: 'sold',
+          barcode: 'PROD005',
+          status: 'available',
           imageUrl: '/placeholder.svg'
         }
       },
       {
-        id: '5',
-        orderId: '3',
-        productId: 'prod5',
+        id: 'item-006',
+        orderId: 'ord-003',
+        productId: 'prod-006',
         quantity: 1,
-        price: 22.99,
+        price: 2000,
         product: {
-          id: 'prod5',
-          name: 'Linen Shorts',
-          title: 'Linen Shorts',
-          price: 22.99,
+          id: 'prod-006',
+          name: 'Linen Pants',
+          price: 2000,
           category: 'Bottoms',
-          condition: 'good',
-          barcode: 'PROD-005',
-          status: 'sold',
+          condition: 'likeNew',
+          barcode: 'PROD006',
+          status: 'available',
           imageUrl: '/placeholder.svg'
         }
       }
     ],
-    totalAmount: 60.49,
-    status: 'pending',
-    paymentMethod: 'mpesa',
-    paymentStatus: 'pending',
-    orderDate: new Date('2025-04-10T11:45:00Z'),
-    createdAt: new Date('2025-04-10T11:45:00Z'),
-    notes: 'First-time customer',
     shippingInfo: {
-      fullName: 'Robert Johnson',
-      email: 'robert@example.com',
+      fullName: 'Mary Johnson',
+      email: 'mary@example.com',
       phone: '+254734567890',
-      address: '789 Kisumu Avenue',
-      city: 'Kisumu',
-      state: 'Kisumu',
-      postalCode: '40100',
+      address: '789 Pine St',
+      city: 'Nairobi',
+      state: 'Nairobi',
+      postalCode: '00300',
       country: 'Kenya',
       shippingMethod: 'standard'
-    },
-    paymentInfo: {
-      method: 'mpesa',
-      status: 'pending',
-      amount: 60.49
-    },
-    deliveryInfo: {
-      estimatedDelivery: new Date('2025-04-14T12:00:00Z'),
-      method: 'standard'
-    },
-    history: [
-      {
-        timestamp: new Date('2025-04-10T11:45:00Z'),
-        status: 'pending',
-        note: 'Order created, awaiting payment'
-      }
-    ]
+    }
   }
 ];
 
 const OrderPreparer = () => {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [selectedTab, setSelectedTab] = useState('pending');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [activeTab, setActiveTab] = useState('processing');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [scannerOpen, setScannerOpen] = useState(false);
-  const [printDialogOpen, setPrintDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Filter orders based on the active tab and search query
-  const filteredOrders = orders.filter(order => {
-    // Filter by status
-    const statusMatch = 
-      activeTab === 'all' || 
-      (activeTab === 'processing' && order.status === 'processing') ||
-      (activeTab === 'ready' && order.status === 'ready') ||
-      (activeTab === 'completed' && (order.status === 'outForDelivery' || order.status === 'delivered'));
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const [orderBarcodes, setOrderBarcodes] = useState<string[]>([]);
+  const [scannedBarcodes, setScannedBarcodes] = useState<string[]>([]);
+  const [scanningMode, setScanningMode] = useState<'off' | 'barcode' | 'order'>('off');
+  
+  const handleScan = (barcode: string) => {
+    // Handle barcode scan
+    console.log('Scanned barcode:', barcode);
+    setScannedBarcodes(prev => [...prev, barcode]);
     
-    // Filter by search query
-    const searchMatch = 
-      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customer?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customer?.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return statusMatch && searchMatch;
-  });
-
-  // Handle order status update
-  const updateOrderStatus = (orderId: string, status: string) => {
-    setIsLoading(true);
-    
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      const updatedOrders = orders.map(order => 
-        order.id === orderId 
-          ? { 
-              ...order, 
-              status, 
-              history: [...(order.history || []), { 
-                timestamp: new Date(),
-                status: status as any,
-                note: `Status updated to ${status}`
-              }]
-            } 
-          : order
-      );
-      
-      setOrders(updatedOrders);
-      if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder({
-          ...selectedOrder,
-          status,
-          history: [...(selectedOrder.history || []), { 
-            timestamp: new Date(),
-            status: status as any,
-            note: `Status updated to ${status}`
-          }]
-        });
-      }
-      
-      setIsLoading(false);
-      toast.success(`Order ${orderId} status updated to ${status}`);
-    }, 500);
-  };
-
-  // Handle barcode scan result
-  const handleScanResult = (barcode: string) => {
-    setScannerOpen(false);
-    
-    const orderNumber = barcode.trim();
-    const foundOrder = orders.find(order => order.orderNumber === orderNumber);
-    
-    if (foundOrder) {
-      setSelectedOrder(foundOrder);
-      toast.success(`Order ${orderNumber} found!`);
+    // TODO: Implement actual barcode processing logic
+    const matchedOrder = mockOrders.find(order => order.orderNumber === barcode);
+    if (matchedOrder) {
+      setSelectedOrder(matchedOrder);
+      toast.success(`Order ${matchedOrder.orderNumber} found!`);
     } else {
-      toast.error(`Order ${orderNumber} not found`);
+      // Check if it's a product barcode
+      const matchedProduct = mockOrders
+        .flatMap(order => order.items || [])
+        .find(item => item.product?.barcode === barcode);
+      
+      if (matchedProduct) {
+        toast.success(`Product ${matchedProduct.product?.name} scanned!`);
+      } else {
+        toast.error('Unknown barcode');
+      }
     }
   };
-
-  // Get status badge based on order status
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-gray-500/20 text-gray-500">Pending</Badge>;
-      case 'processing':
-        return <Badge variant="outline" className="bg-blue-500/20 text-blue-500">Processing</Badge>;
-      case 'ready':
-        return <Badge variant="outline" className="bg-yellow-500/20 text-yellow-500">Ready</Badge>;
-      case 'outForDelivery':
-        return <Badge variant="outline" className="bg-purple-500/20 text-purple-500">Out for Delivery</Badge>;
-      case 'delivered':
-        return <Badge variant="outline" className="bg-green-500/20 text-green-500">Delivered</Badge>;
-      case 'cancelled':
-        return <Badge variant="outline" className="bg-red-500/20 text-red-500">Cancelled</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
+  
+  // Filter orders based on selected tab
+  const filteredOrders = mockOrders.filter(order => {
+    if (selectedTab === 'pending') return order.status === 'pending';
+    if (selectedTab === 'processing') return order.status === 'processing';
+    if (selectedTab === 'ready') return order.status === 'ready';
+    return true;
+  });
+  
   return (
     <StaffLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">Order Preparation</h1>
             <p className="text-muted-foreground">
-              Process and prepare orders for delivery
+              Prepare and pack customer orders for delivery
             </p>
           </div>
           
-          <div className="flex space-x-2">
-            <Button onClick={() => setScannerOpen(true)} variant="outline">
-              <Package className="mr-2 h-4 w-4" />
-              Scan Order
+          <div className="flex items-center gap-2">
+            <Button 
+              variant={scanningMode === 'barcode' ? 'default' : 'outline'} 
+              onClick={() => setScanningMode(scanningMode === 'barcode' ? 'off' : 'barcode')}
+            >
+              {scanningMode === 'barcode' ? 'Scanning Active' : 'Scan Products'}
+            </Button>
+            
+            <Button 
+              variant={scanningMode === 'order' ? 'default' : 'outline'} 
+              onClick={() => setScanningMode(scanningMode === 'order' ? 'off' : 'order')}
+            >
+              {scanningMode === 'order' ? 'Scanning Active' : 'Scan Order'}
             </Button>
           </div>
         </div>
         
-        <div className="flex items-center justify-between">
-          <div className="stats bg-blue-50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-50 shadow-sm rounded-lg">
-            <div className="flex space-x-8 p-4">
+        {/* Scanner */}
+        {scanningMode === 'barcode' && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Product Scanner</CardTitle>
+              <CardDescription>
+                Scan product barcodes to verify items for an order
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="flex flex-col items-center">
-                <div className="text-muted-foreground text-sm">Processing</div>
-                <div className="text-2xl font-bold">{orders.filter(o => o.status === 'processing').length}</div>
+                <BarcodeScanner onScan={handleScan} />
+                <p className="text-muted-foreground text-sm mt-2">
+                  Position the barcode in front of the camera
+                </p>
               </div>
-              <div className="flex flex-col items-center">
-                <div className="text-muted-foreground text-sm">Ready</div>
-                <div className="text-2xl font-bold">{orders.filter(o => o.status === 'ready').length}</div>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="text-muted-foreground text-sm">Today's Total</div>
-                <div className="text-2xl font-bold">{orders.length}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search orders..." 
-              className="w-[250px] pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
+            </CardContent>
+          </Card>
+        )}
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="all">All Orders</TabsTrigger>
+        {scanningMode === 'order' && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Order Scanner</CardTitle>
+              <CardDescription>
+                Scan order barcode to quickly find an order
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center">
+                <OrderScanner />
+                <p className="text-muted-foreground text-sm mt-2">
+                  Position the order barcode in front of the camera
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Orders List */}
+        <Tabs defaultValue="pending" value={selectedTab} onValueChange={setSelectedTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="pending">Pending</TabsTrigger>
             <TabsTrigger value="processing">Processing</TabsTrigger>
-            <TabsTrigger value="ready">Ready</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="ready">Ready for Delivery</TabsTrigger>
+            <TabsTrigger value="all">All Orders</TabsTrigger>
           </TabsList>
           
-          <TabsContent value={activeTab} className="space-y-4 mt-4">
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Order #</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Items</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredOrders.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                          No orders found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredOrders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                          <TableCell>
-                            <div className="font-medium">{order.customer?.name}</div>
-                            <div className="text-xs text-muted-foreground">{order.customer?.email}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div>{new Date(order.orderDate).toLocaleDateString()}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(order.orderDate).toLocaleTimeString()}
-                            </div>
-                          </TableCell>
-                          <TableCell>{order.items?.length || 0}</TableCell>
-                          <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
-                          <TableCell>{getStatusBadge(order.status)}</TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setSelectedOrder(order)}
-                            >
-                              View
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+          <TabsContent value="pending" className="space-y-4">
+            <OrdersList 
+              orders={filteredOrders} 
+              onSelectOrder={setSelectedOrder}
+              onPrintClick={() => setIsPrintDialogOpen(true)}
+            />
+          </TabsContent>
+          
+          <TabsContent value="processing" className="space-y-4">
+            <OrdersList 
+              orders={filteredOrders} 
+              onSelectOrder={setSelectedOrder}
+              onPrintClick={() => setIsPrintDialogOpen(true)}
+            />
+          </TabsContent>
+          
+          <TabsContent value="ready" className="space-y-4">
+            <OrdersList 
+              orders={filteredOrders} 
+              onSelectOrder={setSelectedOrder}
+              onPrintClick={() => setIsPrintDialogOpen(true)}
+            />
+          </TabsContent>
+          
+          <TabsContent value="all" className="space-y-4">
+            <OrdersList 
+              orders={filteredOrders} 
+              onSelectOrder={setSelectedOrder}
+              onPrintClick={() => setIsPrintDialogOpen(true)}
+            />
           </TabsContent>
         </Tabs>
       </div>
       
-      {/* Order Detail Dialog */}
-      {selectedOrder && (
-        <Dialog open={Boolean(selectedOrder)} onOpenChange={open => !open && setSelectedOrder(null)}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center justify-between">
-                <span>Order {selectedOrder.orderNumber}</span>
-                {getStatusBadge(selectedOrder.status)}
-              </DialogTitle>
-              <DialogDescription>
-                Placed on {new Date(selectedOrder.orderDate).toLocaleString()}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-6">
-              {/* Customer and Order Info */}
-              <div className="grid grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Customer</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="font-medium">{selectedOrder.customer?.name}</div>
-                      <div className="text-sm text-muted-foreground">{selectedOrder.customer?.email}</div>
-                      <div className="text-sm text-muted-foreground">{selectedOrder.customer?.phone}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Shipping Address</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-1 text-sm">
-                      <div>{selectedOrder.shippingInfo?.fullName}</div>
-                      <div>{selectedOrder.shippingInfo?.address}</div>
-                      <div>{selectedOrder.shippingInfo?.city}, {selectedOrder.shippingInfo?.state} {selectedOrder.shippingInfo?.postalCode}</div>
-                      <div>{selectedOrder.shippingInfo?.country}</div>
-                      {selectedOrder.shippingInfo?.specialInstructions && (
-                        <div className="text-orange-600 mt-2">
-                          Note: {selectedOrder.shippingInfo.specialInstructions}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {/* Order Items */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Order Items</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Barcode</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead className="text-right">Price</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedOrder.items?.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="flex items-center space-x-2">
-                            <div 
-                              className="h-10 w-10 rounded bg-gray-100 bg-cover bg-center"
-                              style={{backgroundImage: `url(${item.product?.imageUrl || '/placeholder.svg'})`}}
-                            />
-                            <div>
-                              <div className="font-medium">{item.product?.name}</div>
-                              <div className="text-xs text-muted-foreground">{item.product?.category}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-mono text-xs">
-                            {item.product?.barcode}
-                          </TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
-                        </TableRow>
-                      ))}
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-right font-medium">
-                          Subtotal
-                        </TableCell>
-                        <TableCell className="text-right">
-                          ${selectedOrder.totalAmount.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-              
-              {/* Order History */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Order Timeline</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {selectedOrder.history?.map((entry, index) => (
-                      <div key={index} className="flex">
-                        <div className="mr-4 flex flex-col items-center">
-                          <div className="h-2 w-2 rounded-full bg-primary"></div>
-                          {index < (selectedOrder.history?.length || 0) - 1 && (
-                            <div className="h-12 w-0.5 bg-border"></div>
-                          )}
-                        </div>
-                        <div className="space-y-1 pt-0.5">
-                          <div className="text-sm font-medium">{entry.status}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(entry.timestamp).toLocaleString()}
-                          </div>
-                          {entry.note && (
-                            <div className="text-xs">{entry.note}</div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <DialogFooter className="flex justify-between items-center">
-              <div className="flex space-x-2">
-                <Button variant="outline" onClick={() => setPrintDialogOpen(true)}>
-                  <PrinterIcon className="mr-2 h-4 w-4" />
-                  Print Receipt
-                </Button>
-              </div>
-              
-              <div className="flex space-x-2">
-                {selectedOrder.status === 'processing' && (
-                  <Button 
-                    onClick={() => updateOrderStatus(selectedOrder.id, 'ready')}
-                    disabled={isLoading}
-                  >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Mark as Ready
-                  </Button>
-                )}
-                
-                {selectedOrder.status === 'ready' && (
-                  <Button 
-                    onClick={() => updateOrderStatus(selectedOrder.id, 'outForDelivery')}
-                    disabled={isLoading}
-                  >
-                    <Truck className="mr-2 h-4 w-4" />
-                    Send to Delivery
-                  </Button>
-                )}
-                
-                {(selectedOrder.status === 'pending' || selectedOrder.status === 'processing') && (
-                  <Button 
-                    variant="destructive"
-                    onClick={() => updateOrderStatus(selectedOrder.id, 'cancelled')}
-                    disabled={isLoading}
-                  >
-                    <AlertCircle className="mr-2 h-4 w-4" />
-                    Cancel Order
-                  </Button>
-                )}
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-      
-      {/* Barcode Scanner Dialog */}
-      <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Scan Order Barcode</DialogTitle>
-            <DialogDescription>
-              Scan or enter the order barcode to quickly find the order
-            </DialogDescription>
-          </DialogHeader>
-          
-          <OrderScanner onScan={handleScanResult} />
-          
-          <DialogFooter className="sm:justify-start">
-            <Button variant="secondary" onClick={() => setScannerOpen(false)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
       {/* Print Dialog */}
-      <Dialog open={printDialogOpen} onOpenChange={setPrintDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Print Order Receipt</DialogTitle>
-            <DialogDescription>
-              Select a printer to print the order receipt
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedOrder && (
-            <PrintDialog>
-              <OrderReceiptPrint order={selectedOrder} />
-            </PrintDialog>
-          )}
-          
-          <DialogFooter className="sm:justify-start">
-            <Button variant="secondary" onClick={() => setPrintDialogOpen(false)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {selectedOrder && (
+        <PrintDialog
+          title="Print Order Receipt"
+          description={`Print receipt for order ${selectedOrder.orderNumber}`}
+          previewContent={
+            <div className="p-4 border rounded-md">
+              <h3 className="text-lg font-bold mb-2">Order Receipt</h3>
+              <p>Order #: {selectedOrder.orderNumber}</p>
+              <p>Customer: {selectedOrder.customer?.name}</p>
+              <p>Date: {new Date(selectedOrder.orderDate).toLocaleDateString()}</p>
+              <hr className="my-2" />
+              {selectedOrder.items?.map(item => (
+                <div key={item.id} className="flex justify-between py-1">
+                  <span>{item.quantity}x {item.product?.name}</span>
+                  <span>KSh {item.price.toLocaleString()}</span>
+                </div>
+              ))}
+              <hr className="my-2" />
+              <div className="flex justify-between font-bold">
+                <span>Total</span>
+                <span>KSh {selectedOrder.totalAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          }
+          onPrint={() => {
+            console.log('Printing order:', selectedOrder.orderNumber);
+            // TODO: Implement actual printing logic
+            toast.success(`Order ${selectedOrder.orderNumber} receipt printed!`);
+            setIsPrintDialogOpen(false);
+          }}
+          onDownload={() => {
+            console.log('Downloading receipt for order:', selectedOrder.orderNumber);
+            // TODO: Implement actual download logic
+            toast.success(`Order ${selectedOrder.orderNumber} receipt downloaded!`);
+            setIsPrintDialogOpen(false);
+          }}
+        >
+          <div>
+            {/* Additional print options could go here */}
+          </div>
+        </PrintDialog>
+      )}
     </StaffLayout>
   );
 };
 
+interface OrdersListProps {
+  orders: Order[];
+  onSelectOrder: (order: Order) => void;
+  onPrintClick: () => void;
+}
+
+const OrdersList: React.FC<OrdersListProps> = ({ orders, onSelectOrder, onPrintClick }) => {
+  if (orders.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <p className="text-muted-foreground mb-2">No orders found</p>
+          <Button variant="outline">Refresh</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <>
+      {orders.map(order => (
+        <Card key={order.id} className="overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex justify-between">
+              <span>Order #{order.orderNumber}</span>
+              <span className="text-primary">KSh {order.totalAmount.toLocaleString()}</span>
+            </CardTitle>
+            <CardDescription>
+              {new Date(order.orderDate).toLocaleDateString()} - {order.customer?.name}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-medium text-sm mb-1">Order Items</h4>
+                <ul className="space-y-1 text-sm">
+                  {order.items?.map(item => (
+                    <li key={item.id} className="flex justify-between">
+                      <span>{item.quantity}x {item.product?.name}</span>
+                      <span>KSh {item.price.toLocaleString()}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-sm mb-1">Shipping Address</h4>
+                <p className="text-sm text-muted-foreground">
+                  {order.shippingInfo?.fullName}<br />
+                  {order.shippingInfo?.address}<br />
+                  {order.shippingInfo?.city}, {order.shippingInfo?.postalCode}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between pt-2">
+            <div className="flex items-center">
+              <Badge variant={
+                order.status === 'pending' ? 'default' :
+                order.status === 'processing' ? 'secondary' :
+                order.status === 'ready' ? 'success' :
+                'outline'
+              }>
+                {order.status}
+              </Badge>
+              <Badge variant="outline" className="ml-2">
+                {order.paymentMethod === 'mpesa' ? 'M-Pesa' :
+                 order.paymentMethod === 'card' ? 'Card' :
+                 order.paymentMethod === 'cash' ? 'Cash' : 'Other'}
+              </Badge>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => onSelectOrder(order)}>
+                View Details
+              </Button>
+              <Button size="sm" onClick={() => {
+                onSelectOrder(order);
+                onPrintClick();
+              }}>
+                Print Receipt
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
+      ))}
+    </>
+  );
+};
+
 export default OrderPreparer;
+
+// Import toast for notifications
+import { toast } from 'sonner';
+
+// Define a Badge component as it seems to be used but not imported
+const Badge = ({ children, variant }: { children: React.ReactNode, variant?: string }) => {
+  const getVariantClass = () => {
+    switch (variant) {
+      case 'default':
+        return 'bg-primary text-primary-foreground';
+      case 'secondary':
+        return 'bg-secondary text-secondary-foreground';
+      case 'outline':
+        return 'border border-input bg-background text-foreground';
+      case 'success':
+        return 'bg-green-500 text-white';
+      default:
+        return 'bg-primary text-primary-foreground';
+    }
+  };
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getVariantClass()}`}>
+      {children}
+    </span>
+  );
+};

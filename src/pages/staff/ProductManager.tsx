@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import StaffLayout from '@/components/layout/StaffLayout';
 import { 
   Card, 
@@ -31,10 +30,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod";
 import {
   Select,
@@ -42,7 +41,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"
 import { 
   PrinterIcon, 
   ImagePlus, 
@@ -53,9 +52,32 @@ import {
   Wand2, 
   Loader2,
   Eye,
+  EyeOff,
+  Copy,
+  Download,
+  Upload,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  ArrowDown,
+  ArrowUp,
+  FileImage,
+  Text,
+  Tag,
+  ShoppingCart,
+  Percent,
+  Ruler,
+  Layers,
+  Settings,
+  Share2,
+  HelpCircle,
+  LayoutDashboard,
+  Megaphone,
+  Store,
+  Boxes,
   Barcode,
 } from 'lucide-react';
-import { Product, ProductImage } from '@/types';
+import { Product, ProductImage, ProductWithImages } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbProductToProduct, mapDbProductImageToProductImage } from '@/utils/typeMappers';
@@ -63,7 +85,6 @@ import ProductLabelPrint from '@/components/admin/printing/ProductLabelPrint';
 import AIDescriptionGenerator from '@/components/ai/AIDescriptionGenerator';
 import ProductPhotoUpload from '@/components/admin/products/ProductPhotoUpload';
 
-// Define a schema for the product form
 const productFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   title: z.string().optional(),
@@ -86,7 +107,6 @@ const productFormSchema = z.object({
   featured: z.boolean().default(false),
 });
 
-// Define the Product interface
 interface ProductType {
   id: string;
   name: string;
@@ -134,13 +154,15 @@ const ProductManager = () => {
   const [isProductBulkDeleteConfirmOpen, setIsProductBulkDeleteConfirmOpen] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isProductActionsOpen, setIsProductActionsOpen] = useState(false);
-  
-  // Fetch products on component mount
+  const [isProductVisibilityActionsOpen, setIsProductVisibilityActionsOpen] = useState(false);
+  const [isProductBulkVisibilityActionsOpen, setIsProductBulkVisibilityActionsOpen] = useState(false);
+  const [isVisibilityConfirmOpen, setIsVisibilityConfirmOpen] = useState(false);
+  const [isBulkVisibilityConfirmOpen, setIsBulkVisibilityConfirmOpen] = useState(false);
+
   useEffect(() => {
     fetchProducts();
   }, []);
-  
-  // Function to fetch products from the database
+
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
@@ -150,7 +172,6 @@ const ProductManager = () => {
       
       if (error) throw error;
       
-      // Map the products to our Product type
       const mappedProducts = data.map(product => mapDbProductToProduct(product));
       setProducts(mappedProducts);
     } catch (error) {
@@ -160,15 +181,13 @@ const ProductManager = () => {
       setIsLoading(false);
     }
   };
-  
-  // Filter products based on search query
+
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.barcode.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
-  
-  // Sort products based on column and direction
+
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (!sortColumn) return 0;
     
@@ -189,14 +208,11 @@ const ProductManager = () => {
     
     return 0;
   });
-  
-  // Handle product form submission (simplified for now)
+
   const handleSubmitProduct = async (data: z.infer<typeof productFormSchema>) => {
-    // Implementation will be added in future updates
     toast.success('Product saved successfully!');
   };
-  
-  // Placeholder implementation of print functionality
+
   const handlePrintBarcode = (productId: string) => {
     setIsPrinting(true);
     setTimeout(() => {
@@ -204,145 +220,167 @@ const ProductManager = () => {
       toast.success('Barcode sent to printer');
     }, 1500);
   };
-  
+
   return (
     <StaffLayout>
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Product Management</h1>
+            <h1 className="text-3xl font-bold">Product Management</h1>
             <p className="text-muted-foreground">
-              Add, edit, and manage your thrift store inventory
+              Add, edit, and manage products in the inventory
             </p>
           </div>
-          
           <div className="flex items-center gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus size={16} />
-                  Add Product
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                  <DialogTitle>Add New Product</DialogTitle>
-                  <DialogDescription>
-                    Enter the details for the new product. Required fields are marked with an asterisk (*).
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  {/* Product form will be implemented in future updates */}
-                  <p className="text-muted-foreground">Product form coming soon...</p>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline">Cancel</Button>
-                  <Button>Save Product</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <Barcode size={16} />
-                  Scan Barcode
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Scan Product Barcode</DialogTitle>
-                  <DialogDescription>
-                    Use your camera to scan a product barcode or enter it manually.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  {/* Barcode scanner will be implemented in future updates */}
-                  <p className="text-muted-foreground">Barcode scanner coming soon...</p>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setIsAddingProduct(true)} className="gap-1">
+              <Plus className="h-4 w-4" /> Add Product
+            </Button>
           </div>
         </div>
-        
+
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center">
-              <CardTitle>Products</CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search products..."
-                    className="pl-8 w-[250px]"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-grow">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Search products..." 
+                  className="pl-9" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <Select value={sortColumn || 'name'} onValueChange={(value) => setSortColumn(value as keyof ProductType)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="price">Price</SelectItem>
+                    <SelectItem value="category">Category</SelectItem>
+                    <SelectItem value="condition">Condition</SelectItem>
+                    <SelectItem value="status">Status</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                >
+                  {sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>Products</CardTitle>
+            <CardDescription>
+              {products.length} products found
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : sortedProducts.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No products found</p>
-              </div>
-            ) : (
-              <div className="rounded-md border overflow-hidden">
-                <Table>
-                  <TableHeader>
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4" 
+                        onChange={() => {/* TODO: Handle select all */}}
+                      />
+                    </TableHead>
+                    <TableHead className="w-14">Image</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Condition</TableHead>
+                    <TableHead>Size</TableHead>
+                    <TableHead className="text-right">Price (KSh)</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.length === 0 ? (
                     <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Barcode</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableCell colSpan={9} className="text-center py-8">
+                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                          <Boxes className="h-10 w-10 mb-2" />
+                          <p>No products found.</p>
+                          <Button 
+                            variant="link" 
+                            onClick={() => setIsAddingProduct(true)}
+                            className="mt-2"
+                          >
+                            Add your first product
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedProducts.map((product) => (
+                  ) : (
+                    products.map(product => (
                       <TableRow key={product.id}>
                         <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden">
-                              {product.imageUrl ? (
-                                <img 
-                                  src={product.imageUrl} 
-                                  alt={product.name} 
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-medium">{product.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {product.condition} • {product.size || 'No size'}
-                              </p>
-                            </div>
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4"
+                            onChange={() => {/* TODO: Handle selection */}}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="h-10 w-10 rounded bg-muted/50 overflow-hidden">
+                            {product.imageUrl ? (
+                              <img 
+                                src={product.imageUrl} 
+                                alt={product.name} 
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center h-full w-full text-muted-foreground">
+                                <FileImage className="h-5 w-5" />
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center">
-                            <span className="font-mono text-xs">{product.barcode}</span>
+                          <div>
+                            <span className="font-medium">{product.name}</span>
+                            {product.brand && (
+                              <span className="text-xs text-muted-foreground block">
+                                {product.brand}
+                              </span>
+                            )}
                           </div>
                         </TableCell>
-                        <TableCell>KSh {product.price}</TableCell>
                         <TableCell>{product.category}</TableCell>
                         <TableCell>
-                          <Badge 
-                            variant={
-                              product.status === 'available' ? 'default' :
-                              product.status === 'reserved' ? 'outline' : 'secondary'
-                            }
-                          >
+                          <Badge variant="outline">
+                            {product.condition === 'new' ? 'New' : 
+                             product.condition === 'likeNew' ? 'Like New' : 
+                             product.condition === 'good' ? 'Good' : 'Fair'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{product.size || '-'}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {product.price.toLocaleString()}
+                          {product.originalPrice && (
+                            <span className="text-xs text-muted-foreground line-through block">
+                              {product.originalPrice.toLocaleString()}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            product.status === 'available' ? 'default' : 
+                            product.status === 'reserved' ? 'secondary' : 
+                            'outline'
+                          }>
                             {product.status}
                           </Badge>
                         </TableCell>
@@ -351,123 +389,71 @@ const ProductManager = () => {
                             <Button 
                               variant="ghost" 
                               size="icon"
-                              onClick={() => handlePrintBarcode(product.id)}
-                            >
-                              <PrinterIcon className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => {
-                                setSelectedProduct(product);
-                                setIsEditingProduct(true);
-                              }}
+                              onClick={() => {/* TODO: Handle edit */}}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="icon"
-                              onClick={() => {
-                                setSelectedProduct(product);
-                                setIsProductDeleteConfirmOpen(true);
-                              }}
+                              onClick={() => {/* TODO: Handle print */}}
+                            >
+                              <PrinterIcon className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => {/* TODO: Handle delete */}}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex justify-between border-t py-3">
-            <div className="text-sm text-muted-foreground">
-              Showing {sortedProducts.length} of {products.length} products
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
-            {/* Pagination will be implemented in future updates */}
-          </CardFooter>
+          </CardContent>
         </Card>
       </div>
-      
-      {/* Product edit dialog */}
-      <Dialog open={isEditingProduct} onOpenChange={setIsEditingProduct}>
-        <DialogContent className="sm:max-w-[600px]">
+
+      <Dialog open={isAddingProduct || isEditingProduct} onOpenChange={() => {
+        setIsAddingProduct(false);
+        setIsEditingProduct(false);
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
+            <DialogTitle>{isEditingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             <DialogDescription>
-              Update the details for this product. Required fields are marked with an asterisk (*).
+              {isEditingProduct 
+                ? 'Update product details in the inventory' 
+                : 'Add a new product to the inventory'}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            {/* Edit form will be implemented in future updates */}
-            <p className="text-muted-foreground">Edit form coming soon...</p>
+          
+          <div className="space-y-4">
+            <p>Form implementation pending</p>
           </div>
+          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditingProduct(false)}>Cancel</Button>
-            <Button>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Product delete confirmation dialog */}
-      <Dialog open={isProductDeleteConfirmOpen} onOpenChange={setIsProductDeleteConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Product</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this product? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            {selectedProduct && (
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden">
-                  {selectedProduct.imageUrl ? (
-                    <img 
-                      src={selectedProduct.imageUrl} 
-                      alt={selectedProduct.name} 
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium">{selectedProduct.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedProduct.barcode}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsProductDeleteConfirmOpen(false)}>Cancel</Button>
-            <Button variant="destructive">Delete Product</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* AI Product Description Generator */}
-      <Dialog open={isAIModalOpen} onOpenChange={setIsAIModalOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>AI Description Generator</DialogTitle>
-            <DialogDescription>
-              Generate an optimized product description using AI.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            {/* AI Description Generator will be implemented in future updates */}
-            <p className="text-muted-foreground">AI Description Generator coming soon...</p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAIModalOpen(false)}>Cancel</Button>
-            <Button>Use Description</Button>
+            <Button variant="outline" onClick={() => {
+              setIsAddingProduct(false);
+              setIsEditingProduct(false);
+            }}>
+              Cancel
+            </Button>
+            <Button disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isEditingProduct ? 'Updating...' : 'Creating...'}
+                </>
+              ) : (
+                <>{isEditingProduct ? 'Update Product' : 'Create Product'}</>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

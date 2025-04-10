@@ -1,136 +1,214 @@
+
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Product, ProductType } from '@/types';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
-import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { ShoppingCart, Heart } from 'lucide-react';
+
+// Mock data for similar products
+const mockSimilarProducts: Product[] = [
+  {
+    id: 'rec-001',
+    name: 'Vintage Denim Jacket',
+    price: 2500,
+    imageUrl: '/placeholder.svg',
+    category: 'Jackets',
+    condition: 'good',
+    barcode: 'BAR001',
+    status: 'available',
+    size: 'M',
+    brand: 'Levi\'s',
+    color: 'Blue',
+    description: 'Classic vintage denim jacket in excellent condition'
+  },
+  {
+    id: 'rec-002',
+    name: 'Floral Summer Dress',
+    price: 1800,
+    imageUrl: '/placeholder.svg',
+    category: 'Dresses',
+    condition: 'likeNew',
+    barcode: 'BAR002',
+    status: 'available',
+    size: 'S',
+    brand: 'Zara',
+    color: 'Multicolor',
+    description: 'Beautiful floral summer dress, perfect for sunny days'
+  },
+  {
+    id: 'rec-003',
+    name: 'Leather Loafers',
+    price: 3200,
+    imageUrl: '/placeholder.svg', 
+    category: 'Shoes',
+    condition: 'good',
+    barcode: 'BAR003',
+    status: 'available',
+    size: '42',
+    brand: 'Cole Haan',
+    color: 'Brown',
+    description: 'Classic leather loafers, minimal wear on soles'
+  },
+  {
+    id: 'rec-004',
+    name: 'Cashmere Sweater',
+    price: 4500,
+    imageUrl: '/placeholder.svg',
+    category: 'Knitwear',
+    condition: 'likeNew',
+    barcode: 'BAR004',
+    status: 'available',
+    size: 'L',
+    brand: 'Uniqlo',
+    color: 'Navy',
+    description: 'Soft cashmere sweater, perfect for colder weather'
+  }
+];
+
+// Mock data for "complete the look" products
+const mockCompleteTheLookProducts: Product[] = [
+  {
+    id: 'comp-001',
+    name: 'Slim Fit Jeans',
+    price: 1900,
+    imageUrl: '/placeholder.svg',
+    category: 'Pants',
+    condition: 'good',
+    barcode: 'BAR005',
+    status: 'available',
+    size: '32',
+    brand: 'H&M',
+    color: 'Dark Blue',
+    description: 'Classic slim fit jeans that pair well with anything'
+  },
+  {
+    id: 'comp-002',
+    name: 'Canvas Sneakers',
+    price: 1500,
+    imageUrl: '/placeholder.svg',
+    category: 'Shoes',
+    condition: 'good',
+    barcode: 'BAR006',
+    status: 'available',
+    size: '43',
+    brand: 'Converse',
+    color: 'White',
+    description: 'Classic white canvas sneakers'
+  }
+];
 
 interface AIProductRecommendationsProps {
-  productId: string;
-  category: string;
+  productId?: string;
+  category?: string;
 }
 
-export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> = ({ 
-  productId, 
-  category 
-}) => {
-  const { addToCart, addToWishlist } = useCart();
+const AIProductRecommendations: React.FC<AIProductRecommendationsProps> = ({ productId, category }) => {
+  const { addItem, isInCart, addToWishlist, isInWishlist } = useCart();
   
-  const { data: recommendations, isLoading } = useQuery({
-    queryKey: ['product-recommendations', productId, category],
-    queryFn: async () => {
-      // Fetch similar products from the same category
-      const { data, error } = await supabase
-        .from('products')
-        .select('*, product_images(*)')
-        .eq('category', category)
-        .neq('id', productId)
-        .limit(4);
-      
-      if (error) throw error;
-      
-      // Convert to Product interface
-      return data.map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        originalPrice: item.original_price,
-        category: item.category,
-        subCategory: item.sub_category,
-        tags: item.tags,
-        size: item.size,
-        color: item.color,
-        brand: item.brand,
-        condition: item.condition,
-        barcode: item.barcode,
-        status: item.status,
-        dateAdded: new Date(item.date_added),
-        lastUpdated: new Date(item.last_updated),
-        addedBy: item.added_by,
-        featured: item.featured,
-        images: item.product_images?.map((img: any) => ({
-          id: img.id,
-          url: img.url,
-          alt: img.alt,
-          isMain: img.is_main,
-          displayOrder: img.display_order
-        })) || [],
-        measurements: item.measurements,
-        inventoryTracking: item.inventory_tracking
-      })) as Product[];
-    },
-  });
-
   const handleAddToCart = (product: Product) => {
-    addToCart({
-      id: product.id,
+    addItem({
+      id: `cart-${product.id}`,
+      productId: product.id,
       name: product.name,
       price: product.price,
-      imageUrl: product.images?.[0]?.url || 'https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop'
+      quantity: 1,
+      imageUrl: product.imageUrl || '/placeholder.svg'
     });
-    toast.success(`${product.name} added to cart`);
   };
-
+  
   const handleAddToWishlist = (product: Product) => {
-    addToWishlist({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      imageUrl: product.images?.[0]?.url || 'https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop'
-    });
-    toast.success(`${product.name} added to wishlist`);
+    addToWishlist(product);
   };
-
-  if (isLoading) {
-    return (
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">You May Also Like</h2>
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-3">Similar Items You Might Like</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {mockSimilarProducts.map((product) => (
+            <Card key={product.id} className="overflow-hidden">
+              <div className="aspect-square bg-muted relative">
+                <img 
+                  src={product.imageUrl || '/placeholder.svg'} 
+                  alt={product.name} 
+                  className="w-full h-full object-cover"
+                />
+                <Badge className="absolute top-2 right-2">
+                  {product.condition === 'new' ? 'New' : 
+                   product.condition === 'likeNew' ? 'Like New' : 
+                   product.condition === 'good' ? 'Good' : 'Fair'}
+                </Badge>
+              </div>
+              <CardContent className="p-3">
+                <h4 className="font-medium text-sm truncate">{product.name}</h4>
+                <div className="flex justify-between items-center mt-1">
+                  <span className="font-bold">KSh {product.price.toLocaleString()}</span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleAddToWishlist(product)}
+                      disabled={isInWishlist(product.id)}
+                    >
+                      <Heart className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleAddToCart(product)}
+                      disabled={isInCart(product.id)}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
-    );
-  }
-
-  if (!recommendations || recommendations.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-4">You May Also Like</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {recommendations.map((product) => (
-          <Card key={product.id}>
-            <div className="aspect-square overflow-hidden">
-              <img
-                src={product.images?.[0]?.url || "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-              />
-            </div>
-            <CardHeader className="p-4">
-              <CardTitle className="text-base">{product.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="flex justify-between items-center">
-                <p className="font-semibold">KSh {product.price.toFixed(2)}</p>
-                <div className="space-x-2">
-                  <Button 
-                    onClick={() => handleAddToCart(product)} 
-                    className="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary/90"
-                  >
-                    Add to Cart
-                  </Button>
+      
+      <div>
+        <h3 className="text-lg font-semibold mb-3">Complete The Look</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {mockCompleteTheLookProducts.map((product) => (
+            <Card key={product.id} className="overflow-hidden">
+              <div className="flex">
+                <div className="w-1/3 bg-muted">
+                  <img 
+                    src={product.imageUrl || '/placeholder.svg'} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="w-2/3 p-3">
+                  <h4 className="font-medium text-sm">{product.name}</h4>
+                  <span className="block text-muted-foreground text-xs mt-1">
+                    {product.brand} - {product.size}
+                  </span>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="font-bold">KSh {product.price.toLocaleString()}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAddToCart(product)}
+                      disabled={isInCart(product.id)}
+                    >
+                      Add
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
 };
+
+export default AIProductRecommendations;
