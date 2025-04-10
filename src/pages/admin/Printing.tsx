@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,9 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Printer, Package, FileText, Truck } from 'lucide-react';
 import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
 import { useConnectivity } from '@/hooks/use-connectivity';
-import { Order } from '@/types/order';
 
-// Mock order for demo purposes that matches the Order type
+// Mock order for demo purposes
 const mockOrder = {
   id: 'ORD-123456',
   orderNumber: 'TTS-20240410-0001',
@@ -22,64 +22,40 @@ const mockOrder = {
   },
   items: [
     {
-      productId: 'prod-001',
       product: {
         id: 'prod-001',
-        title: 'Vintage Denim Jacket',
+        name: 'Vintage Denim Jacket',
         price: 2500,
-        imageUrl: '/placeholder.svg'
+        images: [{ url: '/placeholder.svg', alt: 'Vintage Denim Jacket' }]
       },
-      quantity: 1,
-      price: 2500
+      price: 2500,
+      quantity: 1
     },
     {
-      productId: 'prod-002',
       product: {
         id: 'prod-002',
-        title: 'Floral Summer Dress',
+        name: 'Floral Summer Dress',
         price: 1800,
-        imageUrl: '/placeholder.svg'
+        images: [{ url: '/placeholder.svg', alt: 'Floral Summer Dress' }]
       },
-      quantity: 1,
-      price: 1800
+      price: 1800,
+      quantity: 1
     }
   ],
   totalAmount: 4300,
   status: 'processing',
   paymentInfo: {
     method: 'mpesa',
-    status: 'completed',
     transactionId: 'MP123456789',
-    amount: 4300
+    status: 'paid'
   },
-  shippingInfo: {
-    fullName: 'Jane Smith',
-    email: 'jane@example.com',
-    phone: '+254712345678',
-    address: '123 Kimathi Street',
+  shippingAddress: {
+    street: '123 Kimathi Street',
     city: 'Nairobi',
-    state: 'Nairobi',
-    postalCode: '00100',
-    country: 'Kenya',
-    shippingMethod: 'standard'
+    zipCode: '00100'
   },
-  deliveryInfo: {
-    estimatedDelivery: new Date('2024-04-15')
-  },
-  orderDate: new Date('2024-04-10T10:30:00'),
-  history: [
-    {
-      timestamp: new Date('2024-04-10T10:30:00'),
-      status: 'pending',
-      note: 'Order created'
-    },
-    {
-      timestamp: new Date('2024-04-10T10:35:00'),
-      status: 'processing',
-      note: 'Payment confirmed'
-    }
-  ]
-} as Order;
+  orderDate: new Date('2024-04-10T10:30:00')
+};
 
 const Printing = () => {
   const [activeTab, setActiveTab] = useState('overview');

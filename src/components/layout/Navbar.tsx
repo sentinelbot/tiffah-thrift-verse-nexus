@@ -101,7 +101,6 @@ const Navbar = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuLabel className="font-normal text-xs truncate">{user.email}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => navigate('/account')}>
                     <User className="mr-2 h-4 w-4" />
@@ -115,12 +114,6 @@ const Navbar = () => {
                     <DropdownMenuItem onSelect={() => navigate('/admin')}>
                       <ShieldCheck className="mr-2 h-4 w-4" />
                       <span>Admin Panel</span>
-                    </DropdownMenuItem>
-                  )}
-                  {['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role) && (
-                    <DropdownMenuItem onSelect={() => navigate('/staff')}>
-                      <ShieldCheck className="mr-2 h-4 w-4" />
-                      <span>Staff Portal</span>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
@@ -178,52 +171,13 @@ const Navbar = () => {
             >
               Help
             </Link>
-            {user ? (
-              <>
-                <Link 
-                  to="/account" 
-                  className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
-                  onClick={toggleMenu}
-                >
-                  My Account
-                </Link>
-                {user.role === 'admin' && (
-                  <Link 
-                    to="/admin" 
-                    className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
-                    onClick={toggleMenu}
-                  >
-                    Admin Portal
-                  </Link>
-                )}
-                {['productManager', 'orderPreparer', 'deliveryStaff'].includes(user.role) && (
-                  <Link 
-                    to="/staff" 
-                    className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
-                    onClick={toggleMenu}
-                  >
-                    Staff Portal
-                  </Link>
-                )}
-                <button
-                  className="w-full text-left block px-3 py-2 rounded-md text-foreground hover:text-primary"
-                  onClick={() => {
-                    handleSignOut();
-                    toggleMenu();
-                  }}
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <Link 
-                to="/auth" 
-                className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
-                onClick={toggleMenu}
-              >
-                Sign In
-              </Link>
-            )}
+            <Link 
+              to="/admin/auth" 
+              className="block px-3 py-2 rounded-md text-foreground hover:text-primary"
+              onClick={toggleMenu}
+            >
+              Admin Portal
+            </Link>
           </div>
         </div>
       )}

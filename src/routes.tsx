@@ -1,8 +1,6 @@
 
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
-
-// Import all page components individually 
 import Index from "./pages/Index";
 import ProductDetails from "./pages/ProductDetails"; 
 import TrackOrderPage from "./pages/TrackOrderPage";
@@ -22,18 +20,11 @@ import Communications from "./pages/staff/Communications";
 import AdminRoutes from "./routes/AdminRoutes";
 import StaffRoutes from "./routes/StaffRoutes";
 import DeliveryReports from "./pages/staff/DeliveryReports";
-import Auth from "./pages/Auth";
-import AdminAuth from "./pages/AdminAuth";
-import Unauthorized from "./pages/Unauthorized";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-import { AuthProvider } from "./contexts/AuthContext";
-import Users from "./pages/admin/Users";
 
-// Create the router with App as the root element
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     path: "/",
-    element: <AuthProvider><App /></AuthProvider>,
+    element: <App />,
     children: [
       {
         index: true,
@@ -48,20 +39,8 @@ const router = createBrowserRouter([
         element: <TrackOrderPage />,
       },
       {
-        path: "auth",
-        element: <Auth />,
-      },
-      {
-        path: "admin/auth",
-        element: <AdminAuth />,
-      },
-      {
-        path: "unauthorized",
-        element: <Unauthorized />,
-      },
-      {
         path: "admin",
-        element: <ProtectedRoute allowedRoles={['admin']} />,
+        element: <AdminRoutes />,
         children: [
           {
             index: true,
@@ -99,15 +78,11 @@ const router = createBrowserRouter([
             path: "marketing",
             element: <Marketing />,
           },
-          {
-            path: "users",
-            element: <Users />,
-          },
         ],
       },
       {
         path: "staff",
-        element: <ProtectedRoute allowedRoles={['productManager', 'orderPreparer', 'deliveryStaff']} />,
+        element: <StaffRoutes />,
         children: [
           {
             index: true,
@@ -115,27 +90,19 @@ const router = createBrowserRouter([
           },
           {
             path: "product-manager",
-            element: <ProtectedRoute allowedRoles={['productManager']} redirectPath="/staff">
-              <ProductManager />
-            </ProtectedRoute>,
+            element: <ProductManager />,
           },
           {
             path: "order-preparer",
-            element: <ProtectedRoute allowedRoles={['orderPreparer']} redirectPath="/staff">
-              <OrderPreparer />
-            </ProtectedRoute>,
+            element: <OrderPreparer />,
           },
           {
             path: "delivery",
-            element: <ProtectedRoute allowedRoles={['deliveryStaff']} redirectPath="/staff">
-              <DeliveryStaff />
-            </ProtectedRoute>,
+            element: <DeliveryStaff />,
           },
           {
             path: "delivery/reports",
-            element: <ProtectedRoute allowedRoles={['deliveryStaff']} redirectPath="/staff">
-              <DeliveryReports />
-            </ProtectedRoute>,
+            element: <DeliveryReports />,
           },
           {
             path: "communications",
@@ -146,5 +113,3 @@ const router = createBrowserRouter([
     ],
   },
 ]);
-
-export { router };

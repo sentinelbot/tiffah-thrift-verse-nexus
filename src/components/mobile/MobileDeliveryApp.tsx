@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { 
   MapPin, 
@@ -18,10 +19,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import DeliveryScanner from '@/components/barcode/DeliveryScanner';
+import { DeliveryScanner } from '@/components/barcode/DeliveryScanner';
 import OfflineDeliveryNotice from './OfflineDeliveryNotice';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+// Mock delivery data
 const deliveries = [
   {
     id: 'DEL-001',
@@ -108,6 +110,7 @@ const MobileDeliveryApp = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
   
+  // Filter deliveries based on active tab
   const filteredDeliveries = deliveries.filter(delivery => {
     if (activeTab === 'assigned') return delivery.status === 'assigned';
     if (activeTab === 'in-progress') return delivery.status === 'in-progress';
@@ -115,28 +118,35 @@ const MobileDeliveryApp = () => {
     return true;
   });
   
+  // Handle delivery selection
   const handleDeliverySelect = (delivery: any) => {
     setSelectedDelivery(delivery);
   };
   
+  // Handle back button click
   const handleBack = () => {
     setSelectedDelivery(null);
     setIsScanning(false);
   };
   
+  // Handle barcode scan
   const handleScan = (data: string) => {
     console.log('Scanned barcode:', data);
     setIsScanning(false);
+    // In a real app, we would validate the barcode and update the delivery status
   };
   
+  // Handle scan button click
   const handleScanClick = () => {
     setIsScanning(true);
   };
   
+  // Toggle sidebar
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
   
+  // Side effect to ensure proper layout on mobile
   useEffect(() => {
     if (isMobile) {
       document.body.style.overflow = isSidebarOpen ? 'hidden' : '';
@@ -147,6 +157,7 @@ const MobileDeliveryApp = () => {
     };
   }, [isSidebarOpen, isMobile]);
   
+  // If scanning, show scanner component
   if (isScanning) {
     return (
       <div className="h-screen flex flex-col">
@@ -157,12 +168,13 @@ const MobileDeliveryApp = () => {
           <h1 className="text-lg font-medium ml-2">Scan Barcode</h1>
         </div>
         <div className="flex-1">
-          <DeliveryScanner onBack={() => setIsScanning(false)} onScanComplete={handleScan} />
+          <DeliveryScanner onScan={handleScan} />
         </div>
       </div>
     );
   }
   
+  // If delivery detail view is active
   if (selectedDelivery) {
     return (
       <div className="h-screen flex flex-col bg-background">
@@ -282,8 +294,10 @@ const MobileDeliveryApp = () => {
     );
   }
   
+  // Main delivery list view
   return (
     <div className="h-screen flex flex-col bg-background">
+      {/* Mobile header */}
       <div className="bg-background p-4 flex justify-between items-center shadow-sm">
         <Button variant="ghost" size="icon" onClick={toggleSidebar}>
           <Menu className="h-5 w-5" />
@@ -294,6 +308,7 @@ const MobileDeliveryApp = () => {
         </Button>
       </div>
       
+      {/* Mobile sidebar */}
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
           <div className="fixed inset-y-0 left-0 w-3/4 max-w-xs bg-background shadow-lg z-50">
