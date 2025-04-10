@@ -2,9 +2,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
-// Import App component first to prevent initialization issues
-import App from "./App";
-// Import all other page components
+// Import all page components individually
 import Index from "./pages/Index";
 import ProductDetails from "./pages/ProductDetails"; 
 import TrackOrderPage from "./pages/TrackOrderPage";
@@ -25,11 +23,14 @@ import AdminRoutes from "./routes/AdminRoutes";
 import StaffRoutes from "./routes/StaffRoutes";
 import DeliveryReports from "./pages/staff/DeliveryReports";
 
-// Define the router after importing all components
-const router = createBrowserRouter([
+// Import App last to avoid circular dependencies
+import App from "./App";
+
+// Define the router configuration without directly referencing App
+const routes = [
   {
     path: "/",
-    element: <App />,
+    element: null, // Will be replaced with App component when router is created
     children: [
       {
         index: true,
@@ -117,6 +118,19 @@ const router = createBrowserRouter([
       },
     ],
   },
-]);
+];
+
+// Create the router with App component as the root element
+const router = createBrowserRouter(
+  routes.map(route => {
+    if (route.path === "/") {
+      return {
+        ...route,
+        element: <App />, // Set the App component here after all imports are processed
+      };
+    }
+    return route;
+  })
+);
 
 export { router };
