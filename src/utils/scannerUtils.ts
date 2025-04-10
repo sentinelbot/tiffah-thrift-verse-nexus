@@ -1,310 +1,490 @@
 
-import Quagga from '@ericblade/quagga2';
+import { supabase } from "@/integrations/supabase/client";
+import { generateUniqueBarcode } from "./barcodeUtils";
+import { completeScanSync } from "./authUtils";
 
-// Initialize the scanner configuration
-export const initBarcodeScanner = (scannerElement: HTMLElement, onDetect: (barcode: string) => void, scannerConfig = {}) => {
-  const defaultConfig = {
-    inputStream: {
-      name: "Live",
-      type: "LiveStream",
-      target: scannerElement,
-      constraints: {
-        width: { min: 640 },
-        height: { min: 480 },
-        facingMode: "environment",
-        aspectRatio: { min: 1, max: 2 }
-      },
-    },
-    locator: {
-      patchSize: "medium",
-      halfSample: true
-    },
-    numOfWorkers: 2,
-    frequency: 10,
-    decoder: {
-      readers: [
-        "code_128_reader",
-        "ean_reader",
-        "ean_8_reader",
-        "code_39_reader",
-        "code_39_vin_reader",
-        "codabar_reader",
-        "upc_reader",
-        "upc_e_reader",
-        "i2of5_reader"
-      ],
-      debug: {
-        showCanvas: true,
-        showPatches: true,
-        showFoundPatches: true,
-        showSkeleton: true,
-        showLabels: true,
-        showPatchLabels: true,
-        showRemainingPatchLabels: true,
-        boxFromPatches: {
-          showTransformed: true,
-          showTransformedBox: true,
-          showBB: true
+// IndexedDB database for offline scanning
+let db: IDBDatabase | null = null;
+
+// Initialize the scanner using Quagga
+export const initScanner = (
+  containerId: string,
+  callbacks: {
+    onDetected: (result: any) => void;
+    onError?: (error: any) => void;
+  }
+): (() => void) => {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(`Container element with ID ${containerId} not found`);
+    if (callbacks.onError) {
+      callbacks.onError(new Error(`Container element with ID ${containerId} not found`));
+    }
+    return () => {};
+  }
+
+  try {
+    // For testing purposes with an esm module, we need to use dynamic import
+    import('@ericblade/quagga2').then((Quagga) => {
+      Quagga.init(
+        {
+          inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: container,
+            constraints: {
+              width: 640,
+              height: 480,
+              facingMode: "environment",
+            },
+          },
+          locator: {
+            patchSize: "medium",
+            halfSample: true,
+          },
+          numOfWorkers: navigator.hardwareConcurrency || 4,
+          decoder: {
+            readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader"],
+          },
+          locate: true,
+        },
+        (err) => {
+          if (err) {
+            console.error("Error initializing Quagga:", err);
+            if (callbacks.onError) {
+              callbacks.onError(err);
+            }
+            return;
+          }
+
+          Quagga.start();
+
+          // Success sound on detection
+          const successSound = new Audio('/sounds/beep.mp3');
+          
+          // Add detection callback
+          Quagga.onDetected((result) => {
+            // Add visual feedback with animation
+            container.classList.add('scan-success');
+            setTimeout(() => {
+              container.classList.remove('scan-success');
+            }, 500);
+            
+            // Play success sound
+            successSound.play().catch((e) => console.log('Sound play error:', e));
+            
+            // Call the onDetected callback
+            callbacks.onDetected(result);
+          });
+
+          Quagga.onProcessed((result) => {
+            const drawingCtx = Quagga.canvas.ctx.overlay;
+            const drawingCanvas = Quagga.canvas.dom.overlay;
+
+            if (result) {
+              if (result.boxes) {
+                drawingCtx.clearRect(
+                  0,
+                  0,
+                  parseInt(drawingCanvas.getAttribute("width") || "0"),
+                  parseInt(drawingCanvas.getAttribute("height") || "0")
+                );
+                result.boxes
+                  .filter((box) => box !== result.box)
+                  .forEach((box) => {
+                    Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, drawingCtx, {
+                      color: "green",
+                      lineWidth: 2,
+                    });
+                  });
+              }
+
+              if (result.box) {
+                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, {
+                  color: "#ec4899",
+                  lineWidth: 2,
+                });
+              }
+
+              if (result.codeResult && result.codeResult.code) {
+                Quagga.ImageDebug.drawPath(
+                  result.line,
+                  { x: "x", y: "y" },
+                  drawingCtx,
+                  { color: "yellow", lineWidth: 3 }
+                );
+              }
+            }
+          });
         }
+      );
+    }).catch((error) => {
+      console.error("Error loading Quagga:", error);
+      if (callbacks.onError) {
+        callbacks.onError(error);
       }
-    },
-    locate: true
-  };
+    });
 
-  // Merge default config with provided overrides
-  const config = { ...defaultConfig, ...scannerConfig };
+    // Return a cleanup function
+    return () => {
+      import('@ericblade/quagga2').then((Quagga) => {
+        Quagga.stop();
+      }).catch(console.error);
+    };
+  } catch (error) {
+    console.error("Error initializing scanner:", error);
+    if (callbacks.onError) {
+      callbacks.onError(error);
+    }
+    return () => {};
+  }
+};
 
-  // Initialize the scanner
-  Quagga.init(config as any, (err) => {
-    if (err) {
-      console.error("Error initializing barcode scanner:", err);
+// Initialize offline database
+export const initOfflineDb = (): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    if (db) {
+      resolve(true);
       return;
     }
 
-    // Start the scanner once initialized
-    Quagga.start();
+    const request = indexedDB.open("TiffahScanner", 1);
 
-    // Listen for detected barcodes
-    Quagga.onDetected((result) => {
-      const barcode = result.codeResult.code;
-      if (barcode) {
-        // Play a beep sound if available
-        const beep = new Audio('/sounds/beep.mp3');
-        beep.play().catch(err => console.log('Error playing beep:', err));
-        
-        // Call the provided callback with the detected barcode
-        onDetect(barcode);
-      }
-    });
-  });
+    request.onerror = (event) => {
+      console.error("IndexedDB error:", event);
+      reject(new Error("Could not open offline database"));
+    };
 
-  // Return a stop function for cleanup
-  return {
-    stop: () => {
-      try {
-        Quagga.stop();
-      } catch (err) {
-        console.error("Error stopping barcode scanner:", err);
-      }
-    }
-  };
-};
-
-// Get ideal camera constraints
-export const getIdealCameraSettings = (element: HTMLElement) => {
-  if (!element) return {};
-  
-  const viewWidth = element instanceof HTMLElement ? element.clientWidth : 640;
-  const viewHeight = element instanceof HTMLElement ? element.clientHeight : 480;
-
-  return {
-    width: { min: viewWidth },
-    height: { min: viewHeight },
-    facingMode: "environment",
-    aspectRatio: { min: 1, max: 2 }
-  };
-};
-
-// Check camera availability and permissions
-export const checkCameraAvailability = async (): Promise<boolean> => {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const hasCamera = devices.some(device => device.kind === 'videoinput');
-    
-    if (!hasCamera) {
-      return false;
-    }
-    
-    // Try to get camera access
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    
-    // Stop all tracks to release the camera
-    stream.getTracks().forEach(track => track.stop());
-    
-    return true;
-  } catch (error) {
-    console.error('Camera access denied or camera not available:', error);
-    return false;
-  }
-};
-
-// Generate a unique identifier for the scan
-export const generateScanId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
-};
-
-// Added missing functions for BarcodeScanner
-export const initScanner = (containerId: string, callbacks: { onDetected: (result: any) => void, onError: (error: any) => void }) => {
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.error('Scanner container not found:', containerId);
-    return () => {};
-  }
-
-  try {
-    const scanner = initBarcodeScanner(
-      container, 
-      (barcode) => {
-        callbacks.onDetected({ codeResult: { code: barcode } });
-      }
-    );
-    
-    return () => {
-      if (scanner && scanner.stop) {
-        scanner.stop();
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      
+      // Create object stores for different scan types
+      if (!db.objectStoreNames.contains("pendingScans")) {
+        db.createObjectStore("pendingScans", { keyPath: "id", autoIncrement: true });
       }
     };
-  } catch (error) {
-    callbacks.onError(error);
-    return () => {};
-  }
+
+    request.onsuccess = (event) => {
+      db = (event.target as IDBOpenDBRequest).result;
+      resolve(true);
+    };
+  });
 };
 
-// Check if device is online
+// Check if online
 export const isOnline = (): boolean => {
   return navigator.onLine;
 };
 
-// Sync offline scans
-export const syncScans = async (): Promise<{ synced: number }> => {
-  // In a real app, this would retrieve locally stored scans and send them to the server
-  console.log('Syncing offline scans...');
-  
-  // Placeholder implementation
-  // This would normally get data from IndexedDB or localStorage
-  const pendingScans = localStorage.getItem('pendingScans') 
-    ? JSON.parse(localStorage.getItem('pendingScans') || '[]') 
-    : [];
-  
-  if (pendingScans.length === 0) {
-    return { synced: 0 };
-  }
-  
-  // Clear pending scans
-  localStorage.setItem('pendingScans', JSON.stringify([]));
-  
-  return { synced: pendingScans.length };
+// Get device info for scanning
+export const getDeviceInfo = (): string => {
+  const userAgent = navigator.userAgent;
+  const platform = navigator.platform;
+  return `${platform} - ${userAgent}`;
 };
 
-// Process product scans
+// Process a product scan
 export const processProductScan = async (
-  code: string, 
-  userId: string, 
-  userRole: string, 
-  isOnlineStatus: boolean
+  barcode: string,
+  userId: string,
+  userRole: string,
+  online: boolean
 ): Promise<{ status: string; result?: any }> => {
-  console.log(`Processing product scan: ${code}`);
-  
-  if (!isOnlineStatus) {
-    // Store scan for later sync
-    const pendingScans = localStorage.getItem('pendingScans')
-      ? JSON.parse(localStorage.getItem('pendingScans') || '[]')
-      : [];
-    
-    pendingScans.push({
-      type: 'product',
-      code,
-      userId,
-      userRole,
-      timestamp: new Date().toISOString()
-    });
-    
-    localStorage.setItem('pendingScans', JSON.stringify(pendingScans));
-    return { status: 'pending-sync' };
-  }
-  
-  // In a real app, this would make an API call to validate the product barcode
-  // For demo purposes, simulate a successful scan
-  return { 
-    status: 'success',
-    result: {
-      id: `PROD-${code}`,
-      name: `Sample Product ${code}`,
-      price: 29.99,
-      status: 'available'
-    }
+  // Record the scan
+  const scanRecord = {
+    barcode,
+    scan_type: "product",
+    scanned_by: userId,
+    device_info: getDeviceInfo(),
   };
+
+  if (!online) {
+    // Store the scan for later synchronization
+    await storePendingScan(scanRecord);
+    return { status: "pending-sync" };
+  }
+
+  try {
+    // First, record the scan in history
+    await supabase.from("scan_history").insert([scanRecord]);
+
+    // Then, look up the product
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, name, price, status, barcode")
+      .eq("barcode", barcode)
+      .single();
+
+    if (error) {
+      console.error("Error fetching product:", error);
+      return { status: "error", result: { message: error.message } };
+    }
+
+    if (!data) {
+      return { status: "error", result: { message: "Product not found" } };
+    }
+
+    return { status: "success", result: data };
+  } catch (error) {
+    console.error("Error processing product scan:", error);
+    return { status: "error", result: { message: "Error processing scan" } };
+  }
 };
 
-// Process order scans
+// Process an order scan
 export const processOrderScan = async (
-  code: string, 
-  userId: string, 
-  userRole: string, 
-  isOnlineStatus: boolean
+  orderNumber: string,
+  userId: string,
+  userRole: string,
+  online: boolean
 ): Promise<{ status: string; result?: any }> => {
-  console.log(`Processing order scan: ${code}`);
-  
-  if (!isOnlineStatus) {
-    // Store scan for later sync
-    const pendingScans = localStorage.getItem('pendingScans')
-      ? JSON.parse(localStorage.getItem('pendingScans') || '[]')
-      : [];
-    
-    pendingScans.push({
-      type: 'order',
-      code,
-      userId,
-      userRole,
-      timestamp: new Date().toISOString()
-    });
-    
-    localStorage.setItem('pendingScans', JSON.stringify(pendingScans));
-    return { status: 'pending-sync' };
-  }
-  
-  // In a real app, this would make an API call to validate the order barcode
-  // For demo purposes, simulate a successful scan
-  return { 
-    status: 'success',
-    result: {
-      id: `ORD-${code}`,
-      orderNumber: `TTS-20250410-${code}`,
-      status: 'processing',
-      items: [
-        { id: 'item1', name: 'Vintage Denim Jacket', quantity: 1 },
-        { id: 'item2', name: 'Leather Bag', quantity: 1 }
-      ]
-    }
+  // Record the scan
+  const scanRecord = {
+    barcode: orderNumber,
+    scan_type: "order",
+    scanned_by: userId,
+    device_info: getDeviceInfo(),
   };
+
+  if (!online) {
+    // Store the scan for later synchronization
+    await storePendingScan(scanRecord);
+    return { status: "pending-sync" };
+  }
+
+  try {
+    // First, record the scan in history
+    await supabase.from("scan_history").insert([scanRecord]);
+
+    // Then, look up the order
+    const { data: orderData, error: orderError } = await supabase
+      .from("orders")
+      .select("id, order_number, status, customer_id")
+      .eq("order_number", orderNumber)
+      .single();
+
+    if (orderError || !orderData) {
+      console.error("Error fetching order:", orderError);
+      return { 
+        status: "error", 
+        result: { message: orderError ? orderError.message : "Order not found" } 
+      };
+    }
+
+    // Get order items
+    const { data: itemsData, error: itemsError } = await supabase
+      .from("order_items")
+      .select(`
+        id, 
+        quantity, 
+        price,
+        products(id, name)
+      `)
+      .eq("order_id", orderData.id);
+
+    if (itemsError) {
+      console.error("Error fetching order items:", itemsError);
+    }
+
+    const orderResult = {
+      id: orderData.id,
+      orderNumber: orderData.order_number,
+      status: orderData.status,
+      items: itemsData?.map(item => ({
+        id: item.id,
+        name: item.products?.name || "Unknown product",
+        quantity: item.quantity
+      })) || []
+    };
+
+    return { status: "success", result: orderResult };
+  } catch (error) {
+    console.error("Error processing order scan:", error);
+    return { status: "error", result: { message: "Error processing scan" } };
+  }
 };
 
-// Process delivery scans
+// Process a delivery scan
 export const processDeliveryScan = async (
-  code: string, 
-  userId: string, 
-  userRole: string, 
-  isOnlineStatus: boolean
+  orderNumber: string,
+  userId: string,
+  userRole: string,
+  online: boolean
 ): Promise<{ status: string; result?: any }> => {
-  console.log(`Processing delivery scan: ${code}`);
-  
-  if (!isOnlineStatus) {
-    // Store scan for later sync
-    const pendingScans = localStorage.getItem('pendingScans')
-      ? JSON.parse(localStorage.getItem('pendingScans') || '[]')
-      : [];
-    
-    pendingScans.push({
-      type: 'delivery',
-      code,
-      userId,
-      userRole,
-      timestamp: new Date().toISOString()
-    });
-    
-    localStorage.setItem('pendingScans', JSON.stringify(pendingScans));
-    return { status: 'pending-sync' };
-  }
-  
-  // In a real app, this would make an API call to validate the delivery barcode
-  // For demo purposes, simulate a successful scan
-  return { 
-    status: 'success',
-    result: {
-      id: `DEL-${code}`,
-      orderNumber: `TTS-20250410-${code}`,
-      status: 'outForDelivery',
-      deliveryTime: new Date().toISOString()
-    }
+  // Record the scan
+  const scanRecord = {
+    barcode: orderNumber,
+    scan_type: "delivery",
+    scanned_by: userId,
+    device_info: getDeviceInfo(),
   };
+
+  if (!online) {
+    // Store the scan for later synchronization
+    await storePendingScan(scanRecord);
+    return { status: "pending-sync" };
+  }
+
+  try {
+    // First, record the scan in history
+    await supabase.from("scan_history").insert([scanRecord]);
+
+    // Then, look up the order
+    const { data: orderData, error: orderError } = await supabase
+      .from("orders")
+      .select("id, order_number, status")
+      .eq("order_number", orderNumber)
+      .single();
+
+    if (orderError || !orderData) {
+      console.error("Error fetching order:", orderError);
+      return { 
+        status: "error", 
+        result: { message: orderError ? orderError.message : "Order not found" } 
+      };
+    }
+
+    // Get delivery info
+    const { data: deliveryData, error: deliveryError } = await supabase
+      .from("delivery_info")
+      .select("*")
+      .eq("order_id", orderData.id)
+      .single();
+
+    const deliveryResult = {
+      id: orderData.id,
+      orderNumber: orderData.order_number,
+      status: orderData.status,
+      deliveryTime: deliveryData?.estimated_delivery
+    };
+
+    return { status: "success", result: deliveryResult };
+  } catch (error) {
+    console.error("Error processing delivery scan:", error);
+    return { status: "error", result: { message: "Error processing scan" } };
+  }
+};
+
+// Store a scan for later synchronization
+const storePendingScan = async (scanData: any): Promise<boolean> => {
+  await initOfflineDb();
+
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Offline database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction(["pendingScans"], "readwrite");
+    const store = transaction.objectStore("pendingScans");
+    
+    // Add timestamp to scan data
+    const scan = {
+      ...scanData,
+      timestamp: new Date().toISOString(),
+    };
+    
+    const request = store.add(scan);
+    
+    request.onsuccess = () => {
+      resolve(true);
+    };
+    
+    request.onerror = (event) => {
+      console.error("Error storing pending scan:", event);
+      reject(new Error("Failed to store scan"));
+    };
+  });
+};
+
+// Get all pending scans
+const getPendingScans = async (): Promise<any[]> => {
+  await initOfflineDb();
+
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Offline database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction(["pendingScans"], "readonly");
+    const store = transaction.objectStore("pendingScans");
+    const request = store.getAll();
+    
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+    
+    request.onerror = (event) => {
+      console.error("Error getting pending scans:", event);
+      reject(new Error("Failed to retrieve scans"));
+    };
+  });
+};
+
+// Clear pending scans
+const clearPendingScans = async (): Promise<boolean> => {
+  await initOfflineDb();
+
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Offline database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction(["pendingScans"], "readwrite");
+    const store = transaction.objectStore("pendingScans");
+    const request = store.clear();
+    
+    request.onsuccess = () => {
+      resolve(true);
+    };
+    
+    request.onerror = (event) => {
+      console.error("Error clearing pending scans:", event);
+      reject(new Error("Failed to clear scans"));
+    };
+  });
+};
+
+// Synchronize pending scans
+export const syncScans = async (): Promise<{synced: number, failed: number}> => {
+  if (!isOnline()) {
+    return { synced: 0, failed: 0 };
+  }
+
+  try {
+    const pendingScans = await getPendingScans();
+    
+    if (pendingScans.length === 0) {
+      return { synced: 0, failed: 0 };
+    }
+    
+    // Format scans for insertion
+    const formattedScans = pendingScans.map(scan => ({
+      barcode: scan.barcode,
+      scan_type: scan.scan_type,
+      scanned_by: scan.scanned_by,
+      device_info: scan.device_info,
+      scan_time: scan.timestamp
+    }));
+    
+    // Sync scans to server
+    const result = await completeScanSync(formattedScans);
+    
+    // If successful, clear pending scans
+    if (result.synced > 0) {
+      await clearPendingScans();
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("Error syncing scans:", error);
+    return { synced: 0, failed: 0 };
+  }
+};
+
+// Function to create a new barcode
+export const generateNewBarcode = (): string => {
+  return generateUniqueBarcode();
 };

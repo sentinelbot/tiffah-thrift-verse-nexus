@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon, LogOut, Settings, ShoppingBag, Heart, Bell } from 'lucide-react';
 import { formatDate } from '@/utils/dateUtils';
-import OrderHistory from '@/components/account/OrderHistory';
+import { OrderHistory } from '@/components/account/OrderHistory';
 import NotificationPreferences from '@/components/notifications/NotificationPreferences';
 import LoyaltyPointsCard from '@/components/marketing/LoyaltyPointsCard';
 

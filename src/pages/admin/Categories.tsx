@@ -307,7 +307,7 @@ const Categories = () => {
                       <SelectValue placeholder="Select a parent category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">None (Top-level category)</SelectItem>
+                      <SelectItem value="">None (Top-level category)</SelectItem>
                       {parentCategories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
@@ -515,14 +515,14 @@ const Categories = () => {
               <div className="space-y-2">
                 <Label htmlFor="edit-parent">Parent Category (Optional)</Label>
                 <Select 
-                  value={currentCategory.parentId || 'none'} 
-                  onValueChange={(value) => setCurrentCategory({...currentCategory, parentId: value === 'none' ? null : value})}
+                  value={currentCategory.parentId || ''} 
+                  onValueChange={(value) => setCurrentCategory({...currentCategory, parentId: value || null})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a parent category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None (Top-level category)</SelectItem>
+                    <SelectItem value="">None (Top-level category)</SelectItem>
                     {parentCategories
                       .filter(cat => cat.id !== currentCategory.id) // Prevent self-parent
                       .map((category) => (

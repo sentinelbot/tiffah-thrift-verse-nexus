@@ -1,10 +1,8 @@
-
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
-import { getMeasurementsFromJson, getInventoryTrackingFromJson, isJsonObject } from '@/types/product';
 import {
   Card,
   CardContent,
@@ -14,6 +12,8 @@ import {
 } from "@/components/ui/card"
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
   Accordion,
@@ -24,62 +24,21 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { ShoppingBag, Heart, Share2, CheckCircle, Truck, RotateCcw, ShieldCheck, Star, StarHalf } from 'lucide-react';
 import { AIProductRecommendations } from '@/components/ai/AIProductRecommendations';
-import { useCart } from '@/context/CartContext';
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const { addToCart, addToWishlist } = useCart();
   
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*, product_images(*)')
+        .select('*')
         .eq('id', id)
         .single();
       
       if (error) throw error;
-      
-      // Convert from Supabase format to our Product interface
-      const formattedProduct: Product = {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        originalPrice: data.original_price,
-        category: data.category,
-        subCategory: data.sub_category,
-        tags: data.tags,
-        size: data.size,
-        color: data.color,
-        brand: data.brand,
-        condition: data.condition as 'new' | 'likeNew' | 'good' | 'fair',
-        barcode: data.barcode,
-        status: data.status as 'available' | 'reserved' | 'sold',
-        dateAdded: new Date(data.date_added),
-        lastUpdated: new Date(data.last_updated),
-        addedBy: data.added_by,
-        featured: data.featured,
-        images: data.product_images?.map((img: any) => ({
-          id: img.id,
-          url: img.url,
-          alt: img.alt,
-          isMain: img.is_main,
-          displayOrder: img.display_order
-        })) || [],
-        measurements: getMeasurementsFromJson(data.measurements),
-        inventoryTracking: {
-          inStockDate: data.inventory_tracking && isJsonObject(data.inventory_tracking) && 
-            data.inventory_tracking.inStockDate ? new Date(data.inventory_tracking.inStockDate as string) : undefined,
-          reservedUntil: data.inventory_tracking && isJsonObject(data.inventory_tracking) && 
-            data.inventory_tracking.reservedUntil ? new Date(data.inventory_tracking.reservedUntil as string) : undefined,
-          soldDate: data.inventory_tracking && isJsonObject(data.inventory_tracking) && 
-            data.inventory_tracking.soldDate ? new Date(data.inventory_tracking.soldDate as string) : undefined
-        }
-      };
-      
-      return formattedProduct;
+      return data as Product;
     },
   });
   
@@ -88,30 +47,6 @@ const ProductDetails = () => {
       toast.error('Failed to load product details.');
     }
   }, [error]);
-
-  const handleAddToCart = () => {
-    if (product) {
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        imageUrl: product.images?.[0]?.url || 'https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop'
-      });
-      toast.success(`${product.name} added to cart`);
-    }
-  };
-
-  const handleAddToWishlist = () => {
-    if (product) {
-      addToWishlist({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        imageUrl: product.images?.[0]?.url || 'https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop'
-      });
-      toast.success(`${product.name} added to wishlist`);
-    }
-  };
   
   if (isLoading) {
     return <div className="container mx-auto p-4">Loading product details...</div>;
@@ -127,7 +62,7 @@ const ProductDetails = () => {
         {/* Product Image */}
         <div>
           <img
-            src={product.images?.[0]?.url || "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"}
+            src="https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"
             alt={product.name}
             className="w-full h-auto rounded-lg"
           />
@@ -149,24 +84,24 @@ const ProductDetails = () => {
           
           <div className="flex items-center mb-4">
             <span className="text-2xl font-semibold">KSh {product.price.toFixed(2)}</span>
-            {product.originalPrice && (
+            {product.original_price && (
               <span className="text-lg text-muted-foreground ml-2 line-through">
-                KSh {product.originalPrice.toFixed(2)}
+                KSh {product.original_price.toFixed(2)}
               </span>
             )}
           </div>
           
           <div className="mb-4">
             <Badge>{product.category}</Badge>
-            {product.subCategory && <Badge className="ml-2">{product.subCategory}</Badge>}
+            {product.sub_category && <Badge className="ml-2">{product.sub_category}</Badge>}
             {product.condition && <Badge className="ml-2">{product.condition}</Badge>}
           </div>
           
           <p className="text-muted-foreground mb-4">{product.description}</p>
           
           <div className="flex items-center space-x-4 mb-6">
-            <Button onClick={handleAddToCart}><ShoppingBag className="w-4 h-4 mr-2" /> Add to Cart</Button>
-            <Button variant="outline" onClick={handleAddToWishlist}><Heart className="w-4 h-4 mr-2" /> Add to Wishlist</Button>
+            <Button><ShoppingBag className="w-4 h-4 mr-2" /> Add to Cart</Button>
+            <Button variant="outline"><Heart className="w-4 h-4 mr-2" /> Add to Wishlist</Button>
             <Button variant="ghost"><Share2 className="w-4 h-4 mr-2" /> Share</Button>
           </div>
           
@@ -228,28 +163,28 @@ const ProductDetails = () => {
               <AccordionContent>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Category</span>
+                    <Label>Category</Label>
                     <span>{product.category}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Condition</span>
+                    <Label>Condition</Label>
                     <span>{product.condition}</span>
                   </div>
                   {product.size && (
                     <div className="flex justify-between">
-                      <span>Size</span>
+                      <Label>Size</Label>
                       <span>{product.size}</span>
                     </div>
                   )}
                   {product.color && (
                     <div className="flex justify-between">
-                      <span>Color</span>
+                      <Label>Color</Label>
                       <span>{product.color}</span>
                     </div>
                   )}
                   {product.brand && (
                     <div className="flex justify-between">
-                      <span>Brand</span>
+                      <Label>Brand</Label>
                       <span>{product.brand}</span>
                     </div>
                   )}

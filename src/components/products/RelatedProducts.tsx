@@ -1,16 +1,14 @@
 
 import { useState, useEffect } from 'react';
-import ProductCard from '@/components/products/ProductCard';
+import ProductCard, { ProductType } from '@/components/products/ProductCard';
 import { getSimilarProducts } from '@/services/aiService';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ProductType } from '@/types/product';
 
 // Mock product data - in a real app, this would come from an API
 const allProducts: ProductType[] = [
   {
     id: "1",
     title: "Vintage Denim Jacket",
-    name: "Vintage Denim Jacket",
     price: 45.99,
     originalPrice: 65.00,
     category: "Clothing",
@@ -21,7 +19,6 @@ const allProducts: ProductType[] = [
   {
     id: "2",
     title: "Floral Summer Dress",
-    name: "Floral Summer Dress",
     price: 28.50,
     category: "Clothing",
     condition: "Like New",
@@ -31,7 +28,6 @@ const allProducts: ProductType[] = [
   {
     id: "3",
     title: "Leather Crossbody Bag",
-    name: "Leather Crossbody Bag",
     price: 34.99,
     originalPrice: 50.00,
     category: "Accessories",
@@ -41,7 +37,6 @@ const allProducts: ProductType[] = [
   {
     id: "4",
     title: "Knit Wool Sweater",
-    name: "Knit Wool Sweater",
     price: 32.00,
     category: "Clothing",
     condition: "Good",
@@ -51,7 +46,6 @@ const allProducts: ProductType[] = [
   {
     id: "5",
     title: "Vintage Polaroid Camera",
-    name: "Vintage Polaroid Camera",
     price: 65.00,
     category: "Home",
     condition: "Fair",
@@ -60,7 +54,6 @@ const allProducts: ProductType[] = [
   {
     id: "6",
     title: "Classic Trench Coat",
-    name: "Classic Trench Coat",
     price: 75.99,
     originalPrice: 120.00,
     category: "Clothing",
@@ -71,7 +64,6 @@ const allProducts: ProductType[] = [
   {
     id: "7",
     title: "Boho Style Earrings",
-    name: "Boho Style Earrings",
     price: 15.99,
     category: "Accessories",
     condition: "New",
@@ -80,7 +72,6 @@ const allProducts: ProductType[] = [
   {
     id: "8",
     title: "Retro Record Player",
-    name: "Retro Record Player",
     price: 89.99,
     originalPrice: 110.00,
     category: "Home",

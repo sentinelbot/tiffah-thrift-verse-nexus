@@ -39,7 +39,7 @@ const Wishlist = () => {
                   <Link to={`/product/${product.id}`} className="block relative">
                     <img 
                       src={product.imageUrl} 
-                      alt={product.name} 
+                      alt={product.title} 
                       className="w-full aspect-square object-cover group-hover:scale-105 transition-transform"
                     />
                     {/* Only show discount badge if originalPrice exists */}
@@ -54,7 +54,7 @@ const Wishlist = () => {
                       to={`/product/${product.id}`}
                       className="block font-medium mb-1 hover:text-primary transition-colors"
                     >
-                      {product.name}
+                      {product.title}
                     </Link>
                     <div className="flex justify-between items-baseline mb-3">
                       <div>

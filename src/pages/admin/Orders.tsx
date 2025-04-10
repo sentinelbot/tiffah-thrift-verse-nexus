@@ -3,19 +3,11 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import { OrdersTable } from '@/components/admin/orders/OrdersTable';
 import OrderReceiptPrint from '@/components/admin/printing/OrderReceiptPrint';
 import ShippingLabelPrint from '@/components/admin/printing/ShippingLabelPrint';
-import { Order, OrderStatus, PaymentMethod, PaymentStatus } from '@/types/orderTypes';
 
 // Mock order for demonstration
-const mockOrder: Order = {
+const mockOrder = {
   id: "order-123",
   orderNumber: "TTS-20250409-1234",
-  totalAmount: 4500,
-  status: "processing" as OrderStatus,
-  paymentMethod: "mpesa" as PaymentMethod,
-  paymentStatus: "completed" as PaymentStatus,
-  paymentTransactionId: "MPESA123456",
-  createdAt: new Date(),
-  orderDate: new Date(),
   customer: {
     id: "cust-123",
     name: "Jane Smith",
@@ -23,8 +15,6 @@ const mockOrder: Order = {
   },
   items: [
     {
-      id: "item-001",
-      orderId: "order-123",
       productId: "prod-001",
       product: {
         id: "prod-001",
@@ -36,8 +26,6 @@ const mockOrder: Order = {
       price: 2500
     },
     {
-      id: "item-002",
-      orderId: "order-123",
       productId: "prod-002",
       product: {
         id: "prod-002",
@@ -49,9 +37,11 @@ const mockOrder: Order = {
       price: 1800
     }
   ],
+  totalAmount: 4500,
+  status: "processing" as const,
   paymentInfo: {
-    method: "mpesa" as PaymentMethod,
-    status: "completed" as PaymentStatus,
+    method: "mpesa" as const,
+    status: "completed" as const,
     transactionId: "MPESA123456",
     amount: 4500
   },
@@ -64,21 +54,22 @@ const mockOrder: Order = {
     state: "Nairobi",
     postalCode: "00100",
     country: "Kenya",
-    shippingMethod: "express"
+    shippingMethod: "express" as const
   },
   deliveryInfo: {
     estimatedDelivery: new Date(Date.now() + 86400000), // Tomorrow
     trackingId: "TRK12345"
   },
+  orderDate: new Date(),
   history: [
     {
       timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-      status: "pending" as OrderStatus,
+      status: "pending" as const,
       note: "Order placed"
     },
     {
       timestamp: new Date(Date.now() - 1800000), // 30 minutes ago
-      status: "processing" as OrderStatus,
+      status: "processing" as const,
       note: "Payment confirmed"
     }
   ]
@@ -94,8 +85,8 @@ const Orders = () => {
             <p className="text-muted-foreground">Manage customer orders</p>
           </div>
           <div className="flex gap-2">
-            <OrderReceiptPrint order={mockOrder as any} />
-            <ShippingLabelPrint order={mockOrder as any} />
+            <OrderReceiptPrint order={mockOrder} />
+            <ShippingLabelPrint order={mockOrder} />
           </div>
         </div>
         

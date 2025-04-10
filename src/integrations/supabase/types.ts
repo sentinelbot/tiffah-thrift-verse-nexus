@@ -572,43 +572,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_user_role: {
-        Args: { p_user_id: string; p_role: string }
-        Returns: boolean
-      }
-      get_delivery_staff: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-          name: string
-          email: string
-        }[]
-      }
-      get_user_roles: {
-        Args: { user_id?: string }
-        Returns: string[]
-      }
-      get_user_scan_history: {
-        Args: { p_user_id: string; p_limit?: number }
-        Returns: {
-          id: string
-          barcode: string
-          scan_type: string
-          scan_time: string
-          location: string
-          device_info: string
-        }[]
-      }
       has_role: {
         Args: { required_role: string }
-        Returns: boolean
-      }
-      process_pending_scans: {
-        Args: { scans_json: Json }
-        Returns: Json
-      }
-      remove_user_role: {
-        Args: { p_user_id: string; p_role: string }
         Returns: boolean
       }
     }

@@ -1,48 +1,62 @@
 
-import React from 'react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { SlidersHorizontal, Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type SortOption = 
-  | 'newest'
-  | 'priceAsc'
-  | 'priceDesc'
-  | 'nameAsc'
-  | 'nameDesc'
-  | 'popular';
+  | "featured" 
+  | "newest" 
+  | "price-low-high" 
+  | "price-high-low" 
+  | "name-a-z" 
+  | "name-z-a";
 
-export interface ProductSortProps {
-  sortBy: SortOption;
-  setSortBy: (value: SortOption) => void;
+interface ProductSortProps {
+  value: SortOption;
+  onChange: (value: SortOption) => void;
 }
 
-const ProductSort: React.FC<ProductSortProps> = ({ sortBy, setSortBy }) => {
-  const handleValueChange = (value: string) => {
-    setSortBy(value as SortOption);
-  };
+const sortOptions = [
+  { value: "featured", label: "Featured" },
+  { value: "newest", label: "Newest" },
+  { value: "price-low-high", label: "Price: Low to High" },
+  { value: "price-high-low", label: "Price: High to Low" },
+  { value: "name-a-z", label: "Name: A to Z" },
+  { value: "name-z-a", label: "Name: Z to A" },
+];
 
+const ProductSort = ({ value, onChange }: ProductSortProps) => {
   return (
-    <div className="flex items-center">
-      <span className="text-sm text-muted-foreground mr-2">Sort by:</span>
-      <Select value={sortBy} onValueChange={handleValueChange}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="newest">Newest First</SelectItem>
-          <SelectItem value="priceAsc">Price: Low to High</SelectItem>
-          <SelectItem value="priceDesc">Price: High to Low</SelectItem>
-          <SelectItem value="nameAsc">Name: A to Z</SelectItem>
-          <SelectItem value="nameDesc">Name: Z to A</SelectItem>
-          <SelectItem value="popular">Most Popular</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4" />
+          <span className="hidden sm:inline">Sort</span>
+          <span className="inline sm:hidden">Sort: {sortOptions.find(option => option.value === value)?.label}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuRadioGroup value={value} onValueChange={onChange as any}>
+          {sortOptions.map((option) => (
+            <DropdownMenuRadioItem 
+              key={option.value} 
+              value={option.value}
+              className="flex justify-between"
+            >
+              {option.label}
+              {value === option.value && <Check className="h-4 w-4" />}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

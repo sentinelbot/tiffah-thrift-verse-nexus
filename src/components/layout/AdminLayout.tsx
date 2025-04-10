@@ -1,235 +1,230 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import {
-  Home,
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Package, 
+  ShoppingCart, 
+  Layers, 
+  Printer, 
+  Barcode, 
+  BrainCircuit, 
+  Settings, 
+  Menu, 
+  X, 
   Users,
-  ShoppingCart,
-  Package,
-  Truck,
   BarChart2,
-  Settings,
-  UserCircle,
-  LogOut,
-  Menu,
-  LayoutDashboard,
   Megaphone,
-  Store,
-  Boxes,
-  Barcode,
+  UserCog,
+  ToggleLeft,
+  MessageSquare,
+  Globe
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { ConnectivityIndicator } from '@/components/ui/connectivity-indicator';
 
-interface AdminLayoutProps {
-  children: React.ReactNode;
-}
-
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast.success('Signed out successfully');
-      navigate('/admin/auth');
-    } catch (error) {
-      toast.error('Failed to sign out');
-    }
+const Sidebar = ({ className }: { className?: string }) => {
+  const { pathname } = useLocation();
+  const { user } = useAuth();
+  
+  const role = user?.role || 'admin';
+  
+  const isRoleAllowed = (allowedRoles: string[]) => {
+    return allowedRoles.includes(role);
   };
-
-  // Define navigation items
-  const navItems = [
+  
+  const routes = [
     {
-      name: 'Dashboard',
-      path: '/admin',
-      icon: <LayoutDashboard className="h-5 w-5" />,
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      href: '/admin',
+      active: pathname === '/admin',
+      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
     },
     {
-      name: 'Users',
-      path: '/admin/users',
-      icon: <Users className="h-5 w-5" />,
+      label: 'Products',
+      icon: Package,
+      href: '/admin/products',
+      active: pathname.includes('/admin/products'),
+      allowedRoles: ['admin', 'productManager']
     },
     {
-      name: 'User Management',
-      path: '/admin/user-management',
-      icon: <UserCircle className="h-5 w-5" />,
+      label: 'Orders',
+      icon: ShoppingCart,
+      href: '/admin/orders',
+      active: pathname.includes('/admin/orders'),
+      allowedRoles: ['admin', 'orderPreparer', 'deliveryStaff']
     },
     {
-      name: 'Orders',
-      path: '/admin/orders',
-      icon: <ShoppingCart className="h-5 w-5" />,
+      label: 'Categories',
+      icon: Layers,
+      href: '/admin/categories',
+      active: pathname.includes('/admin/categories'),
+      allowedRoles: ['admin', 'productManager']
     },
     {
-      name: 'Products',
-      path: '/admin/products',
-      icon: <Package className="h-5 w-5" />,
+      label: 'Analytics',
+      icon: BarChart2,
+      href: '/admin/analytics',
+      active: pathname === '/admin/analytics',
+      allowedRoles: ['admin']
     },
     {
-      name: 'Deliveries',
-      path: '/admin/deliveries',
-      icon: <Truck className="h-5 w-5" />,
+      label: 'Marketing',
+      icon: Megaphone,
+      href: '/admin/marketing',
+      active: pathname === '/admin/marketing',
+      allowedRoles: ['admin']
     },
     {
-      name: 'Inventory',
-      path: '/admin/inventory',
-      icon: <Boxes className="h-5 w-5" />,
+      label: 'AI Dashboard',
+      icon: BrainCircuit,
+      href: '/admin/ai',
+      active: pathname === '/admin/ai',
+      allowedRoles: ['admin', 'productManager']
     },
     {
-      name: 'Scanning',
-      path: '/admin/scanning',
-      icon: <Barcode className="h-5 w-5" />,
+      label: 'Staff Management',
+      icon: UserCog,
+      href: '/admin/staff',
+      active: pathname === '/admin/staff',
+      allowedRoles: ['admin']
     },
     {
-      name: 'Reports',
-      path: '/admin/reports',
-      icon: <BarChart2 className="h-5 w-5" />,
+      label: 'Communications',
+      icon: MessageSquare,
+      href: '/admin/communications',
+      active: pathname === '/admin/communications',
+      allowedRoles: ['admin']
     },
     {
-      name: 'Marketing',
-      path: '/admin/marketing',
-      icon: <Megaphone className="h-5 w-5" />,
+      label: 'Content Management',
+      icon: Globe,
+      href: '/admin/content',
+      active: pathname === '/admin/content',
+      allowedRoles: ['admin']
     },
     {
-      name: 'Store',
-      path: '/admin/store',
-      icon: <Store className="h-5 w-5" />,
+      label: 'Feature Toggles',
+      icon: ToggleLeft,
+      href: '/admin/features',
+      active: pathname === '/admin/features',
+      allowedRoles: ['admin']
     },
     {
-      name: 'Settings',
-      path: '/admin/settings',
-      icon: <Settings className="h-5 w-5" />,
+      label: 'Users',
+      icon: Users,
+      href: '/admin/users',
+      active: pathname === '/admin/users',
+      allowedRoles: ['admin']
     },
+    {
+      label: 'Printing',
+      icon: Printer,
+      href: '/admin/printing',
+      active: pathname === '/admin/printing',
+      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
+    },
+    {
+      label: 'Scanning',
+      icon: Barcode,
+      href: '/admin/scanning',
+      active: pathname === '/admin/scanning',
+      allowedRoles: ['admin', 'productManager', 'orderPreparer', 'deliveryStaff']
+    },
+    {
+      label: 'Settings',
+      icon: Settings,
+      href: '/admin/settings',
+      active: pathname === '/admin/settings',
+      allowedRoles: ['admin']
+    }
   ];
-
+  
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-64 border-r">
-        <div className="flex flex-col h-full">
-          <div className="p-4 border-b">
-            <h1 className="text-xl font-bold text-primary">Tiffah Admin</h1>
-          </div>
-          
-          <div className="flex-grow py-4 overflow-y-auto">
-            <nav className="space-y-1 px-2">
-              {navItems.map((item) => (
-                <Button
-                  key={item.name}
-                  variant={window.location.pathname === item.path ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => navigate(item.path)}
-                >
-                  {item.icon}
-                  <span className="ml-3">{item.name}</span>
-                </Button>
-              ))}
-            </nav>
-          </div>
-          
-          <div className="p-4 border-t">
-            <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/')}>
-              <Home className="h-5 w-5" />
-              <span className="ml-3">Main Website</span>
+    <div className={cn("py-4 h-full flex flex-col", className)}>
+      <div className="px-4 py-2 flex items-center border-b mb-4">
+        <h2 className="text-xl font-bold text-primary">Tiffah Admin</h2>
+      </div>
+      <ScrollArea className="flex-1 px-2">
+        <div className="space-y-1 py-2">
+          {routes.filter(route => isRoleAllowed(route.allowedRoles)).map((route, index) => (
+            <Button
+              key={index}
+              variant={route.active ? "secondary" : "ghost"}
+              className={cn("w-full justify-start", route.active && "bg-muted")}
+              asChild
+            >
+              <Link to={route.href}>
+                <route.icon className="h-4 w-4 mr-3" />
+                {route.label}
+              </Link>
             </Button>
+          ))}
+        </div>
+      </ScrollArea>
+      <div className="px-3 py-2 mt-auto border-t">
+        <ConnectivityIndicator className="mx-0 my-2" />
+        <div className="flex items-center gap-2">
+          <div className="rounded-full h-8 w-8 bg-primary flex items-center justify-center">
+            <span className="text-white font-semibold">
+              {user?.name?.charAt(0) || user?.email?.charAt(0) || 'A'}
+            </span>
+          </div>
+          <div className="text-sm truncate">
+            <p className="font-medium">{user?.name || user?.email || 'Admin User'}</p>
+            <p className="text-muted-foreground capitalize">{role}</p>
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+const AdminLayout = ({ children }: { children: React.ReactNode }) => {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  
+  return (
+    <div className="h-screen flex">
+      <aside className="hidden lg:block w-64 border-r h-full">
+        <Sidebar />
+      </aside>
       
-      {/* Mobile Header */}
-      <div className="flex flex-col flex-grow">
-        <header className="sticky top-0 z-10 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex h-full items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="lg:hidden p-0">
-                  <div className="flex flex-col h-full">
-                    <div className="p-4 border-b">
-                      <h1 className="text-xl font-bold text-primary">Tiffah Admin</h1>
-                    </div>
-                    
-                    <div className="flex-grow py-4 overflow-y-auto">
-                      <nav className="space-y-1 px-2">
-                        {navItems.map((item) => (
-                          <Button
-                            key={item.name}
-                            variant={window.location.pathname === item.path ? "secondary" : "ghost"}
-                            className="w-full justify-start"
-                            onClick={() => navigate(item.path)}
-                          >
-                            {item.icon}
-                            <span className="ml-3">{item.name}</span>
-                          </Button>
-                        ))}
-                      </nav>
-                    </div>
-                    
-                    <div className="p-4 border-t">
-                      <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/')}>
-                        <Home className="h-5 w-5" />
-                        <span className="ml-3">Main Website</span>
-                      </Button>
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-              <h1 className="text-lg font-semibold lg:hidden">Tiffah Admin</h1>
+      <div className="lg:hidden">
+        <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 left-4 z-10"
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle Menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-64">
+            <div className="absolute top-4 right-4 z-10">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileOpen(false)}
+              >
+                <X className="h-5 w-5" />
+                <span className="sr-only">Close Menu</span>
+              </Button>
             </div>
-            
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="" alt={user?.name || "Admin"} />
-                      <AvatarFallback>{user?.name?.substring(0, 2).toUpperCase() || "A"}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span>{user?.name || "Admin User"}</span>
-                      <span className="text-xs text-muted-foreground">{user?.email}</span>
-                      <span className="text-xs text-muted-foreground">Administrator</span>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
-                    <Settings className="h-4 w-4 mr-2" /> Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="h-4 w-4 mr-2" /> Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </header>
-        
-        {/* Main Content */}
-        <main className="flex-grow p-4 md:p-6">
-          {children}
-        </main>
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
       </div>
+      
+      <main className="flex-1 overflow-y-auto bg-background p-6 lg:p-8">
+        {children}
+      </main>
     </div>
   );
 };

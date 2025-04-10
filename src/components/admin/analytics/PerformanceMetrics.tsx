@@ -15,8 +15,7 @@ export function PerformanceMetrics() {
       setIsLoading(true);
       try {
         const data = await fetchSystemPerformance();
-        // This ensures we set the state with the correct single item instead of an array
-        setMetrics(Array.isArray(data) ? data[0] : data);
+        setMetrics(data);
       } catch (error) {
         console.error('Error fetching system performance data:', error);
       } finally {

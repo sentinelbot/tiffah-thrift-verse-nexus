@@ -1,65 +1,47 @@
 
-import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { ShieldAlert, LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { ShieldAlert, Home, LogIn, ArrowLeft } from 'lucide-react';
 
 const Unauthorized = () => {
-  const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
-  };
-  
-  const goBack = () => {
-    navigate(-1);
+    try {
+      await signOut();
+      navigate('/admin/auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
   
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="text-center max-w-md">
-        <div className="flex justify-center mb-4">
-          <div className="rounded-full bg-red-100 p-4">
-            <ShieldAlert className="h-16 w-16 text-red-600" />
-          </div>
-        </div>
+    <div className="flex min-h-screen flex-col items-center justify-center text-center px-4">
+      <ShieldAlert className="h-24 w-24 text-primary mb-6" />
+      <h1 className="text-4xl font-bold mb-4">Access Denied</h1>
+      <p className="text-muted-foreground max-w-md mb-8">
+        You don't have permission to access this page. If you believe this is an error, please contact your administrator.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <Button asChild>
+          <Link to="/">Go to Homepage</Link>
+        </Button>
         
-        <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-        
-        <p className="text-muted-foreground mb-6">
-          You don't have permission to access this page. This area is restricted to authorized personnel only.
-        </p>
-        
-        <div className="space-y-2">
-          <Button variant="outline" className="w-full" onClick={goBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Go Back
+        {user ? (
+          <Button variant="outline" onClick={handleSignOut} className="flex items-center gap-2">
+            <LogIn className="h-4 w-4" />
+            Sign Out & Go to Admin Login
           </Button>
-          
-          <Button className="w-full" onClick={() => navigate('/')}>
-            <Home className="mr-2 h-4 w-4" />
-            Go to Homepage
+        ) : (
+          <Button asChild variant="outline" className="flex items-center gap-2">
+            <Link to="/admin/auth">
+              <LogIn className="h-4 w-4 mr-2" />
+              Go to Admin Login
+            </Link>
           </Button>
-          
-          {user ? (
-            <Button variant="ghost" className="w-full" onClick={handleSignOut}>
-              <LogIn className="mr-2 h-4 w-4" />
-              Sign Out and Log In as Different User
-            </Button>
-          ) : (
-            <Button variant="ghost" className="w-full" onClick={() => navigate('/auth')}>
-              <LogIn className="mr-2 h-4 w-4" />
-              Sign In
-            </Button>
-          )}
-        </div>
-        
-        <p className="text-sm text-muted-foreground mt-8">
-          If you believe this is an error, please contact your administrator for assistance.
-        </p>
+        )}
       </div>
     </div>
   );

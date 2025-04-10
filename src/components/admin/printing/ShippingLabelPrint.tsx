@@ -1,158 +1,160 @@
 
-import React, { useState } from 'react';
+import { Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Printer, Download, CheckCircle, MapPin, Phone, UserCircle, Building } from 'lucide-react';
+import PrintDialog from './PrintDialog';
+import { printShippingLabel } from '@/services/printNodeService';
+import { useAuth } from '@/contexts/AuthContext';
 import { Order } from '@/types/order';
-import { formatDate } from '@/utils/dateUtils';
-import { toast } from 'sonner';
+import { generateBarcodeDataURL } from '@/utils/barcodeUtils';
 
 interface ShippingLabelPrintProps {
   order: Order;
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
-const ShippingLabelPrint: React.FC<ShippingLabelPrintProps> = ({ order }) => {
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [isPrintSuccess, setIsPrintSuccess] = useState(false);
+const ShippingLabelPrint = ({ order, variant = 'outline', size = 'default' }: ShippingLabelPrintProps) => {
+  const { user } = useAuth();
   
-  const handlePrint = () => {
-    setIsPrinting(true);
+  // Handle print action
+  const handlePrint = async (printerId: string) => {
+    if (!user) return false;
     
-    // Simulate print job
-    setTimeout(() => {
-      setIsPrinting(false);
-      setIsPrintSuccess(true);
-      
-      // Reset success state after a delay
-      setTimeout(() => {
-        setIsPrintSuccess(false);
-      }, 3000);
-      
-      toast.success('Shipping label printed successfully');
-    }, 2000);
+    try {
+      return await printShippingLabel(order, printerId, user.id);
+    } catch (error) {
+      console.error('Error printing shipping label:', error);
+      return false;
+    }
   };
   
+  // Handle download action
   const handleDownload = () => {
-    toast.success('Shipping label downloaded successfully');
-  };
-
-  // Mock shipping info for the demo
-  const shippingInfo = {
-    fullName: order.customer?.name || 'John Doe',
-    address: '123 Main Street',
-    city: 'Nairobi',
-    postalCode: '00100',
-    country: 'Kenya',
-    phone: '+254 712 345 678',
-  };
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <MapPin className="mr-2 h-4 w-4" />
-          Print Label
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Print Shipping Label</DialogTitle>
-          <DialogDescription>
-            Print or download a shipping label for order #{order.orderNumber}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="py-4 border rounded-md overflow-hidden">
-          <div className="p-6">
-            <div className="border border-dashed border-2 p-6 space-y-4">
-              <div className="flex justify-between">
-                <div>
-                  <h3 className="text-lg font-bold">Tiffah Thrift Store</h3>
-                  <p className="text-sm text-muted-foreground">456 Warehouse Avenue</p>
-                  <p className="text-sm text-muted-foreground">Nairobi, 00100, Kenya</p>
-                  <p className="text-sm text-muted-foreground">+254 712 345 678</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">Order #: {order.orderNumber}</p>
-                  <p className="text-sm text-muted-foreground">Date: {formatDate(order.createdAt)}</p>
-                  <p className="text-sm text-muted-foreground">Items: {order.items.length}</p>
-                </div>
+    try {
+      // Create a simple HTML representation of the shipping label
+      const html = `
+        <html>
+          <head>
+            <title>Shipping Label: Order #${order.orderNumber}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .label { border: 1px solid #ccc; padding: 20px; max-width: 400px; }
+              .header { font-size: 14px; margin-bottom: 20px; text-align: center; }
+              .store-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+              .order-number { font-size: 14px; }
+              .address { margin-bottom: 20px; }
+              .address-title { font-weight: bold; margin-bottom: 5px; }
+              .customer-name { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+              .shipping-method { margin-top: 15px; font-weight: bold; }
+              .barcode-container { text-align: center; margin: 15px 0; }
+              .barcode-id { font-family: monospace; margin-top: 5px; font-size: 12px; }
+              .footer { font-size: 12px; text-align: center; margin-top: 20px; color: #666; }
+            </style>
+          </head>
+          <body>
+            <div class="label">
+              <div class="header">
+                <div class="store-name">Tiffah Thrift Store</div>
+                <div class="order-number">Order #${order.orderNumber}</div>
               </div>
               
-              <div className="border-t border-dashed pt-4">
-                <div className="flex flex-col space-y-1">
-                  <h3 className="text-sm font-medium">SHIP TO:</h3>
-                  <div className="flex items-start gap-2">
-                    <UserCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                    <p className="text-lg font-bold">{shippingInfo.fullName}</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <p>{shippingInfo.address}</p>
-                      <p>{shippingInfo.city}, {shippingInfo.postalCode}</p>
-                      <p>{shippingInfo.country}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <p>{shippingInfo.phone}</p>
-                  </div>
-                </div>
+              <div class="address">
+                <div class="address-title">SHIP TO:</div>
+                <div class="customer-name">${order.shippingInfo.fullName}</div>
+                <div>${order.shippingInfo.address}</div>
+                <div>${order.shippingInfo.city}, ${order.shippingInfo.state} ${order.shippingInfo.postalCode}</div>
+                <div>${order.shippingInfo.country}</div>
+                <div>Phone: ${order.shippingInfo.phone}</div>
               </div>
               
-              <div className="border-t border-dashed pt-4 text-center">
-                <h3 className="text-lg font-bold">SHIPPING METHOD</h3>
-                <p className="text-xl mt-1">Standard Delivery</p>
-                <p className="text-sm text-muted-foreground mt-1">Est. Delivery: {formatDate(new Date(Date.now() + 86400000 * 2))}</p>
+              <div class="shipping-method">
+                Shipping Method: ${order.shippingInfo.shippingMethod === 'express' ? 'EXPRESS DELIVERY' : 'STANDARD DELIVERY'}
               </div>
               
-              <div className="mt-4 flex flex-col items-center">
-                <div className="border border-black p-2 w-48 text-center">
-                  <p className="text-xs">BARCODE AREA</p>
-                  <div className="h-20 flex items-center justify-center">
-                    <p className="font-mono">{order.orderNumber}</p>
-                  </div>
-                </div>
+              <div class="barcode-container">
+                <img src="${generateBarcodeDataURL(order.orderNumber)}" alt="Barcode" />
+                <div class="barcode-id">${order.orderNumber}</div>
+              </div>
+              
+              <div class="footer">
+                Thank you for shopping with Tiffah Thrift Store
               </div>
             </div>
-          </div>
+          </body>
+        </html>
+      `;
+      
+      // Create a blob from the HTML
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `shipping-label-${order.orderNumber}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating shipping label PDF:', error);
+    }
+  };
+  
+  // Shipping label preview component
+  const PreviewContent = () => (
+    <div className="flex flex-col items-center justify-center p-4 border rounded-md bg-white text-black">
+      <div className="max-w-[400px] w-full border border-gray-300 p-6 rounded-md">
+        <div className="text-center mb-6">
+          <h3 className="text-lg font-bold">Tiffah Thrift Store</h3>
+          <p className="text-sm">Order #{order.orderNumber}</p>
         </div>
         
-        <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" />
-            Download PDF
-          </Button>
-          <Button onClick={handlePrint} disabled={isPrinting || isPrintSuccess}>
-            {isPrinting ? (
-              <>
-                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
-                Printing...
-              </>
-            ) : isPrintSuccess ? (
-              <>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Printed!
-              </>
-            ) : (
-              <>
-                <Printer className="mr-2 h-4 w-4" />
-                Print Label
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="mb-6">
+          <p className="font-bold mb-1">SHIP TO:</p>
+          <p className="font-bold">{order.shippingInfo.fullName}</p>
+          <p>{order.shippingInfo.address}</p>
+          <p>{order.shippingInfo.city}, {order.shippingInfo.state} {order.shippingInfo.postalCode}</p>
+          <p>{order.shippingInfo.country}</p>
+          <p>Phone: {order.shippingInfo.phone}</p>
+        </div>
+        
+        <p className="font-bold mb-4">
+          Shipping Method: {order.shippingInfo.shippingMethod === 'express' 
+            ? 'EXPRESS DELIVERY' 
+            : 'STANDARD DELIVERY'
+          }
+        </p>
+        
+        <div className="flex flex-col items-center mb-4">
+          <img 
+            src={generateBarcodeDataURL(order.orderNumber)} 
+            alt="Barcode" 
+            className="max-w-[200px]"
+          />
+          <span className="text-xs font-mono mt-1">{order.orderNumber}</span>
+        </div>
+        
+        <p className="text-center text-sm text-gray-500">
+          Thank you for shopping with Tiffah Thrift Store
+        </p>
+      </div>
+    </div>
+  );
+  
+  return (
+    <PrintDialog
+      title="Print Shipping Label"
+      description="Preview and print a shipping label for this order"
+      previewContent={<PreviewContent />}
+      onPrint={handlePrint}
+      onDownload={handleDownload}
+    >
+      <Button variant={variant} size={size}>
+        <Truck className={`${size === 'icon' ? 'h-4 w-4' : 'h-4 w-4 mr-2'}`} />
+        {size !== 'icon' && 'Print Shipping Label'}
+      </Button>
+    </PrintDialog>
   );
 };
 
