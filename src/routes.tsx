@@ -28,6 +28,8 @@ import Unauthorized from "./pages/Unauthorized";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import Users from "./pages/admin/Users";
+import NotFound from "./pages/NotFound";
+import HomePage from "./components/home/HomePage";
 
 // Create the router with App as the root element
 const router = createBrowserRouter([
@@ -37,7 +39,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Index />,
+        element: <HomePage />,
       },
       {
         path: "product/:id",
@@ -142,6 +144,10 @@ const router = createBrowserRouter([
             element: <Communications />,
           },
         ],
+      },
+      {
+        path: "*",
+        element: <NotFound />,
       },
     ],
   },
