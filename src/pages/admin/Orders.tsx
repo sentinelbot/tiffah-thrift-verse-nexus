@@ -18,7 +18,7 @@ const mockOrder = {
       productId: "prod-001",
       product: {
         id: "prod-001",
-        title: "Vintage Denim Jacket",
+        name: "Vintage Denim Jacket", // Changed from title to name
         price: 2500,
         imageUrl: "/placeholder.svg"
       },
@@ -29,7 +29,7 @@ const mockOrder = {
       productId: "prod-002",
       product: {
         id: "prod-002",
-        title: "Floral Summer Dress",
+        name: "Floral Summer Dress", // Changed from title to name
         price: 1800,
         imageUrl: "/placeholder.svg"
       },

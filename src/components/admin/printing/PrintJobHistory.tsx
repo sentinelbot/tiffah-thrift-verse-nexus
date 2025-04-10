@@ -15,212 +15,175 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { 
+  Printer, 
+  Loader2, 
+  FileText, 
+  Tag, 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  RefreshCw
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  RefreshCw, 
-  FileText, 
-  Package, 
-  Truck,
-  Check,
-  AlertTriangle,
-  Clock
-} from 'lucide-react';
-import { PrintJob, retryPrintJob } from '@/services/printNodeService';
-import { formatDate } from '@/utils/dateUtils';
-
-// Mock data for demo purposes
-const mockPrintJobs: PrintJob[] = [
-  {
-    id: '1001',
-    type: 'label',
-    content: '^XA...',
-    printerId: 'pm_printer_id',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 120000),
-    processedAt: new Date(Date.now() - 115000),
-    relatedId: 'prod-001',
-    requestedBy: 'user-001'
-  },
-  {
-    id: '1002',
-    type: 'receipt',
-    content: '<html>...</html>',
-    printerId: 'op_printer_id',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 90000),
-    processedAt: new Date(Date.now() - 85000),
-    relatedId: 'order-001',
-    requestedBy: 'user-002'
-  },
-  {
-    id: '1003',
-    type: 'shippingLabel',
-    content: '^XA...',
-    printerId: 'ds_printer_id',
-    status: 'failed',
-    createdAt: new Date(Date.now() - 60000),
-    error: 'Printer offline',
-    relatedId: 'order-002',
-    requestedBy: 'user-003'
-  },
-  {
-    id: '1004',
-    type: 'label',
-    content: '^XA...',
-    printerId: 'pm_printer_id',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 30000),
-    relatedId: 'prod-002',
-    requestedBy: 'user-001'
-  }
-];
+import { getPrintJobHistory, PrintJob } from '@/services/printNodeService';
 
 const PrintJobHistory = () => {
-  const [printJobs, setPrintJobs] = useState<PrintJob[]>(mockPrintJobs);
-  const [isLoading, setIsLoading] = useState(false);
+  const [jobs, setJobs] = useState<PrintJob[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Fetch print jobs - in a real app, this would come from an API
-  const fetchPrintJobs = async () => {
+  const loadJobHistory = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
-      // In a real app, this would fetch from an API or database
-      // For demo purposes, we're using mock data
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setPrintJobs([...mockPrintJobs]);
-    } catch (error) {
-      console.error('Error fetching print jobs:', error);
+      const jobHistory = await getPrintJobHistory();
+      setJobs(jobHistory);
+    } catch (err) {
+      console.error('Error fetching print job history:', err);
+      setError('Failed to load print history');
     } finally {
       setIsLoading(false);
     }
   };
   
   useEffect(() => {
-    fetchPrintJobs();
+    loadJobHistory();
   }, []);
   
-  // Retry a failed print job
-  const handleRetry = async (printJob: PrintJob) => {
-    try {
-      const success = await retryPrintJob(printJob);
-      if (success) {
-        // Update local state to show job as completed
-        setPrintJobs(prevJobs => 
-          prevJobs.map(job => 
-            job.id === printJob.id 
-              ? { ...job, status: 'completed', processedAt: new Date(), error: undefined } 
-              : job
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error retrying print job:', error);
-    }
-  };
-  
-  // Get icon based on print job type
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type: PrintJob['type']) => {
     switch (type) {
-      case 'label':
-        return <Package className="h-4 w-4" />;
       case 'receipt':
-        return <FileText className="h-4 w-4" />;
+        return <FileText className="h-4 w-4 text-blue-500" />;
       case 'shippingLabel':
-        return <Truck className="h-4 w-4" />;
+        return <Tag className="h-4 w-4 text-purple-500" />;
+      case 'productLabel':
+        return <Tag className="h-4 w-4 text-green-500" />;
       default:
-        return <FileText className="h-4 w-4" />;
+        return <Printer className="h-4 w-4" />;
     }
   };
   
-  // Get badge based on print job status
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: PrintJob['status']) => {
     switch (status) {
       case 'completed':
         return (
-          <Badge className="bg-green-500">
-            <Check className="h-3 w-3 mr-1" />
+          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+            <CheckCircle className="h-3 w-3 mr-1" />
             Completed
           </Badge>
         );
       case 'failed':
         return (
-          <Badge variant="destructive">
-            <AlertTriangle className="h-3 w-3 mr-1" />
+          <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
+            <XCircle className="h-3 w-3 mr-1" />
             Failed
           </Badge>
         );
-      case 'pending':
       case 'processing':
         return (
-          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500">
+          <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
             <Clock className="h-3 w-3 mr-1" />
-            {status === 'pending' ? 'Pending' : 'Processing'}
+            Processing
           </Badge>
         );
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+  
+  const formatJobType = (type: PrintJob['type']) => {
+    switch (type) {
+      case 'receipt':
+        return 'Order Receipt';
+      case 'shippingLabel':
+        return 'Shipping Label';
+      case 'productLabel':
+        return 'Product Label';
+      default:
+        return type;
+    }
+  };
+  
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diffInHours = Math.abs(now.getTime() - date.getTime()) / 36e5;
+    
+    if (diffInHours < 24) {
+      return `${Math.round(diffInHours)} hour${Math.round(diffInHours) !== 1 ? 's' : ''} ago`;
+    } else {
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
   };
   
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-          <CardTitle>Print Job History</CardTitle>
-          <CardDescription>Recent print jobs and their status</CardDescription>
+          <CardTitle className="text-lg">Print Job History</CardTitle>
+          <CardDescription>
+            Recent print jobs and their status
+          </CardDescription>
         </div>
-        <Button variant="outline" size="icon" onClick={fetchPrintJobs} disabled={isLoading}>
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={loadJobHistory} 
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Type</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Reference</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {printJobs.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  No print jobs found
-                </TableCell>
-              </TableRow>
-            ) : (
-              printJobs.map((job) => (
-                <TableRow key={job.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {getTypeIcon(job.type)}
-                      <span className="capitalize">
-                        {job.type === 'shippingLabel' ? 'Shipping Label' : job.type}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatDate(job.createdAt)}</TableCell>
-                  <TableCell>{getStatusBadge(job.status)}</TableCell>
-                  <TableCell>
-                    <span className="font-mono text-xs">
-                      {job.relatedId}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {job.status === 'failed' && (
-                      <Button size="sm" variant="outline" onClick={() => handleRetry(job)}>
-                        Retry
-                      </Button>
-                    )}
-                  </TableCell>
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+            <span>Loading print history...</span>
+          </div>
+        ) : error ? (
+          <div className="text-red-500 flex items-center justify-center py-8">
+            <XCircle className="h-5 w-5 mr-2" />
+            <span>{error}</span>
+          </div>
+        ) : jobs.length === 0 ? (
+          <div className="text-muted-foreground flex items-center justify-center py-8">
+            No print jobs found
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>ID</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {jobs.map((job) => (
+                  <TableRow key={job.id}>
+                    <TableCell className="flex items-center">
+                      {getTypeIcon(job.type)}
+                      <span className="ml-2">{formatJobType(job.type)}</span>
+                    </TableCell>
+                    <TableCell>{formatDate(job.createdAt)}</TableCell>
+                    <TableCell>{getStatusBadge(job.status)}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {job.relatedId}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

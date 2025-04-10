@@ -1,149 +1,173 @@
 
 import { Order } from '@/types/order';
-import { formatDate } from '@/utils/dateUtils';
+import { formatPrice } from '@/utils/formatters';
 
-export const generateReceiptHTML = (order: Order): string => {
-  // Format total with currency
-  const formatCurrency = (amount: number): string => {
-    return `KSh ${amount.toFixed(2)}`;
-  };
+const generateOrderTable = (order: Order): string => {
+  // Generate item rows
+  const itemRows = order.items.map((item) => {
+    return `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.product.name}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatPrice(item.price)}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatPrice(item.price * item.quantity)}</td>
+      </tr>
+    `;
+  }).join('');
 
-  // Calculate subtotal (before shipping)
-  const subtotal = order.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-  
-  // Calculate tax (VAT - 16% in Kenya)
-  const taxRate = 0.16;
-  const taxAmount = subtotal * taxRate;
-  
-  // Calculate shipping cost
-  const shippingCost = order.shippingInfo.shippingMethod === 'express' ? 500 : 200;
-  
-  // Create the HTML content for the receipt
+  // Generate the table
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #ddd;">
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h1 style="color: #ec4899; margin-bottom: 5px;">Tiffah Thrift Store</h1>
-        <p>Receipt for Order #${order.orderNumber}</p>
-        <p style="color: #666;">${formatDate(order.orderDate)}</p>
-      </div>
-      
-      <div style="margin-bottom: 20px;">
-        <h2 style="font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Customer Information</h2>
-        <p><strong>Name:</strong> ${order.shippingInfo.fullName}</p>
-        <p><strong>Email:</strong> ${order.shippingInfo.email}</p>
-        <p><strong>Phone:</strong> ${order.shippingInfo.phone}</p>
-      </div>
-      
-      <div style="margin-bottom: 20px;">
-        <h2 style="font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Shipping Address</h2>
-        <p>${order.shippingInfo.address}</p>
-        <p>${order.shippingInfo.city}, ${order.shippingInfo.state} ${order.shippingInfo.postalCode}</p>
-        <p>${order.shippingInfo.country}</p>
-        <p><strong>Shipping Method:</strong> ${order.shippingInfo.shippingMethod === 'express' ? 'Express Shipping' : 'Standard Shipping'}</p>
-      </div>
-      
-      <div style="margin-bottom: 20px;">
-        <h2 style="font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Payment Information</h2>
-        <p><strong>Payment Method:</strong> ${order.paymentInfo.method.charAt(0).toUpperCase() + order.paymentInfo.method.slice(1)}</p>
-        <p><strong>Payment Status:</strong> ${order.paymentInfo.status.charAt(0).toUpperCase() + order.paymentInfo.status.slice(1)}</p>
-        ${order.paymentInfo.transactionId ? `<p><strong>Transaction ID:</strong> ${order.paymentInfo.transactionId}</p>` : ''}
-      </div>
-      
-      <div style="margin-bottom: 20px;">
-        <h2 style="font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Order Items</h2>
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="background-color: #f9fafb;">
-              <th style="text-align: left; padding: 8px; border-bottom: 1px solid #eee;">Item</th>
-              <th style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">Qty</th>
-              <th style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">Price</th>
-              <th style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${order.items.map(item => `
-              <tr>
-                <td style="text-align: left; padding: 8px; border-bottom: 1px solid #eee;">${item.product.title}</td>
-                <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">${item.quantity}</td>
-                <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">${formatCurrency(item.price)}</td>
-                <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">${formatCurrency(item.price * item.quantity)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-      
-      <div style="margin-left: auto; width: 250px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-          <span>Subtotal:</span>
-          <span>${formatCurrency(subtotal)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-          <span>VAT (16%):</span>
-          <span>${formatCurrency(taxAmount)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-          <span>Shipping:</span>
-          <span>${formatCurrency(shippingCost)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 10px; padding-top: 5px; border-top: 1px solid #eee;">
-          <span>Total:</span>
-          <span>${formatCurrency(order.totalAmount)}</span>
-        </div>
-      </div>
-      
-      <div style="margin-top: 40px; text-align: center; color: #666; font-size: 14px;">
-        <p>Thank you for shopping at Tiffah Thrift Store!</p>
-        <p>For any questions regarding your order, please contact us at support@tiffahthrift.com</p>
-        <p>© ${new Date().getFullYear()} Tiffah Thrift Store. All rights reserved.</p>
-      </div>
-    </div>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+      <thead>
+        <tr style="background-color: #f2f2f2;">
+          <th style="padding: 8px; text-align: left; border-bottom: 2px solid #ddd;">Item</th>
+          <th style="padding: 8px; text-align: center; border-bottom: 2px solid #ddd;">Qty</th>
+          <th style="padding: 8px; text-align: right; border-bottom: 2px solid #ddd;">Price</th>
+          <th style="padding: 8px; text-align: right; border-bottom: 2px solid #ddd;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemRows}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold;">Subtotal:</td>
+          <td style="padding: 8px; text-align: right;">${formatPrice(order.totalAmount)}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold;">Shipping:</td>
+          <td style="padding: 8px; text-align: right;">${formatPrice(order.shippingInfo.shippingMethod === 'express' ? 500 : 200)}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold; border-top: 2px solid #ddd;">Total:</td>
+          <td style="padding: 8px; text-align: right; font-weight: bold; border-top: 2px solid #ddd;">${formatPrice(order.totalAmount + (order.shippingInfo.shippingMethod === 'express' ? 500 : 200))}</td>
+        </tr>
+      </tfoot>
+    </table>
   `;
 };
 
-export const downloadReceipt = (order: Order): void => {
-  const html = generateReceiptHTML(order);
-  
-  // Create a Blob with the HTML content
-  const blob = new Blob([html], { type: 'text/html' });
-  
-  // Create a URL for the Blob
-  const url = URL.createObjectURL(blob);
-  
-  // Create a link element
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `receipt-${order.orderNumber}.html`;
-  
-  // Append the link to the body
-  document.body.appendChild(link);
-  
-  // Click the link to trigger the download
-  link.click();
-  
-  // Clean up
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+// Generate receipt HTML
+export const generateReceiptHTML = (order: Order): string => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Order Receipt: ${order.orderNumber}</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .receipt-header {
+          text-align: center;
+          margin-bottom: 20px;
+          padding-bottom: 20px;
+          border-bottom: 1px solid #eee;
+        }
+        .receipt-header h1 {
+          margin: 0;
+          color: #ec4899;
+        }
+        .logo {
+          max-width: 150px;
+          margin-bottom: 15px;
+        }
+        .order-info {
+          margin-bottom: 20px;
+        }
+        .order-info p {
+          margin: 5px 0;
+        }
+        .columns {
+          display: flex;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        .column {
+          flex: 1;
+        }
+        .footer {
+          margin-top: 40px;
+          text-align: center;
+          font-size: 0.8em;
+          color: #777;
+          border-top: 1px solid #eee;
+          padding-top: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="receipt-header">
+        <img class="logo" src="https://thrift.lovable.dev/logo.png" alt="Tiffah Thrift Store">
+        <h1>Tiffah Thrift Store</h1>
+        <p>123 Thrift Avenue, Nairobi, Kenya</p>
+        <p>Tel: +254 700 000000 | Email: info@tiffahthrift.com</p>
+      </div>
+      
+      <div class="order-info">
+        <h2>Order Receipt</h2>
+        <p><strong>Order Number:</strong> ${order.orderNumber}</p>
+        <p><strong>Date:</strong> ${new Date(order.orderDate).toLocaleDateString()}</p>
+      </div>
+      
+      <div class="columns">
+        <div class="column">
+          <h3>Customer Information</h3>
+          <p>${order.shippingInfo.fullName}</p>
+          <p>${order.shippingInfo.email}</p>
+          <p>${order.shippingInfo.phone}</p>
+        </div>
+        
+        <div class="column">
+          <h3>Shipping Address</h3>
+          <p>${order.shippingInfo.address}</p>
+          <p>${order.shippingInfo.city}, ${order.shippingInfo.state} ${order.shippingInfo.postalCode}</p>
+          <p>${order.shippingInfo.country}</p>
+        </div>
+      </div>
+      
+      <h3>Order Details</h3>
+      ${generateOrderTable(order)}
+      
+      <div class="order-info">
+        <p><strong>Payment Method:</strong> ${order.paymentInfo.method.charAt(0).toUpperCase() + order.paymentInfo.method.slice(1)}</p>
+        <p><strong>Payment Status:</strong> ${order.paymentInfo.status.charAt(0).toUpperCase() + order.paymentInfo.status.slice(1)}</p>
+        ${order.paymentInfo.transactionId ? `<p><strong>Transaction ID:</strong> ${order.paymentInfo.transactionId}</p>` : ''}
+        <p><strong>Shipping Method:</strong> ${order.shippingInfo.shippingMethod === 'express' ? 'Express (1-3 business days)' : 'Standard (3-7 business days)'}</p>
+      </div>
+      
+      <div class="footer">
+        <p>Thank you for shopping with Tiffah Thrift Store!</p>
+        <p>For any questions or concerns, please contact our customer service at support@tiffahthrift.com</p>
+        <p>© ${new Date().getFullYear()} Tiffah Thrift Store. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
 };
 
-export const printReceipt = (order: Order): void => {
-  const html = generateReceiptHTML(order);
+// Download receipt as PDF
+export const downloadReceipt = (order: Order): void => {
+  const filename = `receipt-${order.orderNumber}.pdf`;
   
-  // Create a new window for printing
-  const printWindow = window.open('', '_blank');
+  // In a real app, you would use a PDF generation library like jsPDF
+  // For this demo, let's simulate a download by opening a new window with the HTML
+  const receiptHTML = generateReceiptHTML(order);
+  const blob = new Blob([receiptHTML], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
   
-  if (printWindow) {
-    // Write the HTML content to the new window
-    printWindow.document.write(html);
-    printWindow.document.close();
-    
-    // Wait for resources to load and then print
-    printWindow.onload = function() {
-      printWindow.print();
-      // Close the window after printing (optional)
-      // printWindow.close();
-    };
-  } else {
-    console.error('Failed to open print window');
-  }
+  // Create a link and trigger download
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  
+  // Clean up
+  URL.revokeObjectURL(url);
 };
