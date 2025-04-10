@@ -1,21 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/types/product';
+import { callRpcFunction } from '@/integrations/supabase/rpcAdapter';
 
 /**
  * Check if the current user has a specific role
  */
 export const checkUserHasRole = async (role: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('has_role', {
-      required_role: role
-    });
-    
-    if (error) {
-      console.error('Error checking user role:', error);
-      return false;
-    }
-    
+    const data = await callRpcFunction<boolean>('has_role', { required_role: role });
     return Boolean(data);
   } catch (error) {
     console.error('Error in checkUserHasRole:', error);
@@ -28,15 +21,7 @@ export const checkUserHasRole = async (role: string): Promise<boolean> => {
  */
 export const getUserRoles = async (userId?: string): Promise<string[]> => {
   try {
-    const { data, error } = await supabase.rpc('get_user_roles', {
-      user_id: userId
-    });
-    
-    if (error) {
-      console.error('Error getting user roles:', error);
-      return [];
-    }
-    
+    const data = await callRpcFunction<string[]>('get_user_roles', { user_id: userId });
     return data || [];
   } catch (error) {
     console.error('Error in getUserRoles:', error);
@@ -49,16 +34,10 @@ export const getUserRoles = async (userId?: string): Promise<string[]> => {
  */
 export const addUserRole = async (userId: string, role: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('add_user_role', {
+    const data = await callRpcFunction<boolean>('add_user_role', {
       p_user_id: userId,
       p_role: role
     });
-    
-    if (error) {
-      console.error('Error adding user role:', error);
-      return false;
-    }
-    
     return Boolean(data);
   } catch (error) {
     console.error('Error in addUserRole:', error);
@@ -71,16 +50,10 @@ export const addUserRole = async (userId: string, role: string): Promise<boolean
  */
 export const removeUserRole = async (userId: string, role: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('remove_user_role', {
+    const data = await callRpcFunction<boolean>('remove_user_role', {
       p_user_id: userId,
       p_role: role
     });
-    
-    if (error) {
-      console.error('Error removing user role:', error);
-      return false;
-    }
-    
     return Boolean(data);
   } catch (error) {
     console.error('Error in removeUserRole:', error);
@@ -93,13 +66,7 @@ export const removeUserRole = async (userId: string, role: string): Promise<bool
  */
 export const getDeliveryStaff = async (): Promise<any[]> => {
   try {
-    const { data, error } = await supabase.rpc('get_delivery_staff');
-    
-    if (error) {
-      console.error('Error getting delivery staff:', error);
-      return [];
-    }
-    
+    const data = await callRpcFunction<any[]>('get_delivery_staff');
     return data || [];
   } catch (error) {
     console.error('Error in getDeliveryStaff:', error);
@@ -112,16 +79,10 @@ export const getDeliveryStaff = async (): Promise<any[]> => {
  */
 export const getUserScanHistory = async (userId: string, limit = 20): Promise<any[]> => {
   try {
-    const { data, error } = await supabase.rpc('get_user_scan_history', {
+    const data = await callRpcFunction<any[]>('get_user_scan_history', {
       p_user_id: userId,
       p_limit: limit
     });
-    
-    if (error) {
-      console.error('Error getting scan history:', error);
-      return [];
-    }
-    
     return data || [];
   } catch (error) {
     console.error('Error in getUserScanHistory:', error);
@@ -134,15 +95,9 @@ export const getUserScanHistory = async (userId: string, limit = 20): Promise<an
  */
 export const processPendingScans = async (scans: any[]): Promise<any> => {
   try {
-    const { data, error } = await supabase.rpc('process_pending_scans', {
+    const data = await callRpcFunction<any>('process_pending_scans', {
       scans_json: scans as Json
     });
-    
-    if (error) {
-      console.error('Error processing pending scans:', error);
-      return { processed: 0, failed: scans.length };
-    }
-    
     return data || { processed: 0, failed: 0 };
   } catch (error) {
     console.error('Error in processPendingScans:', error);

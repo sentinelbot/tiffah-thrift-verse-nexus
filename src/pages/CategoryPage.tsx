@@ -1,192 +1,86 @@
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import ProductCard, { ProductType } from "@/components/products/ProductCard";
-import { useParams } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
-import { Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
 
-const categoryProducts: Record<string, ProductType[]> = {
-  clothing: [
-    {
-      id: "1",
-      title: "Vintage Denim Jacket",
-      price: 45.99,
-      originalPrice: 65.00,
-      category: "Clothing",
-      condition: "Good",
-      size: "M",
-      imageUrl: "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "2",
-      title: "Floral Summer Dress",
-      price: 28.50,
-      category: "Clothing",
-      condition: "Like New",
-      size: "S",
-      imageUrl: "https://images.unsplash.com/photo-1542295669297-4d352b042bca?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "4",
-      title: "Knit Wool Sweater",
-      price: 32.00,
-      category: "Clothing",
-      condition: "Good",
-      size: "L",
-      imageUrl: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "6",
-      title: "Classic Trench Coat",
-      price: 75.99,
-      originalPrice: 120.00,
-      category: "Clothing",
-      condition: "Like New",
-      size: "M",
-      imageUrl: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=600&auto=format&fit=crop"
-    }
-  ],
-  accessories: [
-    {
-      id: "3",
-      title: "Leather Crossbody Bag",
-      price: 34.99,
-      originalPrice: 50.00,
-      category: "Accessories",
-      condition: "Excellent",
-      imageUrl: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "7",
-      title: "Boho Style Earrings",
-      price: 15.99,
-      category: "Accessories",
-      condition: "New",
-      imageUrl: "https://images.unsplash.com/photo-1593795899768-947c4929449d?q=80&w=600&auto=format&fit=crop"
-    }
-  ],
-  home: [
-    {
-      id: "5",
-      title: "Vintage Polaroid Camera",
-      price: 65.00,
-      category: "Home",
-      condition: "Fair",
-      imageUrl: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "8",
-      title: "Retro Record Player",
-      price: 89.99,
-      originalPrice: 110.00,
-      category: "Home",
-      condition: "Good",
-      imageUrl: "https://images.unsplash.com/photo-1593697963288-0c0828328df1?q=80&w=600&auto=format&fit=crop"
-    }
-  ],
-  vintage: [
-    {
-      id: "9",
-      title: "70s Platform Boots",
-      price: 55.00,
-      category: "Vintage",
-      condition: "Good",
-      size: "38",
-      imageUrl: "https://images.unsplash.com/photo-1605812830455-2fadc55bc4ba?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "10",
-      title: "Retro Typewriter",
-      price: 120.00,
-      category: "Vintage",
-      condition: "Fair",
-      imageUrl: "https://images.unsplash.com/photo-1558461570-ecc7abe720cf?q=80&w=600&auto=format&fit=crop"
-    }
-  ]
-};
-
-const categoryNames: Record<string, string> = {
-  clothing: "Clothing",
-  accessories: "Accessories",
-  home: "Home Goods",
-  vintage: "Vintage Collection"
-};
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Layout } from '@/components/layout/Layout';
+import { ProductCard } from '@/components/products/ProductCard';
+import { ProductType } from '@/types/product';
 
 const CategoryPage = () => {
-  const { categoryId } = useParams();
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { category } = useParams<{ category: string }>();
+  const [loading, setLoading] = useState(false);
   
-  const [products, setProducts] = useState<ProductType[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (categoryId) {
-      setProducts(categoryProducts[categoryId] || []);
-    } else {
-      setProducts([]);
+  // This would normally come from an API call
+  const products: ProductType[] = [
+    {
+      id: '1',
+      name: 'Vintage Denim Jacket',
+      title: 'Vintage Denim Jacket',
+      price: 2500,
+      originalPrice: 3500,
+      category: 'Clothing',
+      condition: 'good',
+      size: 'L',
+      color: 'blue',
+      brand: 'Levi\'s',
+      imageUrl: '/placeholder.svg'
+    },
+    {
+      id: '2',
+      name: 'Floral Summer Dress',
+      title: 'Floral Summer Dress',
+      price: 1800,
+      category: 'Clothing',
+      condition: 'new',
+      size: 'M',
+      color: 'pink',
+      brand: 'Zara',
+      imageUrl: '/placeholder.svg'
+    },
+    {
+      id: '3',
+      name: 'Leather Crossbody Bag',
+      title: 'Leather Crossbody Bag',
+      price: 1200,
+      originalPrice: 1800,
+      category: 'Accessories',
+      condition: 'likeNew',
+      color: 'brown',
+      brand: 'Coach',
+      imageUrl: '/placeholder.svg'
     }
-    setLoading(false);
-  }, [categoryId]);
-
-  const categoryName = categoryId ? categoryNames[categoryId] || categoryId : "";
+  ].filter(product => 
+    !category || product.category?.toLowerCase() === category.toLowerCase()
+  );
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">{categoryName}</h1>
+    <Layout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-3xl font-bold mb-8 capitalize">
+          {category || 'All Products'}
+        </h1>
+        
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="bg-gray-800 rounded-lg p-4 h-80 animate-pulse" />
+            ))}
+          </div>
+        ) : products.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <h2 className="text-xl mb-2">No products found</h2>
             <p className="text-muted-foreground">
-              Discover unique {categoryName.toLowerCase()} pieces that tell a story.
+              We couldn't find any products in this category.
             </p>
-            <Separator className="mt-4" />
           </div>
-          
-          <div className="md:hidden flex justify-between items-center mb-4">
-            <span className="text-sm text-muted-foreground">
-              {products.length} products
-            </span>
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2"
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-            >
-              <Filter className="h-4 w-4" />
-              Filters
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {Array.from({ length: 12 }, (_, i) => (
-                  <Skeleton key={i} className="w-full h-64 rounded-lg" />
-                ))}
-              </div>
-            ) : (
-              products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            )}
-          </div>
-          
-          {products.length === 0 && (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">No products found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your filters or check back soon for new arrivals.
-              </p>
-            </div>
-          )}
-        </div>
-      </main>
-      <Footer />
-    </div>
+        )}
+      </div>
+    </Layout>
   );
 };
 

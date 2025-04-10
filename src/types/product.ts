@@ -1,6 +1,5 @@
 
 // Define types for product-related functionality
-import { Product } from '@/types';
 
 export interface ProductType {
   id: string;
@@ -16,7 +15,17 @@ export interface ProductType {
   brand?: string;
 }
 
-export interface ProductWithImages extends Product {
+export interface ProductWithImages {
+  id: string;
+  name: string;
+  title?: string;
+  price: number;
+  originalPrice?: number;
+  category?: string;
+  condition?: string;
+  size?: string;
+  color?: string;
+  brand?: string;
   images: {
     id: string;
     url: string;
