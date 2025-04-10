@@ -1,10 +1,21 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Profile } from '@/types';
 import { Json } from '@/integrations/supabase/types';
+
+interface AddressItem {
+  id: string;
+  fullName: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  phone?: string;
+  isDefault: boolean;
+}
 
 export const useProfile = () => {
   const { user, refreshUserData } = useAuth();
@@ -33,11 +44,10 @@ export const useProfile = () => {
         throw error;
       }
       
-      // Map the Supabase data to our Profile type
       return {
         id: data.id,
         name: data.name || '',
-        email: user?.email || '', // Use the email from auth context
+        email: user?.email || '',
         role: data.role,
         phone: data.phone,
         loyaltyPoints: data.loyalty_points,
@@ -74,11 +84,10 @@ export const useProfile = () => {
         throw error;
       }
       
-      // Map the Supabase data to our Profile type
       const profile: Profile = {
         id: data.id,
         name: data.name || '',
-        email: user.email, // Use the email from auth context
+        email: user.email,
         role: data.role,
         phone: data.phone,
         loyaltyPoints: data.loyalty_points,
@@ -86,7 +95,6 @@ export const useProfile = () => {
         updated_at: data.updated_at
       };
       
-      // Refresh user data in auth context to reflect changes
       await refreshUserData();
       
       toast.success('Profile updated successfully');
@@ -111,7 +119,6 @@ export const useProfile = () => {
     setError(null);
     
     try {
-      // First, get current addresses
       const { data: profile, error: fetchError } = await supabase
         .from('profiles')
         .select('address_book')
@@ -122,15 +129,13 @@ export const useProfile = () => {
         throw fetchError;
       }
       
-      // Add new address to the array
       const addressBook = profile.address_book || [];
       const newAddress = {
         id: crypto.randomUUID(),
-        isDefault: addressBook.length === 0, // First address is default
+        isDefault: addressBook.length === 0,
         ...address
       };
       
-      // Update profile with new address book
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -164,7 +169,6 @@ export const useProfile = () => {
     setError(null);
     
     try {
-      // First, get current addresses
       const { data: profile, error: fetchError } = await supabase
         .from('profiles')
         .select('address_book')
@@ -177,21 +181,18 @@ export const useProfile = () => {
       
       const addressBook = profile.address_book || [];
       
-      // Find and update the address
-      const updatedAddressBook = addressBook.map((addr: any) => 
-        addr.id === addressId ? { ...addr, ...updates } : addr
+      const updatedAddressBook = addressBook.map((addr: Json) => 
+        (addr as any).id === addressId ? { ...(addr as any), ...updates } : addr
       );
       
-      // Handle setting an address as default
       if (updates.isDefault) {
-        updatedAddressBook.forEach((addr: any) => {
-          if (addr.id !== addressId) {
-            addr.isDefault = false;
+        updatedAddressBook.forEach((addr: Json) => {
+          if ((addr as any).id !== addressId) {
+            (addr as any).isDefault = false;
           }
         });
       }
       
-      // Update profile with modified address book
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -225,7 +226,6 @@ export const useProfile = () => {
     setError(null);
     
     try {
-      // First, get current addresses
       const { data: profile, error: fetchError } = await supabase
         .from('profiles')
         .select('address_book')
@@ -238,16 +238,13 @@ export const useProfile = () => {
       
       const addressBook = profile.address_book || [];
       
-      // Filter out the address to delete
-      const filteredAddressBook = addressBook.filter((addr: any) => addr.id !== addressId);
+      const filteredAddressBook = addressBook.filter((addr: Json) => (addr as any).id !== addressId);
       
-      // If the deleted address was default, make another one default
-      const wasDefault = addressBook.find((addr: any) => addr.id === addressId)?.isDefault;
+      const wasDefault = addressBook.find((addr: Json) => (addr as any).id === addressId)?.(addr as any).isDefault;
       if (wasDefault && filteredAddressBook.length > 0) {
-        filteredAddressBook[0].isDefault = true;
+        (filteredAddressBook[0] as any).isDefault = true;
       }
       
-      // Update profile with filtered address book
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
