@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Profile } from '@/types';
+import { Json } from '@/integrations/supabase/types';
 
 export const useProfile = () => {
   const { user, refreshUserData } = useAuth();
@@ -32,7 +33,17 @@ export const useProfile = () => {
         throw error;
       }
       
-      return data as Profile;
+      // Map the Supabase data to our Profile type
+      return {
+        id: data.id,
+        name: data.name || '',
+        email: user?.email || '', // Use the email from auth context
+        role: data.role,
+        phone: data.phone,
+        loyaltyPoints: data.loyalty_points,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      } as Profile;
     } catch (err: any) {
       console.error('Error fetching profile:', err);
       setError(err.message || 'Failed to fetch profile');
@@ -63,11 +74,23 @@ export const useProfile = () => {
         throw error;
       }
       
+      // Map the Supabase data to our Profile type
+      const profile: Profile = {
+        id: data.id,
+        name: data.name || '',
+        email: user.email, // Use the email from auth context
+        role: data.role,
+        phone: data.phone,
+        loyaltyPoints: data.loyalty_points,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+      
       // Refresh user data in auth context to reflect changes
       await refreshUserData();
       
       toast.success('Profile updated successfully');
-      return data as Profile;
+      return profile;
     } catch (err: any) {
       console.error('Error updating profile:', err);
       setError(err.message || 'Failed to update profile');
