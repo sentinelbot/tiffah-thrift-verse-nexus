@@ -27,9 +27,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getPrintJobHistory, PrintJob } from '@/services/printNodeService';
+import { PrintJob, getPrintHistory } from '@/services/printNodeService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const PrintJobHistory = () => {
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<PrintJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ const PrintJobHistory = () => {
     setError(null);
     
     try {
-      const jobHistory = await getPrintJobHistory();
+      const jobHistory = await getPrintHistory(user?.id);
       setJobs(jobHistory);
     } catch (err) {
       console.error('Error fetching print job history:', err);
@@ -50,16 +52,18 @@ const PrintJobHistory = () => {
   };
   
   useEffect(() => {
-    loadJobHistory();
-  }, []);
+    if (user) {
+      loadJobHistory();
+    }
+  }, [user]);
   
   const getTypeIcon = (type: PrintJob['type']) => {
     switch (type) {
       case 'receipt':
         return <FileText className="h-4 w-4 text-blue-500" />;
-      case 'shippingLabel':
+      case 'shipping':
         return <Tag className="h-4 w-4 text-purple-500" />;
-      case 'productLabel':
+      case 'label':
         return <Tag className="h-4 w-4 text-green-500" />;
       default:
         return <Printer className="h-4 w-4" />;
@@ -98,9 +102,9 @@ const PrintJobHistory = () => {
     switch (type) {
       case 'receipt':
         return 'Order Receipt';
-      case 'shippingLabel':
+      case 'shipping':
         return 'Shipping Label';
-      case 'productLabel':
+      case 'label':
         return 'Product Label';
       default:
         return type;

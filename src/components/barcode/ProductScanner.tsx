@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { processScan } from '@/utils/scannerUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { packageCheck, AlertCircle } from 'lucide-react';
+import { PackageCheck, AlertCircle } from 'lucide-react';
 import BarcodeScanner from './BarcodeScanner';
 
 const ProductScanner = () => {
@@ -122,7 +122,7 @@ const ProductScanner = () => {
                     className="h-full w-full object-cover rounded-md"
                   />
                 ) : (
-                  <packageCheck className="h-12 w-12 text-muted-foreground" />
+                  <PackageCheck className="h-12 w-12 text-muted-foreground" />
                 )}
               </div>
               <div className="flex-1">
