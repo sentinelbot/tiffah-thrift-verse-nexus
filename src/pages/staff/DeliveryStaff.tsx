@@ -1,559 +1,250 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
+import { Truck, Package, Scan, Navigation2, Phone, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { 
-  Truck, 
-  Package, 
-  Search, 
-  MapPin, 
-  CameraIcon, 
-  CheckCircle,
-  Calendar,
-  Phone,
-  ClockIcon,
-  ArrowUpRight,
-  ChevronLeft,
-  Loader2
-} from 'lucide-react';
+import MobileDeliveryApp from '@/components/mobile/MobileDeliveryApp';
+import ProductScanner from '@/components/barcode/ProductScanner';
+import OrderScanner from '@/components/barcode/OrderScanner';
 import { toast } from 'sonner';
 
-// Mock delivery data
-const mockDeliveries = {
-  assigned: [
-    {
-      id: "DEL-20250407-0001",
-      orderNumber: "TTS-20250406-0001",
-      customer: {
-        name: "Bob Williams",
-        phone: "+254 745 678 901",
-        email: "bob@example.com"
-      },
-      items: [
-        { name: "Wool Sweater", quantity: 1 },
-        { name: "Winter Gloves", quantity: 1 }
-      ],
-      address: {
-        street: "101 Thika Road",
-        city: "Nairobi",
-        state: "Nairobi",
-        postalCode: "00300",
-        country: "Kenya",
-        instructions: "Leave with security if not available"
-      },
-      status: "assigned",
-      estimatedDelivery: "Today, 2-4 PM",
-      distance: "5.2 km"
-    },
-    {
-      id: "DEL-20250407-0002",
-      orderNumber: "TTS-20250406-0002",
-      customer: {
-        name: "Sarah Johnson",
-        phone: "+254 756 789 012",
-        email: "sarah@example.com"
-      },
-      items: [
-        { name: "Leather Handbag", quantity: 1 }
-      ],
-      address: {
-        street: "25 Kilimani Road",
-        city: "Nairobi",
-        state: "Nairobi",
-        postalCode: "00100",
-        country: "Kenya",
-        instructions: null
-      },
-      status: "assigned",
-      estimatedDelivery: "Today, 4-6 PM",
-      distance: "3.8 km"
-    }
-  ],
-  inProgress: [
-    {
-      id: "DEL-20250407-0003",
-      orderNumber: "TTS-20250406-0003",
-      customer: {
-        name: "Michael Brown",
-        phone: "+254 767 890 123",
-        email: "michael@example.com"
-      },
-      items: [
-        { name: "Linen Shirt", quantity: 1 },
-        { name: "Chino Pants", quantity: 1 }
-      ],
-      address: {
-        street: "78 Waiyaki Way",
-        city: "Nairobi",
-        state: "Nairobi",
-        postalCode: "00200",
-        country: "Kenya",
-        instructions: "Call upon arrival"
-      },
-      status: "inProgress",
-      estimatedDelivery: "Today, 1-3 PM",
-      distance: "7.5 km"
-    }
-  ],
-  completed: [
-    {
-      id: "DEL-20250406-0001",
-      orderNumber: "TTS-20250405-0001",
-      customer: {
-        name: "Emily Davis",
-        phone: "+254 778 901 234",
-        email: "emily@example.com"
-      },
-      items: [
-        { name: "Vintage Sunglasses", quantity: 1 },
-        { name: "Summer Hat", quantity: 1 }
-      ],
-      address: {
-        street: "15 Karen Road",
-        city: "Nairobi",
-        state: "Nairobi",
-        postalCode: "00500",
-        country: "Kenya",
-        instructions: null
-      },
-      status: "completed",
-      estimatedDelivery: "Yesterday, 10 AM - 12 PM",
-      actualDelivery: "Yesterday, 11:23 AM",
-      distance: "12.3 km"
-    }
-  ]
-};
+const PENDING_DELIVERIES = [
+  {
+    id: 'DEL001',
+    orderId: 'TTS-20250410-0001',
+    customer: 'Jane Smith',
+    address: '123 Kimathi Street, Nairobi',
+    items: 3,
+    scheduledTime: '10:00 AM - 12:00 PM',
+    phone: '+254712345678'
+  },
+  {
+    id: 'DEL002',
+    orderId: 'TTS-20250410-0002',
+    customer: 'John Doe',
+    address: '456 Moi Avenue, Nairobi',
+    items: 1,
+    scheduledTime: '1:00 PM - 3:00 PM',
+    phone: '+254723456789'
+  }
+];
 
-const DeliveryDetail = ({ delivery, onBack }: { delivery: any, onBack: () => void }) => {
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [isCapturingProof, setIsCapturingProof] = useState(false);
-  
-  const handleStartDelivery = () => {
-    setIsUpdatingStatus(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      toast.success("Delivery status updated to 'In Progress'");
-      setIsUpdatingStatus(false);
-      // In a real app, you would update the delivery status
-    }, 1500);
-  };
-  
-  const handleCaptureDelivery = () => {
-    setIsCapturingProof(true);
-    
-    // Simulate capturing proof of delivery
-    setTimeout(() => {
-      toast.success("Proof of delivery captured successfully");
-      setIsCapturingProof(false);
-      
-      // Wait a moment and then simulate completing delivery
-      setTimeout(() => {
-        toast.success("Delivery marked as completed");
-        // In a real app, you would update the delivery status
-      }, 1000);
-    }, 2000);
-  };
-  
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center">
-        <Button
-          variant="outline"
-          onClick={onBack}
-          className="flex items-center"
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          Back to Deliveries
-        </Button>
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="flex items-center">
-                Delivery #{delivery.id}
-                <Badge className={`ml-3 ${
-                  delivery.status === 'assigned' ? 'bg-yellow-500' : 
-                  delivery.status === 'inProgress' ? 'bg-blue-500' : 
-                  'bg-green-500'
-                }`}>
-                  {delivery.status === 'assigned' ? 'Assigned' : 
-                   delivery.status === 'inProgress' ? 'In Progress' : 
-                   'Completed'}
-                </Badge>
-              </CardTitle>
-              <CardDescription>Order #{delivery.orderNumber}</CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => {
-                // This would ideally open maps app with directions
-                toast.info("Opening navigation to customer's address");
-              }}>
-                <MapPin className="mr-2 h-4 w-4" />
-                Navigate
-              </Button>
-              <Button variant="outline" onClick={() => {
-                // This would ideally call the customer's phone number
-                toast.info(`Calling customer: ${delivery.customer.phone}`);
-              }}>
-                <Phone className="mr-2 h-4 w-4" />
-                Call
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          <div className="flex flex-col md:flex-row md:gap-6">
-            <div className="flex-1 space-y-4">
-              <div>
-                <h3 className="font-medium mb-2">Customer Information</h3>
-                <p className="font-medium">{delivery.customer.name}</p>
-                <p className="text-sm text-muted-foreground">{delivery.customer.phone}</p>
-                <p className="text-sm text-muted-foreground">{delivery.customer.email}</p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium mb-2">Delivery Address</h3>
-                <p className="text-sm">{delivery.address.street}</p>
-                <p className="text-sm">
-                  {delivery.address.city}, {delivery.address.state} {delivery.address.postalCode}
-                </p>
-                <p className="text-sm">{delivery.address.country}</p>
-                {delivery.address.instructions && (
-                  <div className="mt-2 p-2 bg-muted rounded text-sm">
-                    <span className="font-medium">Instructions: </span>
-                    {delivery.address.instructions}
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <h3 className="font-medium mb-2">Items ({delivery.items.length})</h3>
-                <div className="space-y-2">
-                  {delivery.items.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between py-1">
-                      <span>{item.name}</span>
-                      <span>Qty: {item.quantity}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex-1 space-y-4 mt-6 md:mt-0">
-              <div>
-                <h3 className="font-medium mb-2">Delivery Information</h3>
-                <div className="flex items-center mb-2">
-                  <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <p className="text-sm">
-                    <span className="font-medium">Estimated: </span>
-                    {delivery.estimatedDelivery}
-                  </p>
-                </div>
-                
-                {delivery.actualDelivery && (
-                  <div className="flex items-center mb-2">
-                    <ClockIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <p className="text-sm">
-                      <span className="font-medium">Delivered: </span>
-                      {delivery.actualDelivery}
-                    </p>
-                  </div>
-                )}
-                
-                <div className="flex items-center">
-                  <Truck className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <p className="text-sm">
-                    <span className="font-medium">Distance: </span>
-                    {delivery.distance}
-                  </p>
-                </div>
-              </div>
-              
-              {delivery.status === 'assigned' && (
-                <Button 
-                  className="w-full mt-6" 
-                  onClick={handleStartDelivery}
-                  disabled={isUpdatingStatus}
-                >
-                  {isUpdatingStatus ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Truck className="mr-2 h-4 w-4" />
-                      Start Delivery
-                    </>
-                  )}
-                </Button>
-              )}
-              
-              {delivery.status === 'inProgress' && (
-                <Button 
-                  className="w-full mt-6" 
-                  onClick={handleCaptureDelivery}
-                  disabled={isCapturingProof}
-                >
-                  {isCapturingProof ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Capturing...
-                    </>
-                  ) : (
-                    <>
-                      <CameraIcon className="mr-2 h-4 w-4" />
-                      Capture Proof of Delivery
-                    </>
-                  )}
-                </Button>
-              )}
-              
-              {delivery.status === 'completed' && (
-                <div className="bg-muted p-4 rounded-md mt-6 text-center">
-                  <CheckCircle className="h-8 w-8 mx-auto text-green-500 mb-2" />
-                  <p className="font-medium">Delivery completed</p>
-                  <p className="text-sm text-muted-foreground">
-                    Delivered at {delivery.actualDelivery}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
+const COMPLETED_DELIVERIES = [
+  {
+    id: 'DEL000',
+    orderId: 'TTS-20250409-0003',
+    customer: 'Alice Johnson',
+    address: '789 Kenyatta Avenue, Nairobi',
+    items: 2,
+    scheduledTime: '9:00 AM - 11:00 AM',
+    completedAt: '10:15 AM',
+    phone: '+254734567890'
+  }
+];
 
 const DeliveryStaff = () => {
-  const [activeTab, setActiveTab] = useState("assigned");
-  const [selectedDelivery, setSelectedDelivery] = useState<any | null>(null);
-  
-  const handleDeliveryClick = (delivery: any) => {
-    setSelectedDelivery(delivery);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const navigate = useNavigate();
+
+  const handleStartDelivery = (delivery: typeof PENDING_DELIVERIES[0]) => {
+    toast.success(`Started delivery to ${delivery.customer}`);
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(delivery.address)}`,
+      '_blank'
+    );
   };
-  
-  if (selectedDelivery) {
-    return <DeliveryDetail delivery={selectedDelivery} onBack={() => setSelectedDelivery(null)} />;
+
+  const handleCallCustomer = (phone: string) => {
+    window.open(`tel:${phone}`, '_self');
+  };
+
+  const handleScanComplete = (code: string) => {
+    toast.success(`Scanned code: ${code}`);
+  };
+
+  if (viewMode === 'mobile') {
+    return <MobileDeliveryApp />;
   }
-  
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Delivery Management</h1>
-      
-      <Tabs defaultValue="assigned" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="assigned">
-            Assigned
-            <Badge variant="outline" className="ml-2">{mockDeliveries.assigned.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="inProgress">
-            In Progress
-            <Badge variant="outline" className="ml-2">{mockDeliveries.inProgress.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="completed">
-            Completed
-            <Badge variant="outline" className="ml-2">{mockDeliveries.completed.length}</Badge>
-          </TabsTrigger>
-        </TabsList>
-        
-        <div className="relative mb-6">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search deliveries..." className="pl-8" />
+    <div className="container mx-auto p-4 md:p-8 max-w-6xl">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Delivery Dashboard</h1>
+          <p className="text-muted-foreground">
+            Manage and track your deliveries
+          </p>
         </div>
-        
-        <TabsContent value="assigned" className="space-y-4">
-          {mockDeliveries.assigned.map((delivery) => (
-            <Card 
-              key={delivery.id} 
-              className="hover:bg-muted/50 cursor-pointer transition-colors"
-              onClick={() => handleDeliveryClick(delivery)}
-            >
-              <CardContent className="p-6">
-                <div className="flex justify-between mb-3">
-                  <div>
-                    <h3 className="font-medium flex items-center">
-                      Delivery #{delivery.id}
-                      <Badge className="ml-2 bg-yellow-500">Assigned</Badge>
-                    </h3>
-                    <p className="text-sm text-muted-foreground">Order #{delivery.orderNumber}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <ClockIcon className="h-4 w-4 mr-1 text-muted-foreground" />
-                    <p className="text-sm">{delivery.estimatedDelivery}</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex gap-2 mb-2">
-                      <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+        <Button onClick={() => setViewMode('mobile')}>
+          <Phone className="mr-2 h-4 w-4" />
+          Open Mobile App
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="scan">Scan</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl flex items-center">
+                  <Package className="mr-2 h-5 w-5 text-primary" />
+                  Pending Deliveries
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{PENDING_DELIVERIES.length}</div>
+                <p className="text-sm text-muted-foreground">Scheduled for today</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl flex items-center">
+                  <Truck className="mr-2 h-5 w-5 text-primary" />
+                  Completed Today
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{COMPLETED_DELIVERIES.length}</div>
+                <p className="text-sm text-muted-foreground">Out of {PENDING_DELIVERIES.length + COMPLETED_DELIVERIES.length} scheduled</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl flex items-center">
+                  <Clock className="mr-2 h-5 w-5 text-primary" />
+                  Average Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">28 min</div>
+                <p className="text-sm text-muted-foreground">Per delivery</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Today's Deliveries</CardTitle>
+              <CardDescription>Manage your scheduled deliveries for today</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <h3 className="font-medium">Pending ({PENDING_DELIVERIES.length})</h3>
+                {PENDING_DELIVERIES.map((delivery) => (
+                  <div key={delivery.id} className="border rounded-md p-4">
+                    <div className="flex justify-between items-start mb-2">
                       <div>
-                        <p className="text-sm">{delivery.address.street}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {delivery.address.city}, {delivery.address.state}
-                        </p>
+                        <h4 className="font-medium">{delivery.customer}</h4>
+                        <p className="text-sm text-muted-foreground">{delivery.address}</p>
                       </div>
+                      <Badge variant="outline" size="sm">
+                        Order #{delivery.orderId.split('-').pop()}
+                      </Badge>
                     </div>
-                    <p className="text-sm font-medium">
-                      Distance: {delivery.distance}
-                    </p>
+                    <div className="flex items-center text-sm text-muted-foreground mb-4">
+                      <Clock className="h-4 w-4 mr-1" />
+                      {delivery.scheduledTime} • {delivery.items} {delivery.items === 1 ? 'item' : 'items'}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleCallCustomer(delivery.phone)}
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
+                        Call
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleStartDelivery(delivery)}
+                      >
+                        <Navigation2 className="h-4 w-4 mr-2" />
+                        Start Delivery
+                      </Button>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium">{delivery.customer.name}</p>
-                    <p className="text-sm text-muted-foreground">{delivery.customer.phone}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Items: {delivery.items.reduce((sum: number, item: any) => sum + item.quantity, 0)}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end mt-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="mr-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toast.info("Opening navigation to customer's address");
-                    }}
-                  >
-                    <MapPin className="mr-2 h-4 w-4" />
-                    Navigate
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toast.success("Delivery status updated to 'In Progress'");
-                    }}
-                  >
-                    <Truck className="mr-2 h-4 w-4" />
-                    Start Delivery
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-        
-        <TabsContent value="inProgress" className="space-y-4">
-          {mockDeliveries.inProgress.map((delivery) => (
-            <Card 
-              key={delivery.id} 
-              className="hover:bg-muted/50 cursor-pointer transition-colors"
-              onClick={() => handleDeliveryClick(delivery)}
-            >
-              <CardContent className="p-6">
-                <div className="flex justify-between mb-3">
-                  <div>
-                    <h3 className="font-medium flex items-center">
-                      Delivery #{delivery.id}
-                      <Badge className="ml-2 bg-blue-500">In Progress</Badge>
-                    </h3>
-                    <p className="text-sm text-muted-foreground">Order #{delivery.orderNumber}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <ClockIcon className="h-4 w-4 mr-1 text-muted-foreground" />
-                    <p className="text-sm">{delivery.estimatedDelivery}</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex gap-2 mb-2">
-                      <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                ))}
+
+                <h3 className="font-medium mt-6">Completed Today ({COMPLETED_DELIVERIES.length})</h3>
+                {COMPLETED_DELIVERIES.map((delivery) => (
+                  <div key={delivery.id} className="border rounded-md p-4 bg-gray-50 dark:bg-gray-900">
+                    <div className="flex justify-between items-start mb-2">
                       <div>
-                        <p className="text-sm">{delivery.address.street}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {delivery.address.city}, {delivery.address.state}
-                        </p>
+                        <h4 className="font-medium">{delivery.customer}</h4>
+                        <p className="text-sm text-muted-foreground">{delivery.address}</p>
                       </div>
+                      <Badge variant="outline" size="sm">
+                        Order #{delivery.orderId.split('-').pop()}
+                      </Badge>
                     </div>
-                    <p className="text-sm font-medium">
-                      Distance: {delivery.distance}
-                    </p>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4 mr-1" />
+                      Completed at {delivery.completedAt}
+                    </div>
                   </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium">{delivery.customer.name}</p>
-                    <p className="text-sm text-muted-foreground">{delivery.customer.phone}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Items: {delivery.items.reduce((sum: number, item: any) => sum + item.quantity, 0)}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end mt-4">
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toast.success("Proof of delivery captured successfully");
-                      setTimeout(() => {
-                        toast.success("Delivery marked as completed");
-                      }, 1000);
-                    }}
-                  >
-                    <CameraIcon className="mr-2 h-4 w-4" />
-                    Complete Delivery
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Delivery Map</CardTitle>
+              <CardDescription>View and optimize your delivery routes</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127635.66247630147!2d36.752610273193356!3d-1.3028617905594762!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f11655c311541%3A0x9dd769ac1c10b897!2sNairobi%2C%20Kenya!5e0!3m2!1sen!2sus!4v1650123456789!5m2!1sen!2sus" 
+                width="100%" 
+                height="450" 
+                style={{ border: 0 }} 
+                allowFullScreen={true} 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+                className="rounded-b-lg"
+              ></iframe>
+            </CardContent>
+          </Card>
         </TabsContent>
-        
-        <TabsContent value="completed" className="space-y-4">
-          {mockDeliveries.completed.map((delivery) => (
-            <Card 
-              key={delivery.id} 
-              className="hover:bg-muted/50 cursor-pointer transition-colors"
-              onClick={() => handleDeliveryClick(delivery)}
-            >
-              <CardContent className="p-6">
-                <div className="flex justify-between mb-3">
-                  <div>
-                    <h3 className="font-medium flex items-center">
-                      Delivery #{delivery.id}
-                      <Badge className="ml-2 bg-green-500">Completed</Badge>
-                    </h3>
-                    <p className="text-sm text-muted-foreground">Order #{delivery.orderNumber}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
-                    <p className="text-sm">{delivery.actualDelivery}</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm">{delivery.address.street}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {delivery.address.city}, {delivery.address.state}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium">{delivery.customer.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Items: {delivery.items.reduce((sum: number, item: any) => sum + item.quantity, 0)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+
+        <TabsContent value="scan" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <OrderScanner 
+              onScanComplete={handleScanComplete}
+            />
+            
+            <ProductScanner 
+              onScanComplete={handleScanComplete}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Delivery History</CardTitle>
+              <CardDescription>View your past deliveries and performance metrics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p>Delivery history will be displayed here</p>
+                {/* Delivery history table would go here */}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
