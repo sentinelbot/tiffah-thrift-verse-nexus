@@ -2,8 +2,9 @@
 import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
-// Import all page components first
+// Import App component first to prevent initialization issues
 import App from "./App";
+// Import all other page components
 import Index from "./pages/Index";
 import ProductDetails from "./pages/ProductDetails"; 
 import TrackOrderPage from "./pages/TrackOrderPage";
@@ -24,7 +25,7 @@ import AdminRoutes from "./routes/AdminRoutes";
 import StaffRoutes from "./routes/StaffRoutes";
 import DeliveryReports from "./pages/staff/DeliveryReports";
 
-// Then define routes that use the imported components
+// Define the router after importing all components
 const router = createBrowserRouter([
   {
     path: "/",
