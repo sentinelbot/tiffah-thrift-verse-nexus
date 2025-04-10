@@ -1,6 +1,6 @@
 
 import { createBrowserRouter } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import App from "./App";
 
 // Import all page components individually 
 import Index from "./pages/Index";
@@ -23,12 +23,11 @@ import AdminRoutes from "./routes/AdminRoutes";
 import StaffRoutes from "./routes/StaffRoutes";
 import DeliveryReports from "./pages/staff/DeliveryReports";
 
-// Create the router without any references to App
+// Create the router with App as the root element
 const router = createBrowserRouter([
   {
     path: "/",
-    // We'll use a simple container here instead of App
-    element: <div id="app-container"></div>,
+    element: <App />,
     children: [
       {
         index: true,
