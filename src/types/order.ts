@@ -20,9 +20,9 @@ export interface OrderItem {
   productId: string;
   product: {
     id: string;
-    title: string;
+    name: string;  // Changed to match other files
     price: number;
-    imageUrl: string;
+    imageUrl?: string;
   };
   quantity: number;
   price: number;

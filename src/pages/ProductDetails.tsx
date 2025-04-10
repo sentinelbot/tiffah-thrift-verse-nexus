@@ -38,7 +38,17 @@ const ProductDetails = () => {
         .single();
       
       if (error) throw error;
-      return data as Product;
+      
+      // Parse measurements JSON string if needed
+      const measurements = data.measurements ? 
+        (typeof data.measurements === 'string' ? 
+          JSON.parse(data.measurements) : data.measurements) : 
+        { chest: null, waist: null, length: null };
+        
+      return { 
+        ...data,
+        measurements
+      } as Product;
     },
   });
   

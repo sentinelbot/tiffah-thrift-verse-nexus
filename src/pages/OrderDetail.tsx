@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -54,7 +53,6 @@ const OrderDetail = () => {
     fetchOrder();
   }, [id, toast]);
   
-  // Function to render the appropriate icon for each order status
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "pending":
@@ -91,7 +89,6 @@ const OrderDetail = () => {
     }
   };
   
-  // Handler for downloading receipt
   const handleDownloadReceipt = () => {
     if (order) {
       downloadReceipt(order);
@@ -102,7 +99,6 @@ const OrderDetail = () => {
     }
   };
   
-  // Handler for printing receipt
   const handlePrintReceipt = () => {
     if (order) {
       printReceipt(order);
@@ -179,10 +175,8 @@ const OrderDetail = () => {
             </CardHeader>
             <CardContent>
               <div className="relative">
-                {/* Status line */}
                 <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-border"></div>
                 
-                {/* Status points */}
                 <div className="space-y-8 relative">
                   {order.history.map((historyItem, index) => (
                     <div key={index} className="flex gap-3">
@@ -275,27 +269,19 @@ const OrderDetail = () => {
             <CardContent>
               <div className="space-y-4">
                 {order.items.map((item) => (
-                  <div key={item.productId} className="flex gap-4">
-                    <div className="w-20 h-20 rounded overflow-hidden border border-border flex-shrink-0">
+                  <div key={item.productId} className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded overflow-hidden border border-border flex-shrink-0">
                       <img 
                         src={item.product.imageUrl} 
-                        alt={item.product.title} 
+                        alt={item.product.name} 
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="flex-grow">
-                      <Link to={`/product/${item.productId}`} className="font-medium hover:underline">
-                        {item.product.title}
-                      </Link>
-                      <p className="text-sm text-muted-foreground">
-                        KSh {item.price.toLocaleString()} × {item.quantity}
+                    <div>
+                      <p className="text-sm font-medium">{item.product.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Qty: {item.quantity} × KSh {(item.product.price).toFixed(2)}
                       </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">KSh {(item.price * item.quantity).toLocaleString()}</p>
-                      <Button variant="ghost" size="sm" asChild className="mt-1">
-                        <Link to={`/product/${item.productId}`}>Buy Again</Link>
-                      </Button>
                     </div>
                   </div>
                 ))}

@@ -1,4 +1,3 @@
-
 import { Order, OrderStatus, PaymentMethod } from '@/types/order';
 
 const API_URL = '/api';
@@ -83,7 +82,7 @@ export const getOrderById = async (orderId: string): Promise<Order> => {
         productId: '1',
         product: {
           id: '1',
-          title: 'Vintage Denim Jacket',
+          name: 'Vintage Denim Jacket',
           price: 59.99,
           imageUrl: '/placeholder.svg'
         },
@@ -152,7 +151,7 @@ export const getCustomerOrders = async (customerId: string): Promise<Order[]> =>
           productId: '1',
           product: {
             id: '1',
-            title: 'Vintage Denim Jacket',
+            name: 'Vintage Denim Jacket',
             price: 59.99,
             imageUrl: '/placeholder.svg'
           },
@@ -225,7 +224,7 @@ export const getCustomerOrders = async (customerId: string): Promise<Order[]> =>
           productId: '2',
           product: {
             id: '2',
-            title: 'Classic White Shirt',
+            name: 'Classic White Shirt',
             price: 29.99,
             imageUrl: '/placeholder.svg'
           },
