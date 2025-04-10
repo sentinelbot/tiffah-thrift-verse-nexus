@@ -344,7 +344,7 @@ const CategoriesSettings = () => {
                           <SelectValue placeholder="None (Top Level Category)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None (Top Level Category)</SelectItem>
+                          <SelectItem value="none">None (Top Level Category)</SelectItem>
                           {parentCategories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.name}
