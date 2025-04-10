@@ -19,6 +19,7 @@ export interface AuthContextType {
 export interface Product {
   id: string;
   name: string;
+  title?: string;
   description?: string;
   price: number;
   originalPrice?: number;
@@ -30,6 +31,7 @@ export interface Product {
   brand?: string;
   condition: 'new' | 'likeNew' | 'good' | 'fair';
   images?: ProductImage[];
+  imageUrl?: string;
   barcode: string;
   status: 'available' | 'reserved' | 'sold';
   dateAdded: Date;

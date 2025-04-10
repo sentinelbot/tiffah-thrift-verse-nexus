@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { ProductCard } from '@/components/products/ProductCard';
+import ProductCard from '@/components/products/ProductCard';
 import { ProductType } from '@/types/product';
 import ProductFilters, { FilterState } from '@/components/shop/ProductFilters';
 import ProductSort, { SortOption } from '@/components/shop/ProductSort';

@@ -5,9 +5,10 @@ import { ProductType } from "@/types/product";
 
 interface ProductCardProps {
   product: ProductType;
+  viewMode?: 'grid' | 'list';
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+export const ProductCard = ({ product, viewMode = 'grid' }: ProductCardProps) => {
   const { id, name, title, price, originalPrice, imageUrl, size } = product;
   const displayName = title || name; // Use title if available, otherwise use name
   

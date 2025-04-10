@@ -1,152 +1,141 @@
 
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { getCustomerOrders } from '@/services/orderService';
+import { useAuth } from '@/contexts/AuthContext';
+import { Order } from '@/types/orderTypes';
+import { convertOrderType } from '@/utils/orderTypeMapper';
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { FileText, Eye } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { getCustomerOrders } from "@/services/orderService";
-import { Order, OrderStatus } from "@/types/order";
-import { formatDate } from "@/utils/dateUtils";
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
+import { Package } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export function OrderHistory() {
+// Helper function to format dates
+const formatDate = (date: Date): string => {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+const OrderHistory: React.FC = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
-    if (!user?.id) return;
-    
     const fetchOrders = async () => {
-      try {
-        const data = await getCustomerOrders(user.id);
-        setOrders(data);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      } finally {
-        setLoading(false);
+      if (user?.id) {
+        try {
+          setLoading(true);
+          const fetchedOrders = await getCustomerOrders(user.id);
+          setOrders(fetchedOrders || []);
+        } catch (error) {
+          console.error('Error fetching orders:', error);
+        } finally {
+          setLoading(false);
+        }
       }
     };
-    
+
     fetchOrders();
-  }, [user?.id]);
-  
-  // Function to get the appropriate badge color for each order status
-  const getStatusColor = (status: OrderStatus) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-500";
-      case "processing":
-        return "bg-blue-500";
-      case "ready":
-        return "bg-indigo-500";
-      case "outForDelivery":
-        return "bg-purple-500";
-      case "delivered":
-        return "bg-green-500";
-      case "cancelled":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-  
+  }, [user]);
+
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-8 w-64 mb-2" />
-          <Skeleton className="h-4 w-full max-w-md" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Array(3).fill(0).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {[1, 2, 3].map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-4 w-[150px]" />
+              <Skeleton className="h-3 w-[100px]" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-[120px]" />
+                  <Skeleton className="h-3 w-[80px]" />
+                </div>
+                <Skeleton className="h-8 w-[100px]" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     );
   }
-  
+
   if (orders.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Your Orders</CardTitle>
-          <CardDescription>Track and manage your orders</CardDescription>
+          <CardTitle>Order History</CardTitle>
+          <CardDescription>You haven't placed any orders yet.</CardDescription>
         </CardHeader>
-        <CardContent className="text-center py-10">
-          <p className="text-muted-foreground mb-4">You haven't placed any orders yet.</p>
-          <Button asChild>
-            <Link to="/shop">Start Shopping</Link>
-          </Button>
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <Package className="h-16 w-16 text-muted-foreground mb-4" />
+          <p className="text-center text-muted-foreground mb-4">
+            Your order history will appear here once you've made a purchase.
+          </p>
+          <Link to="/shop">
+            <Button>Start Shopping</Button>
+          </Link>
         </CardContent>
       </Card>
     );
   }
-  
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Your Orders</CardTitle>
-        <CardDescription>Track and manage your orders</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order Number</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="text-center">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                <TableCell>{formatDate(order.orderDate)}</TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(order.status)}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">KSh {order.totalAmount.toLocaleString()}</TableCell>
-                <TableCell>
-                  <div className="flex justify-center space-x-2">
-                    <Button size="sm" variant="outline" asChild>
-                      <Link to={`/order/${order.id}`}>
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Link>
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => window.open(`/api/receipts/${order.id}`, '_blank')}
-                    >
-                      <FileText className="h-4 w-4 mr-1" />
-                      Receipt
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Order History</CardTitle>
+          <CardDescription>View and track your orders</CardDescription>
+        </CardHeader>
+      </Card>
+      
+      {orders.map((order) => (
+        <Card key={order.id}>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-base">Order #{order.orderNumber}</CardTitle>
+                <CardDescription>Placed on {formatDate(order.orderDate)}</CardDescription>
+              </div>
+              <Badge 
+                variant={
+                  order.status === 'delivered' ? 'default' : 
+                  order.status === 'cancelled' ? 'destructive' : 
+                  'secondary'
+                }
+              >
+                {order.status}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="font-medium">KSh {order.totalAmount.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">{order.items?.length || 0} items</p>
+              </div>
+              <Link to={`/order/${order.id}`}>
+                <Button variant="outline" size="sm">View Details</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
-}
+};
+
+export default OrderHistory;

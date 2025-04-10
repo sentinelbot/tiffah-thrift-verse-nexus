@@ -13,6 +13,7 @@ export interface ProductType {
   size?: string;
   color?: string;
   brand?: string;
+  description?: string;
 }
 
 export interface ProductImage {

@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { ProductCard } from '@/components/products/ProductCard';
+import ProductCard from '@/components/products/ProductCard';
 import { ProductType } from '@/types/product';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -112,9 +112,9 @@ const CategoryPage = () => {
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <h3 className="text-xl font-medium mb-2">No products found</h3>
               <p className="text-muted-foreground mb-6">We couldn't find any products in this category.</p>
-              <Button href="/shop">
-                Browse all products
-              </Button>
+              <Link to="/shop">
+                <Button>Browse all products</Button>
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
