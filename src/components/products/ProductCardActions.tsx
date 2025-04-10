@@ -15,11 +15,22 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
   const { addToCart, addToWishlist } = useCart();
   
   const handleAddToCart = () => {
+    // Ensure both name and title are available regardless of the product type
+    const productName = 'name' in product ? product.name : product.title;
+    
     // Convert to a format that works with both Product and ProductType
-    const cartProduct = {
+    const cartProduct: Product = {
       id: product.id,
-      name: 'name' in product ? product.name : product.title,
+      name: productName,
+      title: 'title' in product ? product.title : product.name,
       price: product.price,
+      category: product.category,
+      condition: product.condition as 'new' | 'likeNew' | 'good' | 'fair',
+      barcode: 'barcode' in product ? product.barcode : product.id, // Use ID as fallback barcode
+      status: 'available',
+      dateAdded: new Date(),
+      lastUpdated: new Date(),
+      featured: false,
       imageUrl: 'imageUrl' in product ? 
         product.imageUrl : 
         (('images' in product && product.images && product.images.length > 0) ? 
@@ -29,15 +40,26 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
     };
     
     addToCart(cartProduct, 1);
-    toast.success(`${cartProduct.name} added to cart`);
+    toast.success(`${productName} added to cart`);
   };
   
   const handleAddToWishlist = () => {
+    // Ensure both name and title are available regardless of the product type
+    const productName = 'name' in product ? product.name : product.title;
+    
     // Convert to a format that works with both Product and ProductType
-    const wishlistProduct = {
+    const wishlistProduct: Product = {
       id: product.id,
-      name: 'name' in product ? product.name : product.title,
+      name: productName,
+      title: 'title' in product ? product.title : product.name,
       price: product.price,
+      category: product.category,
+      condition: product.condition as 'new' | 'likeNew' | 'good' | 'fair',
+      barcode: 'barcode' in product ? product.barcode : product.id, // Use ID as fallback barcode
+      status: 'available',
+      dateAdded: new Date(),
+      lastUpdated: new Date(),
+      featured: false,
       imageUrl: 'imageUrl' in product ? 
         product.imageUrl : 
         (('images' in product && product.images && product.images.length > 0) ? 
@@ -47,7 +69,7 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
     };
     
     addToWishlist(wishlistProduct);
-    toast.success(`${wishlistProduct.name} added to wishlist`);
+    toast.success(`${productName} added to wishlist`);
   };
   
   return (

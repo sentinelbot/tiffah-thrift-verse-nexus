@@ -14,6 +14,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "1",
       title: "Vintage Denim Jacket",
+      name: "Vintage Denim Jacket", // Added name property
       price: 45.99,
       originalPrice: 65.00,
       category: "Clothing",
@@ -24,6 +25,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "2",
       title: "Floral Summer Dress",
+      name: "Floral Summer Dress", // Added name property
       price: 28.50,
       category: "Clothing",
       condition: "Like New",
@@ -33,6 +35,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "4",
       title: "Knit Wool Sweater",
+      name: "Knit Wool Sweater", // Added name property
       price: 32.00,
       category: "Clothing",
       condition: "Good",
@@ -42,6 +45,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "6",
       title: "Classic Trench Coat",
+      name: "Classic Trench Coat", // Added name property
       price: 75.99,
       originalPrice: 120.00,
       category: "Clothing",
@@ -54,6 +58,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "3",
       title: "Leather Crossbody Bag",
+      name: "Leather Crossbody Bag", // Added name property
       price: 34.99,
       originalPrice: 50.00,
       category: "Accessories",
@@ -63,6 +68,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "7",
       title: "Boho Style Earrings",
+      name: "Boho Style Earrings", // Added name property
       price: 15.99,
       category: "Accessories",
       condition: "New",
@@ -73,6 +79,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "5",
       title: "Vintage Polaroid Camera",
+      name: "Vintage Polaroid Camera", // Added name property
       price: 65.00,
       category: "Home",
       condition: "Fair",
@@ -81,6 +88,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "8",
       title: "Retro Record Player",
+      name: "Retro Record Player", // Added name property
       price: 89.99,
       originalPrice: 110.00,
       category: "Home",
@@ -92,6 +100,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "9",
       title: "70s Platform Boots",
+      name: "70s Platform Boots", // Added name property
       price: 55.00,
       category: "Vintage",
       condition: "Good",
@@ -101,6 +110,7 @@ const categoryProducts: Record<string, ProductType[]> = {
     {
       id: "10",
       title: "Retro Typewriter",
+      name: "Retro Typewriter", // Added name property
       price: 120.00,
       category: "Vintage",
       condition: "Fair",

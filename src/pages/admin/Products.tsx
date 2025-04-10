@@ -24,7 +24,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/types';
+import { Product, mapSupabaseProduct } from '@/types';
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,29 +39,7 @@ const Products = () => {
       
       if (error) throw error;
       
-      return data.map(item => ({
-        id: item.id,
-        name: item.name,
-        title: item.name,
-        description: item.description,
-        price: item.price,
-        originalPrice: item.original_price,
-        category: item.category,
-        subCategory: item.sub_category,
-        tags: item.tags,
-        size: item.size,
-        color: item.color,
-        brand: item.brand,
-        condition: item.condition,
-        barcode: item.barcode,
-        status: item.status,
-        dateAdded: new Date(item.date_added),
-        lastUpdated: new Date(item.last_updated),
-        addedBy: item.added_by,
-        featured: item.featured,
-        measurements: item.measurements,
-        inventoryTracking: item.inventory_tracking
-      } as Product));
+      return data.map(item => mapSupabaseProduct(item));
     }
   });
   

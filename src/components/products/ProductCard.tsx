@@ -6,7 +6,7 @@ import { Product } from "@/types";
 export interface ProductType {
   id: string;
   title: string;
-  name: string;
+  name: string; // Adding the name property to match with Product type
   price: number;
   originalPrice?: number;
   category: string;
@@ -25,6 +25,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   // Handle both Product and ProductType
   const id = product.id;
   const title = 'title' in product ? product.title : product.name;
+  const name = 'name' in product ? product.name : product.title; // Make sure name is always available
   const price = product.price;
   const originalPrice = product.originalPrice;
   const category = product.category;

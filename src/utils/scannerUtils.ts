@@ -24,13 +24,14 @@ interface ScannerConfig {
   };
   numOfWorkers: number;
   decoder: {
-    readers: any[]; // Using any to work around the type issue with Quagga2
+    readers: string[]; // Using string[] since we're passing string values
   };
   locate: boolean;
 }
 
 export const initScanner = (elementId: string, callback: (result: any) => void): Promise<void> => {
-  const config: any = { // Using any to work around the Quagga types issue
+  // We'll use the any type here to work around the Quagga types issue
+  const config: any = {
     inputStream: {
       name: 'Live',
       type: 'LiveStream',
