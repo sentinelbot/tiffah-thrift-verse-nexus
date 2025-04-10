@@ -1,6 +1,8 @@
-
 import { Order } from '@/types/order';
 import { formatPrice } from '@/utils/formatters';
+import { toast } from 'sonner';
+import { printOrderReceipt } from './printNodeService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const generateOrderTable = (order: Order): string => {
   // Generate item rows
@@ -150,6 +152,27 @@ export const generateReceiptHTML = (order: Order): string => {
     </body>
     </html>
   `;
+};
+
+// Print receipt
+export const printReceipt = async (order: Order): Promise<boolean> => {
+  try {
+    // Get the current user - in a real implementation, this would be handled differently
+    // since hooks can't be used outside of components
+    let userId = "default-user";
+    let printerId = "default-printer";
+    
+    // In a real implementation, we'd get these values from context or params
+    // This is a simplified version for demo purposes
+    return await printOrderReceipt(order, printerId, userId);
+  } catch (error) {
+    console.error('Error printing receipt:', error);
+    toast.error('Error printing receipt. Downloading as PDF instead.');
+    
+    // Fallback to downloading receipt
+    downloadReceipt(order);
+    return false;
+  }
 };
 
 // Download receipt as PDF

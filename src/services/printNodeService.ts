@@ -1,8 +1,8 @@
-
 import { Order } from '@/types/order';
 import { Product } from '@/types';
 import { toast } from 'sonner';
 import { generateReceiptHTML } from './receiptService';
+import { formatPrice } from '@/utils/formatters';
 
 // Mock PrintNode API Key (in a real app, this would be in environment variables)
 const PRINTNODE_API_KEY = 'demo_printnode_api_key';

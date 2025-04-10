@@ -1,3 +1,4 @@
+
 import { ProductImage } from "./product";
 
 export type Category = {
@@ -90,12 +91,12 @@ export interface Order {
 // Update the Product interface to align with the database structure
 export interface Product {
   id: string;
-  name: string; // This should be name, not title
+  name: string;
   price: number;
-  originalPrice?: number; // Map to original_price from database
+  originalPrice?: number;
   description?: string;
   category: string;
-  subCategory?: string; // Map to sub_category from database 
+  subCategory?: string;
   condition: 'new' | 'likeNew' | 'good' | 'fair';
   brand?: string;
   size?: string;
@@ -105,14 +106,24 @@ export interface Product {
   featured: boolean;
   imageUrl?: string;
   images: ProductImage[];
-  dateAdded: string; // Map to date_added from database
-  lastUpdated?: string; // Map to last_updated from database
+  dateAdded: string;
+  lastUpdated?: string;
   measurements?: {
     chest?: number;
     waist?: number;
     length?: number;
   };
   tags?: string[];
+}
+
+export interface User {
+  id: string;
+  email: string;
+  role: string;
+  name?: string;
+  phone?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Profile {
@@ -123,3 +134,5 @@ export interface Profile {
   created_at?: string | null;
   updated_at?: string | null;
 }
+
+export * from './analytics';
