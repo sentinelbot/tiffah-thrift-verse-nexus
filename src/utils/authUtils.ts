@@ -64,9 +64,7 @@ export const getUserRoles = async (): Promise<string[]> => {
     }
 
     // Call the function to get user roles
-    const { data, error } = await supabase.rpc('get_user_roles', { 
-      user_id: userData.user.id 
-    });
+    const { data, error } = await supabase.rpc('get_user_roles');
 
     if (error) {
       console.error('Error fetching user roles:', error);
@@ -88,7 +86,7 @@ export const getUserRoles = async (): Promise<string[]> => {
  */
 export const addRole = async (userId: string, role: string): Promise<boolean> => {
   try {
-    const { error } = await supabase.rpc('add_user_role', { 
+    const { data, error } = await supabase.rpc('add_user_role', { 
       p_user_id: userId, 
       p_role: role 
     });
@@ -112,7 +110,7 @@ export const addRole = async (userId: string, role: string): Promise<boolean> =>
  */
 export const removeRole = async (userId: string, role: string): Promise<boolean> => {
   try {
-    const { error } = await supabase.rpc('remove_user_role', { 
+    const { data, error } = await supabase.rpc('remove_user_role', { 
       p_user_id: userId, 
       p_role: role 
     });
@@ -142,6 +140,8 @@ export const getDeliveryStaff = async (): Promise<User[]> => {
       return [];
     }
 
+    if (!data) return [];
+
     return data.map((item: any) => ({
       id: item.id,
       name: item.name || 'Unknown',
@@ -170,7 +170,7 @@ export const completeScanSync = async (scans: any[]): Promise<{synced: number, f
     if (error) {
       console.error('Error syncing scans:', error);
       failed = scans.length;
-    } else {
+    } else if (data) {
       synced = data.processed || 0;
       failed = scans.length - synced;
     }

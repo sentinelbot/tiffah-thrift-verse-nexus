@@ -9,6 +9,23 @@ import {
   SystemPerformance 
 } from '@/types';
 
+// Utility functions
+export const formatCurrency = (value: number): string => {
+  return `KSh ${value.toFixed(2)}`;
+};
+
+export const exportToCSV = (data: any[], filename: string) => {
+  // Implementation of CSV export
+  console.log(`Exporting ${filename} to CSV`, data);
+  // In a real app, this would generate and download a CSV file
+};
+
+export const exportToPDF = (elementId: string, filename: string) => {
+  // Implementation of PDF export
+  console.log(`Exporting ${elementId} to PDF as ${filename}`);
+  // In a real app, this would generate and download a PDF file
+};
+
 // Page load time analytics
 export const recordPageLoadTime = () => {
   if (typeof window !== 'undefined') {
@@ -68,10 +85,10 @@ export const fetchStaffPerformance = async (): Promise<StaffPerformanceData[]> =
 
 export const fetchCustomerBehavior = async (): Promise<CustomerBehavior[]> => {
   return [
-    { metric: 'Average Order Value', value: 45.32, previousValue: 42.18, change: 7.4 },
-    { metric: 'Cart Abandonment Rate', value: 22.5, previousValue: 24.8, change: -9.3 },
-    { metric: 'Return Rate', value: 3.2, previousValue: 3.5, change: -8.6 },
-    { metric: 'Customer Retention', value: 68.4, previousValue: 65.9, change: 3.8 },
+    { metric: 'Average Order Value', value: 45.32, previousValue: 42.18, change: 7.4, count: 1250 },
+    { metric: 'Cart Abandonment Rate', value: 22.5, previousValue: 24.8, change: -9.3, averageSpend: 38.45 },
+    { metric: 'Return Rate', value: 3.2, previousValue: 3.5, change: -8.6, repeatRate: 65.2 },
+    { metric: 'Customer Retention', value: 68.4, previousValue: 65.9, change: 3.8, averageItemsPerOrder: 2.7 },
     { metric: 'Time on Site (mins)', value: 4.2, previousValue: 3.8, change: 10.5 },
   ];
 };
@@ -88,10 +105,10 @@ export const fetchMarketingEffectiveness = async (): Promise<MarketingEffectiven
 
 export const fetchSystemPerformance = async (): Promise<SystemPerformance[]> => {
   return [
-    { metric: 'Page Load Time (s)', value: 1.8, target: 2, status: 'good' },
-    { metric: 'API Response Time (ms)', value: 220, target: 200, status: 'warning' },
-    { metric: 'Database Query Time (ms)', value: 85, target: 100, status: 'good' },
-    { metric: 'Error Rate (%)', value: 0.8, target: 1, status: 'good' },
+    { metric: 'Page Load Time (s)', value: 1.8, target: 2, status: 'good', pageLoadTime: 1.8 },
+    { metric: 'API Response Time (ms)', value: 220, target: 200, status: 'warning', serverResponseTime: 220 },
+    { metric: 'Database Query Time (ms)', value: 85, target: 100, status: 'good', errorRate: 0.8 },
+    { metric: 'Error Rate (%)', value: 0.8, target: 1, status: 'good', userSatisfaction: 4.5 },
     { metric: 'Server CPU Usage (%)', value: 78, target: 80, status: 'warning' },
   ];
 };

@@ -6,6 +6,7 @@ import { Product, ProductType } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/context/CartContext';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AIProductRecommendationsProps {
   productId: string;
@@ -24,7 +25,7 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
       // Fetch similar products from the same category
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, product_images(*)')
         .eq('category', category)
         .neq('id', productId)
         .limit(4);
@@ -51,6 +52,13 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
         lastUpdated: new Date(item.last_updated),
         addedBy: item.added_by,
         featured: item.featured,
+        images: item.product_images?.map((img: any) => ({
+          id: img.id,
+          url: img.url,
+          alt: img.alt,
+          isMain: img.is_main,
+          displayOrder: img.display_order
+        })) || [],
         measurements: item.measurements,
         inventoryTracking: item.inventory_tracking
       })) as Product[];
@@ -64,6 +72,7 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
       price: product.price,
       imageUrl: product.images?.[0]?.url || 'https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop'
     });
+    toast.success(`${product.name} added to cart`);
   };
 
   const handleAddToWishlist = (product: Product) => {
@@ -73,6 +82,7 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
       price: product.price,
       imageUrl: product.images?.[0]?.url || 'https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop'
     });
+    toast.success(`${product.name} added to wishlist`);
   };
 
   if (isLoading) {
@@ -98,7 +108,7 @@ export const AIProductRecommendations: React.FC<AIProductRecommendationsProps> =
           <Card key={product.id}>
             <div className="aspect-square overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"
+                src={product.images?.[0]?.url || "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"}
                 alt={product.name}
                 className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
               />

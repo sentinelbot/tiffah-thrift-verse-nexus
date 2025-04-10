@@ -1,26 +1,15 @@
 
 import { Link } from "react-router-dom";
 import ProductCardActions from "./ProductCardActions";
-
-export interface ProductType {
-  id: string;
-  title: string;
-  price: number;
-  originalPrice?: number;
-  category: string;
-  condition?: string;
-  size?: string;
-  color?: string;
-  brand?: string;
-  imageUrl: string;
-}
+import { ProductType } from "@/types";
 
 interface ProductCardProps {
   product: ProductType;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const { id, title, price, originalPrice, category, condition, size, imageUrl } = product;
+  const { id, name, title, price, originalPrice, imageUrl, size } = product;
+  const displayName = title || name; // Use title if available, otherwise use name
   
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border hover:border-primary transition-colors">
@@ -30,7 +19,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       >
         <img 
           src={imageUrl} 
-          alt={title} 
+          alt={displayName} 
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         {originalPrice && (
@@ -44,7 +33,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           to={`/product/${id}`}
           className="font-medium hover:text-primary transition-colors"
         >
-          {title}
+          {displayName}
         </Link>
         <div className="mt-1 mb-2 flex justify-between">
           <div>

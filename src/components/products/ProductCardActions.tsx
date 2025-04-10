@@ -15,12 +15,12 @@ const ProductCardActions: React.FC<ProductCardActionsProps> = ({ product }) => {
 
   const handleAddToCart = () => {
     addToCart(product);
-    toast.success(`${product.name} added to cart`);
+    toast.success(`${product.name || product.title} added to cart`);
   };
 
   const handleAddToWishlist = () => {
     addToWishlist(product);
-    toast.success(`${product.name} added to wishlist`);
+    toast.success(`${product.name || product.title} added to wishlist`);
   };
 
   return (

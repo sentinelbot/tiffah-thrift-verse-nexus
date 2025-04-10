@@ -63,6 +63,8 @@ export interface CartItem {
   price: number;
   imageUrl: string;
   quantity: number;
+  product?: Product;
+  reservedUntil?: Date;
 }
 
 export interface Category {
@@ -131,6 +133,10 @@ export interface CustomerBehavior {
   value: number;
   previousValue: number;
   change: number;
+  count?: number;
+  averageSpend?: number;
+  repeatRate?: number;
+  averageItemsPerOrder?: number;
 }
 
 export interface MarketingEffectiveness {
@@ -146,6 +152,10 @@ export interface SystemPerformance {
   value: number;
   target: number;
   status: 'good' | 'warning' | 'critical';
+  pageLoadTime?: number;
+  serverResponseTime?: number;
+  errorRate?: number;
+  userSatisfaction?: number;
 }
 
 // Extended CartContext Types
@@ -154,6 +164,7 @@ export interface ProductType {
   name: string;
   price: number;
   imageUrl: string;
+  title?: string;
 }
 
 export interface WishlistItem {
@@ -162,6 +173,9 @@ export interface WishlistItem {
   price: number;
   imageUrl: string;
   addedOn: Date;
+  title?: string;
+  originalPrice?: number;
+  size?: string;
 }
 
 export interface ExtendedCartContextType {
