@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Plus, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,7 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
       size: product.size
     };
     
-    // Pass the product and quantity 1 as arguments
+    // Pass the cart item and quantity 1 as arguments
     addToCart(cartItem, 1);
     toast.success(`${product.title} added to cart`);
   };
