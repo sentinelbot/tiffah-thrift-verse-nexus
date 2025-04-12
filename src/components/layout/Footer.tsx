@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Instagram, Facebook, Twitter, Mail } from "lucide-react";
@@ -17,16 +16,14 @@ const Footer = () => {
     e.preventDefault();
     
     if (!email.trim()) {
-      toast({
-        title: "Please enter your email",
-        variant: "destructive"
+      toast("Please enter your email", {
+        description: "Email address is required to subscribe."
       });
       return;
     }
     
     // Here you would typically handle the subscription process
-    toast({
-      title: "Thank you for subscribing!",
+    toast("Thank you for subscribing!", {
       description: "You've been added to our mailing list."
     });
     

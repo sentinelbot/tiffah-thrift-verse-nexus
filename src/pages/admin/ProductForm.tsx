@@ -161,8 +161,10 @@ const ProductForm = () => {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      if (!values.barcode) {
-        values.barcode = await generateUniqueBarcode();
+      let barcodeValue = values.barcode;
+      
+      if (!barcodeValue) {
+        barcodeValue = await generateUniqueBarcode();
       }
 
       if (isEditing) {
@@ -173,7 +175,7 @@ const ProductForm = () => {
             description: values.description,
             price: values.price,
             original_price: values.original_price,
-            barcode: values.barcode,
+            barcode: barcodeValue,
             category: values.category,
             sub_category: values.sub_category || null,
             size: values.size || null,
@@ -252,6 +254,11 @@ const ProductForm = () => {
     if (mainImage) {
       setProductImage(mainImage.url);
     }
+  };
+
+  const generateBarcode = async () => {
+    const barcode = await generateUniqueBarcode();
+    form.setValue('barcode', barcode);
   };
 
   return (
@@ -499,10 +506,7 @@ const ProductForm = () => {
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  onClick={() => {
-                                    const barcode = generateUniqueBarcode();
-                                    form.setValue('barcode', barcode);
-                                  }}
+                                  onClick={generateBarcode}
                                   className="shrink-0"
                                 >
                                   Generate

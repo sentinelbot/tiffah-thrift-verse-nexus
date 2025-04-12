@@ -1,9 +1,9 @@
-
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Product, ProductImage } from '@/types';
+import { Product } from '@/types';
+import { ProductImage } from '@/types/product';
 import {
   Card,
   CardContent,

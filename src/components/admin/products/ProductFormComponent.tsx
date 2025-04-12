@@ -57,7 +57,7 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
   const [images, setImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [product, setProduct] = useState<Partial<Product>>({});
-  const [existingImages, setExistingImages] = useState<{ url: string; alt: string; isMain: boolean }[]>([]);
+  const [existingImages, setExistingImages] = useState<ProductImage[]>([]);
   const isEditMode = Boolean(productId);
 
   const form = useForm<ProductFormValues>({

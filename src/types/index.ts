@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -45,6 +44,9 @@ export interface Product {
     length?: number;
   };
 }
+
+// Re-export the types from product.ts
+export * from './product';
 
 // Analytics types
 export interface SalesData {
