@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -32,7 +33,7 @@ export interface Product {
   brand?: string;
   condition: 'new' | 'likeNew' | 'good' | 'fair';
   imageUrl?: string;
-  images: { url: string; alt: string; isMain: boolean }[];
+  images: { url: string; alt: string; isMain: boolean; id?: string }[];
   barcode: string;
   status: 'available' | 'reserved' | 'sold';
   dateAdded?: Date;

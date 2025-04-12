@@ -1,286 +1,197 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
-import { CheckCircle2, Truck, Package, Calendar, ArrowLeft, FileText, Printer } from "lucide-react";
-import { Order } from "@/types/order";
-import { formatDate } from "@/utils/dateUtils";
-import { getOrderById } from "@/services/orderService";
-import { downloadReceipt, printReceipt } from "@/services/receiptService";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Check, MapPin, Package, Truck, CalendarClock, ShoppingBag, Printer } from 'lucide-react';
 
 const OrderConfirmation = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { toast } = useToast();
-  
-  // Get order ID from location state
-  const orderId = location.state?.orderId;
-  
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    // If no orderId, redirect to home
-    if (!orderId) {
-      navigate('/');
-      return;
-    }
-    
-    // Fetch order details
-    const fetchOrder = async () => {
-      try {
-        const orderData = await getOrderById(orderId);
-        setOrder(orderData);
-      } catch (error) {
-        console.error("Error fetching order:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load order details. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
+  // Mock order details
+  const order = {
+    id: 'TTS-20250412-1234',
+    date: new Date(),
+    status: 'pending',
+    payment: {
+      method: 'mpesa',
+      transactionId: 'MPESA12345678',
+      status: 'completed'
+    },
+    shipping: {
+      method: 'standard',
+      address: {
+        fullName: 'John Doe',
+        street: '123 Main St',
+        city: 'Nairobi',
+        state: '',
+        postalCode: '00100',
+        country: 'Kenya'
+      },
+      estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) // 5 days from now
+    },
+    items: [
+      {
+        id: '1',
+        name: 'Vintage Denim Jacket',
+        price: 2500,
+        quantity: 1,
+        image: 'https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=150&auto=format&fit=crop'
+      },
+      {
+        id: '2',
+        name: 'Floral Summer Dress',
+        price: 1800,
+        quantity: 1,
+        image: 'https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=150&auto=format&fit=crop'
       }
-    };
-    
-    fetchOrder();
-  }, [orderId, navigate, toast]);
-  
-  // Handler for downloading receipt
-  const handleDownloadReceipt = () => {
-    if (order) {
-      downloadReceipt(order);
-      toast({
-        title: "Receipt Downloaded",
-        description: "Your receipt has been downloaded successfully."
-      });
-    }
+    ],
+    subtotal: 4300,
+    shipping: 200,
+    total: 4500
   };
   
-  // Handler for printing receipt
-  const handlePrintReceipt = () => {
-    if (order) {
-      printReceipt(order);
-    }
+  // Format date
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(date);
   };
-  
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          <div className="max-w-3xl mx-auto">
-            <Skeleton className="h-12 w-3/4 mb-6" />
-            <Skeleton className="h-64 w-full mb-6" />
-            <Skeleton className="h-32 w-full mb-6" />
-            <Skeleton className="h-20 w-2/4" />
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-  
-  // If no order found
-  if (!order) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-2xl font-bold mb-4">Order Not Found</h1>
-            <p className="text-muted-foreground mb-6">
-              We couldn't find the order details you're looking for.
-            </p>
-            <Button onClick={() => navigate('/')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Return to Home
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
   
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4">
-              <CheckCircle2 className="h-8 w-8" />
+              <Check className="h-8 w-8" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold">Thank You for Your Order!</h1>
-            <p className="text-muted-foreground mt-2">
-              Your order has been placed successfully and is being processed.
+            <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
+            <p className="text-muted-foreground">
+              Thank you for your purchase. Your order has been received and is being processed.
             </p>
           </div>
           
           <Card className="mb-6">
             <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Order Summary</h2>
-                <span className="text-sm text-muted-foreground">
-                  {formatDate(order.orderDate)}
-                </span>
+              <div className="flex flex-col md:flex-row justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Order #{order.id}</h2>
+                  <p className="text-muted-foreground">Placed on {formatDate(order.date)}</p>
+                </div>
+                <div className="mt-2 md:mt-0">
+                  <Button variant="outline" size="sm" className="mr-2">
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Receipt
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/order/${order.id}`}>View Details</Link>
+                  </Button>
+                </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Order Number</p>
-                  <p className="font-medium">{order.orderNumber}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="space-y-1">
+                  <div className="flex items-center text-muted-foreground">
+                    <Package className="h-4 w-4 mr-2" />
+                    <span className="text-sm">Order Status</span>
+                  </div>
+                  <div className="font-medium capitalize">{order.status}</div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Payment Method</p>
-                  <p className="font-medium capitalize">{order.paymentInfo.method}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Order Status</p>
-                  <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                
+                <div className="space-y-1">
+                  <div className="flex items-center text-muted-foreground">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    <span className="text-sm">Shipping Address</span>
+                  </div>
+                  <div className="font-medium">{order.shipping.address.fullName}</div>
+                  <div className="text-sm">
+                    {order.shipping.address.street}, {order.shipping.address.city}, {order.shipping.address.postalCode}
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Amount</p>
-                  <p className="font-medium">KSh {order.totalAmount.toLocaleString()}</p>
+                
+                <div className="space-y-1">
+                  <div className="flex items-center text-muted-foreground">
+                    <CalendarClock className="h-4 w-4 mr-2" />
+                    <span className="text-sm">Estimated Delivery</span>
+                  </div>
+                  <div className="font-medium">{formatDate(order.shipping.estimatedDelivery)}</div>
+                  <div className="text-sm capitalize">{order.shipping.method} Shipping</div>
                 </div>
               </div>
               
-              <Separator className="my-4" />
+              <Separator className="my-6" />
               
-              <h3 className="font-medium mb-3">Order Items</h3>
-              <div className="space-y-3">
-                {order.items.map((item) => (
-                  <div key={item.productId} className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded border border-border overflow-hidden flex-shrink-0">
-                        <img 
-                          src={item.product.imageUrl} 
-                          alt={item.product.title} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium">{item.product.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Qty: {item.quantity} × KSh {item.price.toLocaleString()}
-                        </p>
-                      </div>
+              <h3 className="font-semibold mb-4">Order Items</h3>
+              <div className="space-y-4">
+                {order.items.map(item => (
+                  <div key={item.id} className="flex items-center">
+                    <div className="h-20 w-20 flex-shrink-0 bg-muted rounded-md overflow-hidden">
+                      <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                     </div>
-                    <span className="font-medium">
-                      KSh {(item.price * item.quantity).toLocaleString()}
-                    </span>
+                    <div className="ml-4 flex-grow">
+                      <h4 className="font-medium">{item.name}</h4>
+                      <div className="text-sm text-muted-foreground">Quantity: {item.quantity}</div>
+                    </div>
+                    <div className="font-medium">KSh {item.price.toLocaleString()}</div>
                   </div>
                 ))}
               </div>
               
-              <Separator className="my-4" />
+              <Separator className="my-6" />
               
-              <div className="space-y-2 ml-auto w-full max-w-[240px]">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal:</span>
-                  <span>KSh {order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Shipping:</span>
-                  <span>KSh {order.shippingInfo.shippingMethod === 'express' ? '500' : '200'}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>VAT (16%):</span>
-                  <span>
-                    KSh {(order.totalAmount - (order.shippingInfo.shippingMethod === 'express' ? 500 : 200) - 
-                    order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.16).toLocaleString()}
-                  </span>
-                </div>
-                <Separator className="my-2" />
-                <div className="flex justify-between font-bold">
-                  <span>Total:</span>
-                  <span>KSh {order.totalAmount.toLocaleString()}</span>
+              <div className="flex justify-end">
+                <div className="w-full max-w-xs">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>KSh {order.subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-muted-foreground">Shipping</span>
+                    <span>KSh {order.shipping.toLocaleString()}</span>
+                  </div>
+                  <Separator className="my-2" />
+                  <div className="flex justify-between font-semibold">
+                    <span>Total</span>
+                    <span>KSh {order.total.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card>
+          <div className="flex flex-col md:flex-row gap-4">
+            <Card className="flex-1">
               <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Truck className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Shipping Information</h3>
+                <div className="flex items-center mb-4">
+                  <Truck className="h-5 w-5 mr-2 text-primary" />
+                  <h3 className="font-semibold">Track Your Order</h3>
                 </div>
-                <address className="not-italic">
-                  <p>{order.shippingInfo.fullName}</p>
-                  <p>{order.shippingInfo.address}</p>
-                  <p>{order.shippingInfo.city}, {order.shippingInfo.state} {order.shippingInfo.postalCode}</p>
-                  <p>{order.shippingInfo.country}</p>
-                  <p className="mt-2">
-                    <span className="text-muted-foreground">Email: </span>
-                    {order.shippingInfo.email}
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Phone: </span>
-                    {order.shippingInfo.phone}
-                  </p>
-                </address>
+                <p className="text-sm text-muted-foreground mb-4">
+                  You'll receive tracking information via email once your order ships.
+                </p>
+                <Button variant="outline" className="w-full">Track Order</Button>
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="flex-1">
               <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Delivery Information</h3>
+                <div className="flex items-center mb-4">
+                  <ShoppingBag className="h-5 w-5 mr-2 text-primary" />
+                  <h3 className="font-semibold">Continue Shopping</h3>
                 </div>
-                <p className="mb-2">
-                  <span className="text-muted-foreground">Shipping Method: </span>
-                  <span className="capitalize">{order.shippingInfo.shippingMethod}</span>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Browse our collection for more unique thrift finds.
                 </p>
-                <p className="mb-2">
-                  <span className="text-muted-foreground">Estimated Delivery: </span>
-                  {order.deliveryInfo.estimatedDelivery ? 
-                    formatDate(order.deliveryInfo.estimatedDelivery) : 
-                    'To be determined'}
-                </p>
-                {order.deliveryInfo.trackingId && (
-                  <p>
-                    <span className="text-muted-foreground">Tracking Number: </span>
-                    {order.deliveryInfo.trackingId}
-                  </p>
-                )}
+                <Button className="w-full" asChild>
+                  <Link to="/shop">Continue Shopping</Link>
+                </Button>
               </CardContent>
             </Card>
-          </div>
-          
-          <div className="flex flex-wrap justify-between gap-4">
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => navigate('/')}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Continue Shopping
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/account')}>
-                <Package className="mr-2 h-4 w-4" />
-                View All Orders
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handlePrintReceipt}>
-                <Printer className="mr-2 h-4 w-4" />
-                Print Receipt
-              </Button>
-              <Button onClick={handleDownloadReceipt}>
-                <FileText className="mr-2 h-4 w-4" />
-                Download Receipt
-              </Button>
-            </div>
           </div>
         </div>
       </main>

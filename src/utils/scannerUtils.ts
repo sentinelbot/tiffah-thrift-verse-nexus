@@ -1,325 +1,215 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { openDB } from 'idb';
-import { getBarcodeDataURL } from '@/utils/barcodeUtils';
+import { Product, ProductStatus } from "@/types/product";
+import { supabase } from "@/integrations/supabase/client";
 
-// Define types needed for our scanner components
+// Define the interface for scan results
 export interface ScanResult {
   id: string;
+  timestamp: Date;
+  type: "product" | "order" | "delivery";
   code: string;
-  scanType: string;
-  timestamp: number;
-  status: string;
+  status: "success" | "error" | "pending";
   result?: any;
+  error?: string;
+  processedBy?: string;
 }
 
-// Initialize IndexedDB for offline storage
-const initDB = async () => {
-  return openDB('tiffah-scan-db', 1, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains('pending-scans')) {
-        db.createObjectStore('pending-scans', { keyPath: 'id', autoIncrement: true });
-      }
-    },
-  });
-};
-
-// Check if we're online
-export const isOnline = (): boolean => {
-  return navigator.onLine;
-};
-
-// Initialize scanner with QuaggaJS
-export const initScanner = (containerId: string, options: any): (() => void) => {
-  // This would normally use QuaggaJS, but for now we'll just create a stub
-  console.log(`Scanner initialized in container ${containerId} with options:`, options);
-  
-  // Return a cleanup function
-  return () => {
-    console.log('Scanner stopped');
-  };
-};
-
-// Process a product scan
-export const processProductScan = async (
-  barcode: string,
-  userId: string,
-  userRole: string,
-  online: boolean = navigator.onLine
-) => {
+// Mock function to get scan history from local storage
+export const getScanHistory = async (userId?: string): Promise<ScanResult[]> => {
   try {
-    // Record the scan in history (if online) or store for later sync
-    const scanData = {
-      barcode,
-      scan_type: 'product',
-      scanned_by: userId,
-      device_info: `${navigator.userAgent}`,
-      location: null, // Could add geolocation here if needed
-    };
-
-    if (online) {
-      // We're online - record scan immediately
-      await supabase.from('scan_history').insert(scanData);
-
-      // Look up the product
-      const { data: product, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('barcode', barcode)
-        .single();
-
-      if (error) {
-        return {
-          status: 'error',
-          message: 'Product not found',
-        };
-      }
-
-      // Special actions based on user role
-      if (userRole === 'productManager') {
-        // Product manager workflow - maybe verify inventory
-      } else if (userRole === 'orderPreparer') {
-        // Order preparer workflow - maybe mark as picked
-      } else if (userRole === 'deliveryStaff') {
-        // Delivery staff workflow - maybe mark as loaded
-      } else if (userRole === 'admin') {
-        // Admin workflow - universal access
-      }
-
-      return {
-        status: 'success',
-        result: {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          status: product.status,
-        },
-      };
-    } else {
-      // We're offline - store scan for later
-      const db = await initDB();
-      await db.add('pending-scans', {
-        ...scanData,
-        timestamp: new Date().toISOString(),
-      });
-
-      return {
-        status: 'pending-sync',
-        message: 'Scan saved for later synchronization',
-      };
+    const scanHistoryString = localStorage.getItem('scanHistory');
+    if (!scanHistoryString) return [];
+    
+    const scanHistory = JSON.parse(scanHistoryString) as ScanResult[];
+    
+    // Filter by user if provided
+    if (userId) {
+      return scanHistory.filter(scan => scan.processedBy === userId);
     }
+    
+    return scanHistory;
   } catch (error) {
-    console.error('Error processing scan:', error);
-    return {
-      status: 'error',
-      message: 'Failed to process scan',
-    };
+    console.error('Error getting scan history:', error);
+    return [];
   }
 };
 
-// Add processDeliveryScan function that was missing
-export const processDeliveryScan = async (
-  barcode: string,
-  userId: string,
-  userRole: string,
-  online: boolean = navigator.onLine
-) => {
-  try {
-    // Record the scan
-    const scanData = {
-      barcode,
-      scan_type: 'delivery',
-      scanned_by: userId,
-      device_info: `${navigator.userAgent}`,
-    };
-
-    if (online) {
-      await supabase.from('scan_history').insert(scanData);
-
-      // Look up the order
-      const { data: order, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('order_number', barcode)
-        .single();
-
-      if (error) {
-        return {
-          status: 'error',
-          message: 'Order not found',
-        };
-      }
-
-      return {
-        status: 'success',
-        result: {
-          id: order.id,
-          orderNumber: order.order_number,
-          status: order.status,
-          deliveryTime: new Date().toISOString(),
-        },
-      };
-    } else {
-      // Store for later sync
-      const db = await initDB();
-      await db.add('pending-scans', {
-        ...scanData,
-        timestamp: new Date().toISOString(),
-      });
-
-      return {
-        status: 'pending-sync',
-        message: 'Delivery scan saved for later synchronization',
-      };
+// Initialize barcode scanner
+export const initScanner = (videoElement: HTMLVideoElement, onDetected: (code: string) => void): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    try {
+      // This would be implemented using Quagga or a similar library
+      // For now, we'll just resolve the promise
+      setTimeout(() => {
+        console.log('Scanner initialized');
+        resolve();
+      }, 1000);
+    } catch (error) {
+      console.error('Error initializing scanner:', error);
+      reject(error);
     }
+  });
+};
+
+// Sync scans with the server or local storage
+export const syncScans = async (scans: ScanResult[]): Promise<boolean> => {
+  try {
+    // Get existing scan history
+    const existingScansString = localStorage.getItem('scanHistory');
+    const existingScans = existingScansString ? JSON.parse(existingScansString) : [];
+    
+    // Merge with new scans
+    const allScans = [...existingScans, ...scans];
+    
+    // Store back in local storage
+    localStorage.setItem('scanHistory', JSON.stringify(allScans));
+    
+    // In a real app, we would also sync with the server
+    return true;
   } catch (error) {
-    console.error('Error processing delivery scan:', error);
-    return {
-      status: 'error',
-      message: 'Failed to process delivery scan',
-    };
+    console.error('Error syncing scans:', error);
+    return false;
+  }
+};
+
+// Process a product scan
+export const processProductScan = async (code: string, userId?: string): Promise<ScanResult> => {
+  const scanResult: ScanResult = {
+    id: `scan-${Date.now()}`,
+    timestamp: new Date(),
+    type: "product",
+    code,
+    status: "pending",
+    processedBy: userId
+  };
+  
+  try {
+    // Lookup product in database
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('barcode', code)
+      .single();
+    
+    if (error) {
+      scanResult.status = "error";
+      scanResult.error = error.message;
+    } else if (data) {
+      scanResult.status = "success";
+      scanResult.result = data;
+    } else {
+      scanResult.status = "error";
+      scanResult.error = "Product not found";
+    }
+    
+    // Save scan result to history
+    const history = await getScanHistory();
+    await syncScans([...history, scanResult]);
+    
+    return scanResult;
+  } catch (error: any) {
+    scanResult.status = "error";
+    scanResult.error = error.message;
+    
+    // Save scan result to history
+    const history = await getScanHistory();
+    await syncScans([...history, scanResult]);
+    
+    return scanResult;
   }
 };
 
 // Process an order scan
-export const processOrderScan = async (
-  barcode: string,
-  userId: string,
-  userRole: string,
-  online: boolean = navigator.onLine
-) => {
+export const processOrderScan = async (code: string, userId?: string): Promise<ScanResult> => {
+  const scanResult: ScanResult = {
+    id: `scan-${Date.now()}`,
+    timestamp: new Date(),
+    type: "order",
+    code,
+    status: "pending",
+    processedBy: userId
+  };
+  
   try {
-    // Record the scan
-    const scanData = {
-      barcode,
-      scan_type: 'order',
-      scanned_by: userId,
-      device_info: `${navigator.userAgent}`,
+    // Mock order data lookup
+    // In a real app, this would query the database
+    const mockOrder = {
+      id: code,
+      orderNumber: `TTS-${new Date().getFullYear()}${new Date().getMonth() + 1}${new Date().getDate()}-${Math.floor(Math.random() * 10000)}`,
+      status: "processing",
+      customerId: "cust-123",
+      items: [
+        { id: "prod-001", name: "Vintage Denim Jacket", quantity: 1 },
+        { id: "prod-002", name: "Floral Summer Dress", quantity: 1 }
+      ]
     };
+    
+    scanResult.status = "success";
+    scanResult.result = mockOrder;
+    
+    // Save scan result to history
+    const history = await getScanHistory();
+    await syncScans([...history, scanResult]);
+    
+    return scanResult;
+  } catch (error: any) {
+    scanResult.status = "error";
+    scanResult.error = error.message;
+    
+    // Save scan result to history
+    const history = await getScanHistory();
+    await syncScans([...history, scanResult]);
+    
+    return scanResult;
+  }
+};
 
-    if (online) {
-      await supabase.from('scan_history').insert(scanData);
-
-      // Look up the order
-      const { data: order, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('order_number', barcode)
-        .single();
-
-      if (error) {
-        return {
-          status: 'error',
-          message: 'Order not found',
-        };
-      }
-
-      // Mock items for testing OrderScanner
-      const mockItems = [
-        { id: '1', name: 'Vintage T-shirt', quantity: 1 },
-        { id: '2', name: 'Denim Jacket', quantity: 1 }
-      ];
-
-      // Role-specific actions
-      if (userRole === 'orderPreparer') {
-        // Order preparer might update status to 'processing'
-      } else if (userRole === 'deliveryStaff') {
-        // Delivery staff might update to 'out for delivery'
-      }
-
-      return {
-        status: 'success',
-        result: {
-          id: order.id,
-          orderNumber: order.order_number,
-          status: order.status,
-          customerId: order.customer_id,
-          items: mockItems  // Add mock items for now
-        },
-      };
-    } else {
-      // Store for later sync
-      const db = await initDB();
-      await db.add('pending-scans', {
-        ...scanData,
-        timestamp: new Date().toISOString(),
-      });
-
-      return {
-        status: 'pending-sync',
-        message: 'Order scan saved for later synchronization',
-      };
-    }
-  } catch (error) {
-    console.error('Error processing order scan:', error);
-    return {
-      status: 'error',
-      message: 'Failed to process order scan',
+// Process a delivery scan
+export const processDeliveryScan = async (code: string, userId?: string): Promise<ScanResult> => {
+  const scanResult: ScanResult = {
+    id: `scan-${Date.now()}`,
+    timestamp: new Date(),
+    type: "delivery",
+    code,
+    status: "pending",
+    processedBy: userId
+  };
+  
+  try {
+    // Mock delivery data lookup
+    // In a real app, this would query the database
+    const mockDelivery = {
+      id: code,
+      orderNumber: `TTS-${new Date().getFullYear()}${new Date().getMonth() + 1}${new Date().getDate()}-${Math.floor(Math.random() * 10000)}`,
+      status: "out_for_delivery",
+      address: "123 Main St, Nairobi, Kenya",
+      customerName: "John Doe",
+      customerPhone: "+254712345678"
     };
+    
+    scanResult.status = "success";
+    scanResult.result = mockDelivery;
+    
+    // Save scan result to history
+    const history = await getScanHistory();
+    await syncScans([...history, scanResult]);
+    
+    return scanResult;
+  } catch (error: any) {
+    scanResult.status = "error";
+    scanResult.error = error.message;
+    
+    // Save scan result to history
+    const history = await getScanHistory();
+    await syncScans([...history, scanResult]);
+    
+    return scanResult;
   }
 };
 
-// Synchronize pending scans when coming back online
-export const syncScans = async () => {
-  try {
-    const db = await initDB();
-    const pendingScans = await db.getAll('pending-scans');
-
-    if (pendingScans.length === 0) {
-      return { synced: 0 };
-    }
-
-    // Prepare the data for bulk processing
-    const scansForSync = pendingScans.map(({ id, ...scan }) => scan);
-
-    // Send to server for processing
-    const { data, error } = await supabase.functions.invoke('process-pending-scans', {
-      body: { scans: scansForSync },
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    // Clear successfully synced scans
-    const tx = db.transaction('pending-scans', 'readwrite');
-    for (const scan of pendingScans) {
-      await tx.store.delete(scan.id);
-    }
-    await tx.done;
-
-    return { synced: pendingScans.length, result: data };
-  } catch (error) {
-    console.error('Error syncing pending scans:', error);
-    return { synced: 0, error: error.message };
-  }
-};
-
-// Generate a barcode data URL for display
-export const generateBarcodeScanURL = (barcode: string): string => {
-  return getBarcodeDataURL(barcode);
-};
-
-// Get scan history
-export const getScanHistory = async (limit: number = 100): Promise<ScanResult[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('scan_history')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-
-    return data.map(item => ({
-      id: item.id,
-      code: item.barcode,
-      scanType: item.scan_type,
-      timestamp: new Date(item.created_at).getTime(),
-      status: item.scan_result || 'success'
-    }));
-  } catch (error) {
-    console.error('Error fetching scan history:', error);
-    return [];
-  }
+// Generate a unique barcode
+export const generateBarcode = (): string => {
+  const prefix = 'TTS';
+  const numericPart = Math.floor(Math.random() * 10000000000).toString().padStart(10, '0');
+  return `${prefix}${numericPart}`;
 };

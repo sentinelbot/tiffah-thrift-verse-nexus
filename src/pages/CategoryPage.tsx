@@ -1,173 +1,156 @@
 
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import ProductCard, { ProductType } from "@/components/products/ProductCard";
-import { useParams } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
-import { Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-
-// Mock data for different categories
-const categoryProducts: Record<string, ProductType[]> = {
-  clothing: [
-    {
-      id: "1",
-      title: "Vintage Denim Jacket",
-      price: 45.99,
-      originalPrice: 65.00,
-      category: "Clothing",
-      condition: "Good",
-      size: "M",
-      imageUrl: "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "2",
-      title: "Floral Summer Dress",
-      price: 28.50,
-      category: "Clothing",
-      condition: "Like New",
-      size: "S",
-      imageUrl: "https://images.unsplash.com/photo-1542295669297-4d352b042bca?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "4",
-      title: "Knit Wool Sweater",
-      price: 32.00,
-      category: "Clothing",
-      condition: "Good",
-      size: "L",
-      imageUrl: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "6",
-      title: "Classic Trench Coat",
-      price: 75.99,
-      originalPrice: 120.00,
-      category: "Clothing",
-      condition: "Like New",
-      size: "M",
-      imageUrl: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=600&auto=format&fit=crop"
-    }
-  ],
-  accessories: [
-    {
-      id: "3",
-      title: "Leather Crossbody Bag",
-      price: 34.99,
-      originalPrice: 50.00,
-      category: "Accessories",
-      condition: "Excellent",
-      imageUrl: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "7",
-      title: "Boho Style Earrings",
-      price: 15.99,
-      category: "Accessories",
-      condition: "New",
-      imageUrl: "https://images.unsplash.com/photo-1593795899768-947c4929449d?q=80&w=600&auto=format&fit=crop"
-    }
-  ],
-  home: [
-    {
-      id: "5",
-      title: "Vintage Polaroid Camera",
-      price: 65.00,
-      category: "Home",
-      condition: "Fair",
-      imageUrl: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "8",
-      title: "Retro Record Player",
-      price: 89.99,
-      originalPrice: 110.00,
-      category: "Home",
-      condition: "Good",
-      imageUrl: "https://images.unsplash.com/photo-1593697963288-0c0828328df1?q=80&w=600&auto=format&fit=crop"
-    }
-  ],
-  vintage: [
-    {
-      id: "9",
-      title: "70s Platform Boots",
-      price: 55.00,
-      category: "Vintage",
-      condition: "Good",
-      size: "38",
-      imageUrl: "https://images.unsplash.com/photo-1605812830455-2fadc55bc4ba?q=80&w=600&auto=format&fit=crop"
-    },
-    {
-      id: "10",
-      title: "Retro Typewriter",
-      price: 120.00,
-      category: "Vintage",
-      condition: "Fair",
-      imageUrl: "https://images.unsplash.com/photo-1558461570-ecc7abe720cf?q=80&w=600&auto=format&fit=crop"
-    }
-  ]
-};
-
-// Category name mapping
-const categoryNames: Record<string, string> = {
-  clothing: "Clothing",
-  accessories: "Accessories",
-  home: "Home Goods",
-  vintage: "Vintage Collection"
-};
+import { Product } from '@/types';
+import ProductCard from '@/components/products/ProductCard';
+import ProductFilters from '@/components/shop/ProductFilters';
+import ProductSort from '@/components/shop/ProductSort';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Filter, Grid3X3, LayoutList } from 'lucide-react';
 
 const CategoryPage = () => {
-  const { categoryId } = useParams();
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { categorySlug } = useParams<{ categorySlug: string }>();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [categoryTitle, setCategoryTitle] = useState('');
   
-  // Get products for this category, or empty array if category not found
-  const products = categoryId ? categoryProducts[categoryId] || [] : [];
-  const categoryName = categoryId ? categoryNames[categoryId] || categoryId : "";
-  
+  useEffect(() => {
+    // Convert slug to display title
+    if (categorySlug) {
+      setCategoryTitle(
+        categorySlug.charAt(0).toUpperCase() + 
+        categorySlug.slice(1).replace(/-/g, ' ')
+      );
+    }
+  }, [categorySlug]);
+
+  // Fetch products from Supabase
+  const { data: products, isLoading } = useQuery({
+    queryKey: ['products', categorySlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*, product_images(*)')
+        .eq('status', 'available')
+        .eq('category', categorySlug)
+        .order('date_added', { ascending: false });
+      
+      if (error) throw error;
+      
+      return data.map((product: any) => {
+        const mainImage = product.product_images?.find((img: any) => img.is_main) || 
+                          product.product_images?.[0];
+        
+        return {
+          ...product,
+          imageUrl: mainImage?.url || '/placeholder.svg'
+        };
+      });
+    },
+    enabled: !!categorySlug
+  });
+
+  // Filter products based on search term
+  const filteredProducts = products?.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">{categoryName}</h1>
-            <p className="text-muted-foreground">
-              Discover unique {categoryName.toLowerCase()} pieces that tell a story.
-            </p>
-            <Separator className="mt-4" />
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">{categoryTitle}</h1>
+          <p className="text-muted-foreground">Browse our {categoryTitle.toLowerCase()} collection</p>
+        </div>
+        
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar filters - only visible on larger screens or when toggled */}
+          <div className={`w-full lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+            <ProductFilters category={categorySlug} />
           </div>
           
-          <div className="md:hidden flex justify-between items-center mb-4">
-            <span className="text-sm text-muted-foreground">
-              {products.length} products
-            </span>
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2"
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-            >
-              <Filter className="h-4 w-4" />
-              Filters
-            </Button>
-          </div>
-          
-          {/* Filter panel would go here - similar to Shop page */}
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-          
-          {products.length === 0 && (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">No products found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your filters or check back soon for new arrivals.
-              </p>
+          {/* Product listing */}
+          <div className="w-full lg:flex-1">
+            {/* Search and filter controls */}
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-grow">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input 
+                  type="search" 
+                  placeholder={`Search ${categoryTitle.toLowerCase()}...`} 
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="lg:hidden"
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+                <ProductSort />
+                <div className="hidden sm:flex border rounded-md">
+                  <Button 
+                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'} 
+                    size="icon"
+                    onClick={() => setViewMode('grid')}
+                    className="rounded-none rounded-l-md"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant={viewMode === 'list' ? 'secondary' : 'ghost'} 
+                    size="icon"
+                    onClick={() => setViewMode('list')}
+                    className="rounded-none rounded-r-md"
+                  >
+                    <LayoutList className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
-          )}
+            
+            {/* Products grid */}
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="bg-muted rounded-lg h-80"></div>
+                ))}
+              </div>
+            ) : filteredProducts?.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">No products found in {categoryTitle}</p>
+                {searchTerm && (
+                  <Button onClick={() => setSearchTerm('')}>Clear search</Button>
+                )}
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' 
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" 
+                : "space-y-4"
+              }>
+                {filteredProducts?.map((product: Product) => (
+                  <ProductCard 
+                    key={product.id} 
+                    product={product} 
+                    viewMode={viewMode} 
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
       <Footer />
