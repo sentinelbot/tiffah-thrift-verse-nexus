@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/types';
+import { Product, ProductImage } from '@/types';
 import {
   Card,
   CardContent,
@@ -34,19 +34,26 @@ const ProductDetails = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, product_images(*)')
         .eq('id', id)
         .single();
       
       if (error) throw error;
       
       // Convert database fields to match our Product interface
+      const productImages: ProductImage[] = data.product_images?.map((img: any) => ({
+        id: img.id,
+        url: img.url,
+        alt: img.alt || data.name,
+        isMain: img.is_main
+      })) || [];
+      
       return {
         ...data,
         name: data.name,
-        imageUrl: data.images?.[0]?.url,
+        imageUrl: productImages[0]?.url,
         dateAdded: new Date(data.date_added),
-        images: data.images || [],
+        images: productImages,
       } as Product;
     },
   });

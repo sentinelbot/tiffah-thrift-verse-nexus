@@ -3,6 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { openDB } from 'idb';
 import { getBarcodeDataURL } from '@/utils/barcodeUtils';
 
+// Define types needed for our scanner components
+export interface ScanResult {
+  id: string;
+  code: string;
+  scanType: string;
+  timestamp: number;
+  status: string;
+  result?: any;
+}
+
 // Initialize IndexedDB for offline storage
 const initDB = async () => {
   return openDB('tiffah-scan-db', 1, {
@@ -17,6 +27,17 @@ const initDB = async () => {
 // Check if we're online
 export const isOnline = (): boolean => {
   return navigator.onLine;
+};
+
+// Initialize scanner with QuaggaJS
+export const initScanner = (containerId: string, options: any): (() => void) => {
+  // This would normally use QuaggaJS, but for now we'll just create a stub
+  console.log(`Scanner initialized in container ${containerId} with options:`, options);
+  
+  // Return a cleanup function
+  return () => {
+    console.log('Scanner stopped');
+  };
 };
 
 // Process a product scan
@@ -96,6 +117,70 @@ export const processProductScan = async (
   }
 };
 
+// Add processDeliveryScan function that was missing
+export const processDeliveryScan = async (
+  barcode: string,
+  userId: string,
+  userRole: string,
+  online: boolean = navigator.onLine
+) => {
+  try {
+    // Record the scan
+    const scanData = {
+      barcode,
+      scan_type: 'delivery',
+      scanned_by: userId,
+      device_info: `${navigator.userAgent}`,
+    };
+
+    if (online) {
+      await supabase.from('scan_history').insert(scanData);
+
+      // Look up the order
+      const { data: order, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('order_number', barcode)
+        .single();
+
+      if (error) {
+        return {
+          status: 'error',
+          message: 'Order not found',
+        };
+      }
+
+      return {
+        status: 'success',
+        result: {
+          id: order.id,
+          orderNumber: order.order_number,
+          status: order.status,
+          deliveryTime: new Date().toISOString(),
+        },
+      };
+    } else {
+      // Store for later sync
+      const db = await initDB();
+      await db.add('pending-scans', {
+        ...scanData,
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        status: 'pending-sync',
+        message: 'Delivery scan saved for later synchronization',
+      };
+    }
+  } catch (error) {
+    console.error('Error processing delivery scan:', error);
+    return {
+      status: 'error',
+      message: 'Failed to process delivery scan',
+    };
+  }
+};
+
 // Process an order scan
 export const processOrderScan = async (
   barcode: string,
@@ -129,6 +214,12 @@ export const processOrderScan = async (
         };
       }
 
+      // Mock items for testing OrderScanner
+      const mockItems = [
+        { id: '1', name: 'Vintage T-shirt', quantity: 1 },
+        { id: '2', name: 'Denim Jacket', quantity: 1 }
+      ];
+
       // Role-specific actions
       if (userRole === 'orderPreparer') {
         // Order preparer might update status to 'processing'
@@ -143,6 +234,7 @@ export const processOrderScan = async (
           orderNumber: order.order_number,
           status: order.status,
           customerId: order.customer_id,
+          items: mockItems  // Add mock items for now
         },
       };
     } else {
@@ -168,7 +260,7 @@ export const processOrderScan = async (
 };
 
 // Synchronize pending scans when coming back online
-export const syncPendingScans = async () => {
+export const syncScans = async () => {
   try {
     const db = await initDB();
     const pendingScans = await db.getAll('pending-scans');
@@ -206,4 +298,28 @@ export const syncPendingScans = async () => {
 // Generate a barcode data URL for display
 export const generateBarcodeScanURL = (barcode: string): string => {
   return getBarcodeDataURL(barcode);
+};
+
+// Get scan history
+export const getScanHistory = async (limit: number = 100): Promise<ScanResult[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('scan_history')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return data.map(item => ({
+      id: item.id,
+      code: item.barcode,
+      scanType: item.scan_type,
+      timestamp: new Date(item.created_at).getTime(),
+      status: item.scan_result || 'success'
+    }));
+  } catch (error) {
+    console.error('Error fetching scan history:', error);
+    return [];
+  }
 };

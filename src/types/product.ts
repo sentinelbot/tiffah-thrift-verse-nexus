@@ -3,6 +3,7 @@ export type ProductCondition = 'new' | 'likeNew' | 'good' | 'fair';
 export type ProductStatus = 'available' | 'reserved' | 'sold';
 
 export interface ProductImage {
+  id?: string; // Make id optional for new images
   url: string;
   alt: string;
   isMain: boolean;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -30,9 +29,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { getOrGenerateBarcode } from '@/utils/barcodeUtils';
-import { Product, ProductFormValues, ProductCondition, ProductStatus } from '@/types/product';
+import { Product, ProductFormValues, ProductCondition, ProductStatus, ProductMeasurements, ProductImage } from '@/types/product';
 
-// Define the schema for the form
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Product name must be at least 3 characters' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters' }),
@@ -62,7 +60,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
   const [existingImages, setExistingImages] = useState<{ url: string; alt: string; isMain: boolean }[]>([]);
   const isEditMode = Boolean(productId);
 
-  // Set up form with default values
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -82,7 +79,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
     },
   });
 
-  // Fetch product data if in edit mode
   useEffect(() => {
     if (productId) {
       const fetchProduct = async () => {
@@ -99,7 +95,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
         }
 
         if (data) {
-          // Convert to our Product type
           const productData: Product = {
             id: data.id,
             name: data.name,
@@ -116,7 +111,11 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
             status: data.status as ProductStatus,
             dateAdded: new Date(data.date_added),
             featured: data.featured,
-            measurements: data.measurements,
+            measurements: data.measurements as ProductMeasurements || {
+              chest: undefined,
+              waist: undefined,
+              length: undefined
+            },
             images: [],
             tags: data.tags,
             added_by: data.added_by,
@@ -124,7 +123,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
 
           setProduct(productData);
 
-          // Set form values
           form.reset({
             name: productData.name,
             description: productData.description,
@@ -142,7 +140,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
             added_by: productData.added_by || user?.id || '',
           });
 
-          // Fetch product images
           const { data: imageData, error: imageError } = await supabase
             .from('product_images')
             .select('*')
@@ -154,7 +151,8 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
           }
 
           if (imageData) {
-            const formattedImages = imageData.map(img => ({
+            const formattedImages: ProductImage[] = imageData.map(img => ({
+              id: img.id,
               url: img.url,
               alt: img.alt || '',
               isMain: img.is_main
@@ -168,15 +166,12 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
     }
   }, [productId, form, user?.id]);
 
-  // Handle form submission
   const onSubmit = async (values: ProductFormValues) => {
     setIsSubmitting(true);
 
     try {
-      // Generate or use existing barcode
       const barcode = await getOrGenerateBarcode(product.barcode);
       
-      // Prepare product data
       const productData = {
         ...values,
         barcode,
@@ -193,7 +188,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
       let productId: string;
 
       if (isEditMode) {
-        // Update existing product
         const { error: updateError } = await supabase
           .from('products')
           .update(productData)
@@ -206,7 +200,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
         productId = product.id as string;
         toast.success('Product updated successfully');
       } else {
-        // Insert new product
         const { data: newProduct, error: insertError } = await supabase
           .from('products')
           .insert(productData)
@@ -221,16 +214,13 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
         toast.success('Product created successfully');
       }
 
-      // Handle image uploads if there are any
       if (images.length > 0) {
-        // Upload each image to storage
         for (let i = 0; i < images.length; i++) {
           const file = images[i];
           const fileExt = file.name.split('.').pop();
           const fileName = `${productId}/${Date.now()}.${fileExt}`;
           const filePath = `products/${fileName}`;
 
-          // Upload image to storage
           const { error: uploadError } = await supabase.storage
             .from('product-images')
             .upload(filePath, file);
@@ -240,17 +230,15 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
             continue;
           }
 
-          // Get public URL
           const { data: publicUrlData } = supabase.storage
             .from('product-images')
             .getPublicUrl(filePath);
 
-          // Save image info to database
           const { error: dbError } = await supabase.from('product_images').insert({
             product_id: productId,
             url: publicUrlData.publicUrl,
             alt: values.name,
-            is_main: i === 0 && existingImages.length === 0, // First image is main if no existing images
+            is_main: i === 0 && existingImages.length === 0,
           });
 
           if (dbError) {
@@ -259,7 +247,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
         }
       }
 
-      // Redirect to products page
       navigate('/admin/products');
     } catch (error: any) {
       console.error('Error saving product:', error);
@@ -273,10 +260,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
     if (!productId || !confirm('Are you sure you want to delete this product?')) return;
 
     try {
-      // Delete product images from storage
-      // This would need a more robust implementation to delete all images
-
-      // Delete product image records
       const { error: imageDbError } = await supabase
         .from('product_images')
         .delete()
@@ -286,7 +269,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
         throw new Error(imageDbError.message);
       }
 
-      // Delete product
       const { error } = await supabase
         .from('products')
         .delete()
@@ -308,7 +290,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
     <div className="space-y-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Basic Information */}
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-4">
@@ -382,7 +363,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
             </CardContent>
           </Card>
           
-          {/* Categories & Tags */}
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-4">
@@ -558,7 +538,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
             </CardContent>
           </Card>
           
-          {/* Product Images */}
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-4">
@@ -571,7 +550,6 @@ const ProductFormComponent: React.FC<ProductFormComponentProps> = ({ productId }
             </CardContent>
           </Card>
           
-          {/* Form Actions */}
           <div className="flex justify-between">
             <Button
               type="button"

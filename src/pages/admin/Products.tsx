@@ -1,96 +1,73 @@
-
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Package, 
-  Edit, 
-  Trash2, 
-  ChevronLeft, 
-  ChevronRight 
+  Search,
+  PlusCircle,
+  Filter,
+  ArrowUpDown,
+  MoreHorizontal
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/types';
-import { toast } from 'sonner';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+
+interface ProductListItem {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  condition: string;
+  status: string;
+  barcode: string;
+  date_added: string;
+  featured: boolean;
+  imageUrl?: string;
+  product_images?: Array<{id: string, url: string, is_main: boolean}>;
+}
 
 const Products = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [productToDelete, setProductToDelete] = useState<string | null>(null);
-  
-  const { data: products = [], isLoading } = useQuery({
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, product_images(id, url, is_main)')
         .order('date_added', { ascending: false });
-      
+        
       if (error) throw error;
       
-      // Convert database fields to match our Product interface
-      return data.map(product => ({
-        ...product,
-        name: product.name,
-        imageUrl: product.images?.[0]?.url || '',
-        dateAdded: new Date(product.date_added),
-        images: product.images || [],
-      })) as Product[];
+      // Process the products to get the main image URL
+      return data.map((product: ProductListItem) => {
+        // Find the main image, or use the first image, or provide a default
+        const mainImage = product.product_images?.find(img => img.is_main) || product.product_images?.[0];
+        return {
+          ...product,
+          imageUrl: mainImage?.url || 'https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=150&auto=format&fit=crop'
+        };
+      });
     }
   });
-  
-  const deleteProductMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      return id;
-    },
-    onSuccess: () => {
-      toast.success('Product deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      setProductToDelete(null);
-    },
-    onError: (error) => {
-      toast.error(`Error deleting product: ${error.message}`);
-    }
-  });
-  
+
+  // Filter products based on search term
   const filteredProducts = products?.filter(product => 
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.barcode.toLowerCase().includes(searchQuery.toLowerCase())
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.barcode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
+
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'available':
@@ -119,16 +96,6 @@ const Products = () => {
     }
   };
   
-  const handleDeleteClick = (id: string) => {
-    setProductToDelete(id);
-  };
-  
-  const confirmDelete = () => {
-    if (productToDelete) {
-      deleteProductMutation.mutate(productToDelete);
-    }
-  };
-  
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -139,7 +106,7 @@ const Products = () => {
           </div>
           <Button asChild>
             <Link to="/admin/products/new">
-              <Plus className="mr-2 h-4 w-4" />
+              <PlusCircle className="mr-2 h-4 w-4" />
               Add Product
             </Link>
           </Button>
@@ -151,8 +118,8 @@ const Products = () => {
             <Input 
               placeholder="Search products..." 
               className="pl-10 w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -161,8 +128,8 @@ const Products = () => {
               Filters
             </Button>
             <Button variant="outline" className="flex-1 sm:flex-none">
-              <Package className="mr-2 h-4 w-4" />
-              Export
+              <ArrowUpDown className="mr-2 h-4 w-4" />
+              Sort
             </Button>
           </div>
         </div>
@@ -204,16 +171,8 @@ const Products = () => {
                       <div className="flex justify-end gap-2">
                         <Button size="icon" variant="ghost" asChild>
                           <Link to={`/admin/products/${product.id}`}>
-                            <Edit className="h-4 w-4" />
+                            <MoreHorizontal className="h-4 w-4" />
                           </Link>
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="text-destructive"
-                          onClick={() => handleDeleteClick(product.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -230,36 +189,16 @@ const Products = () => {
               </p>
               <div className="flex items-center gap-1">
                 <Button size="icon" variant="outline" disabled>
-                  <ChevronLeft className="h-4 w-4" />
+                  <ArrowUpDown className="h-4 w-4" />
                 </Button>
                 <Button size="icon" variant="outline" disabled>
-                  <ChevronRight className="h-4 w-4" />
+                  <ArrowUpDown className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           )}
         </div>
       </div>
-      
-      <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the product from your inventory.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-destructive hover:bg-destructive/90"
-              onClick={confirmDelete}
-            >
-              {deleteProductMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AdminLayout>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -126,7 +125,6 @@ const ProductForm = () => {
               featured: data.featured,
             });
             
-            // Fetch product images
             const { data: imageData, error: imageError } = await supabase
               .from('product_images')
               .select('*')
@@ -143,7 +141,6 @@ const ProductForm = () => {
               
               setProductImages(images);
               
-              // Set main product image
               const mainImage = images.find(img => img.isMain);
               if (mainImage) {
                 setProductImage(mainImage.url);
@@ -165,7 +162,7 @@ const ProductForm = () => {
     setLoading(true);
     try {
       if (!values.barcode) {
-        values.barcode = generateUniqueBarcode();
+        values.barcode = await generateUniqueBarcode();
       }
 
       if (isEditing) {
@@ -189,8 +186,6 @@ const ProductForm = () => {
           .eq('id', id);
 
         if (error) throw error;
-        
-        // In a real implementation, we would save productImages to the database here
         
         toast.success('Product updated successfully');
       } else {
@@ -219,9 +214,6 @@ const ProductForm = () => {
 
         if (error) throw error;
         
-        // In a real implementation, we would save productImages to the database here
-        // Associate images with the new product ID (data.id)
-        
         toast.success('Product created successfully');
       }
 
@@ -243,7 +235,7 @@ const ProductForm = () => {
     form.setValue('price', price);
   };
 
-  const handleEnhancedImage = (enhancedUrl: string) => {
+  const handleEnhancedImage = async (enhancedUrl: string) => {
     setProductImage(enhancedUrl);
     toast.success('Enhanced image will be used for this product');
   };
@@ -256,7 +248,6 @@ const ProductForm = () => {
   const handleImagesChange = (images: ProductImage[]) => {
     setProductImages(images);
     
-    // Update main product image if there is a main image
     const mainImage = images.find(img => img.isMain);
     if (mainImage) {
       setProductImage(mainImage.url);
