@@ -1,10 +1,33 @@
 
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Twitter, Mail } from "lucide-react";
+import { Instagram, Facebook, Twitter, Mail, Copyright } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAccessControl } from "@/hooks/useAccessControl";
+import AdminAccessModal from "@/components/admin/AdminAccessModal";
 
 const Footer = () => {
+  // Access control state management
+  const { processAccessAttempt, triggerAccessAnimation } = useAccessControl();
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const copyrightRef = useRef<HTMLSpanElement>(null);
+  
+  // Handle copyright text click
+  const handleCopyrightClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Process click with security measures
+    const accessGranted = processAccessAttempt('copyright');
+    if (accessGranted) {
+      // Only show animation and modal if access is granted
+      triggerAccessAnimation(copyrightRef.current, () => {
+        setShowAdminModal(true);
+      });
+    }
+  };
+
   return (
     <footer className="bg-muted mt-8 pt-12 pb-6 text-muted-foreground">
       <div className="container mx-auto px-4">
@@ -125,9 +148,24 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-border mt-8 pt-8 text-center text-xs">
-          <p>© {new Date().getFullYear()} TiffahThrift. All rights reserved.</p>
+          <p className="flex items-center justify-center gap-1">
+            <span 
+              ref={copyrightRef}
+              onClick={handleCopyrightClick}
+              className="inline-flex items-center select-none cursor-default transition-all duration-300" 
+            >
+              <Copyright className="h-3 w-3 mr-1" />
+              {new Date().getFullYear()} TiffahThrift. All rights reserved.
+            </span>
+          </p>
         </div>
       </div>
+      
+      {/* Admin access modal */}
+      <AdminAccessModal 
+        open={showAdminModal} 
+        onClose={() => setShowAdminModal(false)} 
+      />
     </footer>
   );
 };
