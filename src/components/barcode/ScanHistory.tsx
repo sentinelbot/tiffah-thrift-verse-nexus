@@ -1,147 +1,125 @@
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { getScanHistory } from '@/utils/authUtils';
+import { getScanHistory, ScanResult } from '@/utils/scannerUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, PackageOpen, FileText, Truck } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-
-interface ScanHistoryItem {
-  id: string;
-  barcode: string;
-  scan_type: 'product' | 'order' | 'delivery';
-  scan_time: string;
-  location?: string;
-  device_info?: string;
-}
+import { Input } from '@/components/ui/input';
+import { Loader2, Search } from 'lucide-react';
 
 const ScanHistory: React.FC = () => {
-  const { user } = useAuth();
-  const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
+  const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (user) {
-      loadScanHistory();
-    }
-  }, [user]);
+    const loadHistory = async () => {
+      try {
+        const history = await getScanHistory(100);
+        setScanHistory(history);
+      } catch (error) {
+        console.error('Failed to load scan history:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const loadScanHistory = async () => {
-    setIsLoading(true);
-    setError(null);
+    loadHistory();
+  }, []);
 
-    try {
-      const history = await getScanHistory(50);
-      setScanHistory(history);
-    } catch (error) {
-      console.error('Error loading scan history:', error);
-      setError('Failed to load scan history');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const filteredHistory = scanHistory.filter(scan => 
+    scan.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    scan.scanType.includes(searchTerm.toLowerCase()) ||
+    scan.status.includes(searchTerm.toLowerCase())
+  );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-
-  const getScanIcon = (scanType: string) => {
-    switch (scanType) {
-      case 'product':
-        return <PackageOpen className="h-4 w-4" />;
-      case 'order':
-        return <FileText className="h-4 w-4" />;
-      case 'delivery':
-        return <Truck className="h-4 w-4" />;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success':
+        return 'bg-green-500';
+      case 'pending-sync':
+        return 'bg-yellow-500';
+      case 'failed':
+        return 'bg-red-500';
       default:
-        return null;
+        return 'bg-gray-500';
     }
   };
 
-  const getScanTypeBadge = (scanType: string) => {
-    switch (scanType) {
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString();
+  };
+
+  const getScanTypeLabel = (type: string) => {
+    switch (type) {
       case 'product':
-        return <Badge variant="secondary">Product</Badge>;
+        return 'Product';
       case 'order':
-        return <Badge variant="default">Order</Badge>;
+        return 'Order';
       case 'delivery':
-        return <Badge variant="outline">Delivery</Badge>;
+        return 'Delivery';
       default:
-        return <Badge>{scanType}</Badge>;
+        return type;
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Scan History</CardTitle>
-          <Button variant="outline" size="sm" onClick={loadScanHistory} disabled={isLoading}>
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-            Refresh
-          </Button>
-        </div>
+        <CardTitle>Scan History</CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="relative mb-4">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search scans..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
         {isLoading ? (
-          <div className="flex justify-center py-8">
+          <div className="flex justify-center items-center h-40">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : error ? (
-          <div className="text-center py-8 text-destructive">
-            <p>{error}</p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={loadScanHistory}
-            >
-              Try Again
-            </Button>
-          </div>
-        ) : scanHistory.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No scan history found</p>
-          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Barcode</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Device</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {scanHistory.map((scan) => (
-                  <TableRow key={scan.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getScanIcon(scan.scan_type)}
-                        {getScanTypeBadge(scan.scan_type)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {scan.barcode}
-                    </TableCell>
-                    <TableCell>
-                      {formatDate(scan.scan_time)}
-                    </TableCell>
-                    <TableCell className="truncate max-w-[200px]">
-                      <span title={scan.device_info}>
-                        {scan.device_info?.substring(0, 20)}...
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <>
+            {filteredHistory.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground">
+                {searchTerm ? 'No matching scans found' : 'No scan history yet'}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredHistory.map((scan) => (
+                      <TableRow key={scan.id}>
+                        <TableCell>{formatTimestamp(scan.timestamp)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{getScanTypeLabel(scan.scanType)}</Badge>
+                        </TableCell>
+                        <TableCell className="font-mono">{scan.code}</TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(scan.status)}>
+                            {scan.status === 'pending-sync' ? 'Pending' : scan.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

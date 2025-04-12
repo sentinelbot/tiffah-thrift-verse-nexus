@@ -40,14 +40,13 @@ const ProductDetails = () => {
       
       if (error) throw error;
       
-      // Map database fields to the Product interface
+      // Convert database fields to match our Product interface
       return {
         ...data,
+        name: data.name,
+        imageUrl: data.images?.[0]?.url,
         dateAdded: new Date(data.date_added),
-        lastUpdated: new Date(data.last_updated),
-        subCategory: data.sub_category,
-        originalPrice: data.original_price,
-        addedBy: data.added_by
+        images: data.images || [],
       } as Product;
     },
   });
@@ -72,7 +71,7 @@ const ProductDetails = () => {
         {/* Product Image */}
         <div>
           <img
-            src="https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"
+            src={product.imageUrl || "https://images.unsplash.com/photo-1578651557809-5919a62b0c20?q=80&w=600&auto=format&fit=crop"}
             alt={product.name}
             className="w-full h-auto rounded-lg"
           />

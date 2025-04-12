@@ -2,11 +2,12 @@
 {
   "name": "Tiffah Thrift Store",
   "short_name": "Tiffah",
-  "description": "Sustainable fashion at affordable prices",
+  "description": "Discover unique pre-loved treasures at Tiffah Thrift Store",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#171717",
   "theme_color": "#ec4899",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -17,7 +18,8 @@
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

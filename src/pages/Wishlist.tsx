@@ -1,3 +1,4 @@
+
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -5,48 +6,9 @@ import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { Heart, ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { useState, useEffect } from "react";
-import { ProductType } from "@/types";
 
 const Wishlist = () => {
-  const { addToCart, wishlist, removeFromWishlist } = useCart();
-  const [wishlistItems, setWishlistItems] = useState<ProductType[]>([]);
-  
-  useEffect(() => {
-    const formattedItems = wishlist.map(item => ({
-      id: item.id,
-      title: item.name || item.title || '',
-      price: item.price,
-      originalPrice: item.originalPrice,
-      category: item.category,
-      condition: item.condition,
-      size: item.size,
-      imageUrl: item.imageUrl || ''
-    }));
-    
-    setWishlistItems(formattedItems);
-  }, [wishlist]);
-  
-  const moveToCart = (productId: string) => {
-    const product = wishlistItems.find(item => item.id === productId);
-    if (product) {
-      const cartItem = {
-        id: product.id,
-        name: product.title,
-        price: product.price,
-        imageUrl: product.imageUrl,
-        quantity: 1,
-        size: product.size
-      };
-      
-      addToCart(cartItem, 1);
-      removeFromWishlist(productId);
-    }
-  };
-  
-  const handleRemoveFromWishlist = (productId: string) => {
-    removeFromWishlist(productId);
-  };
+  const { wishlistItems, moveToCart, removeFromWishlist } = useCart();
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -80,6 +42,7 @@ const Wishlist = () => {
                       alt={product.title} 
                       className="w-full aspect-square object-cover group-hover:scale-105 transition-transform"
                     />
+                    {/* Only show discount badge if originalPrice exists */}
                     {product.originalPrice && (
                       <span className="absolute top-2 left-2 bg-primary text-white text-xs font-medium px-2 py-1 rounded">
                         {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
@@ -96,6 +59,7 @@ const Wishlist = () => {
                     <div className="flex justify-between items-baseline mb-3">
                       <div>
                         <span className="font-semibold text-primary">${product.price.toFixed(2)}</span>
+                        {/* Only show original price if it exists */}
                         {product.originalPrice && (
                           <span className="text-xs text-muted-foreground line-through ml-2">
                             ${product.originalPrice.toFixed(2)}
@@ -117,7 +81,7 @@ const Wishlist = () => {
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        onClick={() => handleRemoveFromWishlist(product.id)}
+                        onClick={() => removeFromWishlist(product.id)}
                         className="text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />

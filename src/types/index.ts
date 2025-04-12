@@ -16,105 +16,46 @@ export interface AuthContextType {
   refreshUserData: () => Promise<void>;
 }
 
-export interface ProductImage {
-  url: string;
-  alt?: string;
-  isMain?: boolean;
-}
-
+// Product types
 export interface Product {
   id: string;
   name: string;
-  description?: string;
+  title?: string; // For backward compatibility
+  description: string;
   price: number;
   originalPrice?: number;
+  original_price?: number; // For backward compatibility
   category: string;
   subCategory?: string;
-  tags?: string[];
+  sub_category?: string; // For backward compatibility
   size?: string;
   color?: string;
   brand?: string;
   condition: 'new' | 'likeNew' | 'good' | 'fair';
-  images?: ProductImage[];
+  imageUrl?: string;
+  images: { url: string; alt: string; isMain: boolean }[];
   barcode: string;
   status: 'available' | 'reserved' | 'sold';
-  dateAdded: Date;
-  lastUpdated: Date;
-  addedBy?: string;
+  dateAdded?: Date;
+  date_added?: string; // For backward compatibility
   featured: boolean;
-  imageUrl?: string; // Added for backward compatibility with some components
-  title?: string; // Added for backward compatibility with some components
   measurements?: {
     chest?: number;
     waist?: number;
     length?: number;
-    [key: string]: number | undefined;
   };
-  inventoryTracking?: {
-    inStockDate?: Date;
-    reservedUntil?: Date;
-    soldDate?: Date;
-  };
-}
-
-// This interface replicates the structure used in some components
-export interface ProductType {
-  id: string;
-  title: string;
-  price: number;
-  originalPrice?: number;
-  category: string;
-  condition?: string;
-  size?: string;
-  imageUrl: string;
-  color?: string;
-  brand?: string;
-}
-
-export interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-  quantity: number;
-  size?: string; // Added for backward compatibility
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  description?: string;
-  parentId?: string;
-  children?: Category[];
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-export interface PrintJob {
-  id: string;
-  type: 'label' | 'receipt' | 'shippingLabel';
-  content: string;
-  printerId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  error?: string;
-  requestedBy?: string;
-  relatedId?: string;
-  createdAt: Date;
-  processedAt?: Date;
 }
 
 // Analytics types
 export interface SalesData {
-  period: string;
-  revenue: number;
-  orders: number;
-  averageOrderValue: number;
-  previousPeriodChange: number;
+  period?: string;
+  date?: string;
+  revenue?: number;
+  amount?: number;
+  orders?: number;
+  averageOrderValue?: number;
+  avgOrderValue?: number;
+  previousPeriodChange?: number;
 }
 
 export interface SalesByCategory {
@@ -126,39 +67,59 @@ export interface SalesByCategory {
 export interface InventoryStatus {
   category: string;
   inStock: number;
-  lowStock: number;
-  totalValue: number;
+  lowStock?: number;
+  reserved?: number;
+  sold?: number;
+  totalValue?: number;
 }
 
 export interface StaffPerformanceData {
   name: string;
-  role: 'productManager' | 'orderPreparer' | 'deliveryStaff';
+  role: string;
+  productivity?: number;
+  accuracy?: number;
+  customerRating?: number;
   processed?: number;
   fulfilled?: number;
   completed?: number;
-  target: number;
-  efficiency: number;
+  target?: number;
+  efficiency?: number;
 }
 
 export interface CustomerBehavior {
-  segment: string;
-  count: number;
-  averageSpend: number;
-  repeatRate: number;
-  averageItemsPerOrder: number;
+  metric?: string;
+  value?: number;
+  previousValue?: number;
+  change?: number;
+  segment?: string;
+  count?: number;
+  averageSpend?: number;
+  repeatRate?: number;
+  averageItemsPerOrder?: number;
 }
 
 export interface MarketingEffectiveness {
-  campaign: string;
-  clicks: number;
-  conversions: number;
-  revenue: number;
-  roi: number;
+  channel?: string;
+  visitors?: number;
+  conversion?: number;
+  cost?: number;
+  roi?: number;
+  campaign?: string;
+  clicks?: number;
+  conversions?: number;
+  revenue?: number;
 }
 
 export interface SystemPerformance {
-  pageLoadTime: number;
-  serverResponseTime: number;
-  errorRate: number;
-  userSatisfaction: number;
+  metric?: string;
+  value?: number;
+  target?: number;
+  status?: 'good' | 'warning' | 'critical';
+  pageLoadTime?: number;
+  serverResponseTime?: number;
+  errorRate?: number;
+  userSatisfaction?: number;
 }
+
+// Export existing Order types from order.ts
+export * from './order';

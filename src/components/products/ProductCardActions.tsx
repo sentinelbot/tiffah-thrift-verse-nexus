@@ -1,8 +1,10 @@
+
 import React from "react";
 import { Plus, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
-import { ProductType } from "@/types";
+import { ProductType as ContextProductType } from "@/context/CartContext";
+import { ProductType } from "./ProductCard";
 import { toast } from "sonner";
 
 interface ProductCardActionsProps {
@@ -13,33 +15,27 @@ const ProductCardActions = ({ product }: ProductCardActionsProps) => {
   const { addToCart, addToWishlist } = useCart();
   
   const handleAddToCart = () => {
-    // Format product to cart item
-    const cartItem = {
-      id: product.id,
-      name: product.title, // Map title to name
-      price: product.price,
-      imageUrl: product.imageUrl,
-      quantity: 1,
-      size: product.size
+    // Convert from ProductCard.ProductType to CartContext.ProductType
+    const contextProduct: ContextProductType = {
+      ...product,
+      condition: product.condition || 'good', // Provide default if missing
+      originalPrice: product.originalPrice || undefined, // Handle originalPrice properly
     };
     
-    // Pass the cart item and quantity 1 as arguments
-    addToCart(cartItem, 1);
+    // Pass the product and quantity 1 as arguments
+    addToCart(contextProduct, 1);
     toast.success(`${product.title} added to cart`);
   };
   
   const handleAddToWishlist = () => {
-    // Format product to wishlist item
-    const wishlistItem = {
-      id: product.id,
-      name: product.title, // Map title to name
-      price: product.price,
-      imageUrl: product.imageUrl,
-      quantity: 1,
-      size: product.size
+    // Convert from ProductCard.ProductType to CartContext.ProductType
+    const contextProduct: ContextProductType = {
+      ...product,
+      condition: product.condition || 'good', // Provide default if missing
+      originalPrice: product.originalPrice || undefined, // Handle originalPrice properly
     };
     
-    addToWishlist(wishlistItem);
+    addToWishlist(contextProduct);
     toast.success(`${product.title} added to wishlist`);
   };
   

@@ -1,6 +1,8 @@
 
 import { Order, OrderStatus, PaymentMethod } from '@/types/order';
 
+const API_URL = '/api';
+
 // Generate a unique order number in format TTS-YYYYMMDD-XXXX
 export const generateOrderNumber = (): string => {
   const now = new Date();

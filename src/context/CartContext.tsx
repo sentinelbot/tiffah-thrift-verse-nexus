@@ -1,225 +1,248 @@
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { toast } from 'sonner';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, CartItem as CartItemType } from '@/types';
+export type ProductType = {
+  id: string;
+  title: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  condition: string;
+  size?: string;
+  color?: string;
+  brand?: string;
+  imageUrl: string;
+};
 
 export interface CartItem {
-  product: Product;
+  id: string;
+  name: string;
+  price: number;
   quantity: number;
-  reservedUntil: Date;
+  image: string;
+  size?: string;
+  color?: string;
+  reservedUntil?: Date;
 }
 
-interface CartContextType {
+export interface WishlistItem extends ProductType {
+}
+
+export interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product | CartItemType, quantity: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addItem: (item: CartItem) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
-  getCartTotal: () => number;
-  getItemCount: () => number;
-  addToWishlist: (product: Product | CartItemType) => void;
-  removeFromWishlist: (productId: string) => void;
-  wishlist: Product[];
-  cartItems: CartItem[]; // Alias for items, for backward compatibility
-  calculateCartTotal: () => number; // Alias for getCartTotal, for backward compatibility
+  getSubtotal: () => number;
+  getTotalItems: () => number;
+  
+  isInCart: (id: string) => boolean;
+  isInWishlist: (id: string) => boolean;
+  addToCart: (product: ProductType, quantity: number) => void;
+  addToWishlist: (product: ProductType) => void;
+  removeFromCart: (id: string) => void;
+  removeFromWishlist: (id: string) => void;
+  moveToCart: (id: string) => void;
+  cartItems: Array<{product: ProductType, quantity: number, reservedUntil: Date}>;
+  wishlistItems: WishlistItem[];
+  calculateCartTotal: () => number;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+const CartContext = createContext<CartContextType>({
+  items: [],
+  addItem: () => {},
+  removeItem: () => {},
+  updateQuantity: () => {},
+  clearCart: () => {},
+  getSubtotal: () => 0,
+  getTotalItems: () => 0,
+  
+  isInCart: () => false,
+  isInWishlist: () => false,
+  addToCart: () => {},
+  addToWishlist: () => {},
+  removeFromCart: () => {},
+  removeFromWishlist: () => {},
+  moveToCart: () => {},
+  cartItems: [],
+  wishlistItems: [],
+  calculateCartTotal: () => 0
+});
 
-interface CartProviderProps {
-  children: React.ReactNode;
-}
-
-export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<Product[]>([]);
-
-  // Load cart and wishlist from localStorage on initialization
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  
   useEffect(() => {
-    const savedCart = localStorage.getItem('tiffah-cart');
+    const savedCart = localStorage.getItem('cart');
+    const savedWishlist = localStorage.getItem('wishlist');
+    
     if (savedCart) {
       try {
-        // Convert string dates back to Date objects
-        const parsedCart = JSON.parse(savedCart, (key, value) => {
-          if (key === 'reservedUntil' && value) {
-            return new Date(value);
-          }
-          return value;
-        });
-        setItems(parsedCart);
+        setItems(JSON.parse(savedCart));
       } catch (error) {
-        console.error('Error parsing cart data:', error);
-        localStorage.removeItem('tiffah-cart');
+        console.error('Failed to parse cart from localStorage:', error);
+        localStorage.removeItem('cart');
       }
     }
-
-    const savedWishlist = localStorage.getItem('tiffah-wishlist');
+    
     if (savedWishlist) {
       try {
         setWishlist(JSON.parse(savedWishlist));
       } catch (error) {
-        console.error('Error parsing wishlist data:', error);
-        localStorage.removeItem('tiffah-wishlist');
+        console.error('Failed to parse wishlist from localStorage:', error);
+        localStorage.removeItem('wishlist');
       }
     }
   }, []);
-
-  // Save cart and wishlist to localStorage whenever they change
+  
   useEffect(() => {
-    localStorage.setItem('tiffah-cart', JSON.stringify(items));
+    localStorage.setItem('cart', JSON.stringify(items));
   }, [items]);
-
+  
   useEffect(() => {
-    localStorage.setItem('tiffah-wishlist', JSON.stringify(wishlist));
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
-
-  const addToCart = (product: Product | CartItemType, quantity: number) => {
-    setItems(currentItems => {
-      // Check if the product already exists in the cart
-      // Safely extract the product ID based on the type
-      const productId = 'id' in product ? product.id : '';
-      const existingItemIndex = currentItems.findIndex(item => item.product.id === productId);
-
-      // Set reservation expiry to 15 minutes from now
-      const reservationTime = new Date();
-      reservationTime.setMinutes(reservationTime.getMinutes() + 15);
-
-      // Convert CartItemType to Product if needed
-      let fullProduct: Product;
-      if ('name' in product && !('barcode' in product)) {
-        // It's a CartItemType, convert to a basic Product
-        fullProduct = {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          category: 'unknown',
-          condition: 'good' as 'new' | 'likeNew' | 'good' | 'fair',
-          barcode: product.id, // Use ID as barcode
-          status: 'available',
-          dateAdded: new Date(),
-          lastUpdated: new Date(),
-          featured: false,
-          imageUrl: product.imageUrl,
-          title: product.name // For backward compatibility
-        };
+  
+  const isInCart = (id: string) => {
+    return items.some(item => item.id === id);
+  };
+  
+  const isInWishlist = (id: string) => {
+    return wishlist.some(item => item.id === id);
+  };
+  
+  const addItem = (item: CartItem) => {
+    setItems(prevItems => {
+      const existingItem = prevItems.find(i => i.id === item.id);
+      
+      if (existingItem) {
+        return prevItems.map(i => 
+          i.id === item.id 
+            ? { ...i, quantity: i.quantity + item.quantity } 
+            : i
+        );
       } else {
-        // It's already a Product
-        fullProduct = product as Product;
-      }
-
-      if (existingItemIndex > -1) {
-        // Update quantity of existing item
-        const updatedItems = [...currentItems];
-        updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + quantity,
-          reservedUntil: reservationTime, // Reset the reservation time
-        };
-        return updatedItems;
-      } else {
-        // Add new item
-        return [...currentItems, {
-          product: fullProduct,
-          quantity,
-          reservedUntil: reservationTime
-        }];
+        return [...prevItems, item];
       }
     });
+    
+    toast.success(`${item.name} added to cart!`);
   };
-
-  const removeFromCart = (productId: string) => {
-    setItems(currentItems => currentItems.filter(item => item.product.id !== productId));
+  
+  const addToCart = (product: ProductType, quantity: number) => {
+    const item: CartItem = {
+      id: product.id,
+      name: product.title,
+      price: product.price,
+      quantity: quantity,
+      image: product.imageUrl,
+      size: product.size,
+      color: product.color,
+      reservedUntil: new Date(Date.now() + 15 * 60000)
+    };
+    
+    addItem(item);
   };
-
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
+  
+  const addToWishlist = (product: ProductType) => {
+    if (isInWishlist(product.id)) {
       return;
     }
-
-    setItems(currentItems => 
-      currentItems.map(item => 
-        item.product.id === productId ? { ...item, quantity } : item
+    
+    setWishlist(prevWishlist => [...prevWishlist, product]);
+    toast.success(`${product.title} added to wishlist!`);
+  };
+  
+  const removeItem = (id: string) => {
+    setItems(prevItems => prevItems.filter(item => item.id !== id));
+    toast.info('Item removed from cart');
+  };
+  
+  const removeFromCart = removeItem;
+  
+  const removeFromWishlist = (id: string) => {
+    setWishlist(prevWishlist => prevWishlist.filter(item => item.id !== id));
+    toast.info('Item removed from wishlist');
+  };
+  
+  const moveToCart = (id: string) => {
+    const product = wishlist.find(item => item.id === id);
+    
+    if (product) {
+      addToCart(product, 1);
+      removeFromWishlist(id);
+      toast.success(`${product.title} moved to cart!`);
+    }
+  };
+  
+  const updateQuantity = (id: string, quantity: number) => {
+    if (quantity < 1) {
+      removeItem(id);
+      return;
+    }
+    
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.id === id ? { ...item, quantity } : item
       )
     );
   };
-
+  
   const clearCart = () => {
     setItems([]);
+    toast.info('Cart cleared');
   };
-
-  const getCartTotal = () => {
-    return items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  
+  const getSubtotal = () => {
+    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
-
-  const getItemCount = () => {
-    return items.reduce((count, item) => count + item.quantity, 0);
+  
+  const calculateCartTotal = getSubtotal;
+  
+  const getTotalItems = () => {
+    return items.reduce((total, item) => total + item.quantity, 0);
   };
-
-  const addToWishlist = (product: Product | CartItemType) => {
-    setWishlist(currentWishlist => {
-      // Convert CartItemType to Product if needed
-      let fullProduct: Product;
-      if ('name' in product && !('barcode' in product)) {
-        // It's a CartItemType, convert to a basic Product
-        fullProduct = {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          category: 'unknown',
-          condition: 'good' as 'new' | 'likeNew' | 'good' | 'fair',
-          barcode: product.id, // Use ID as barcode
-          status: 'available',
-          dateAdded: new Date(),
-          lastUpdated: new Date(),
-          featured: false,
-          imageUrl: product.imageUrl,
-          title: product.name // For backward compatibility
-        };
-      } else {
-        // It's already a Product
-        fullProduct = product as Product;
-      }
-
-      // Check if product already exists in wishlist
-      if (currentWishlist.some(item => item.id === fullProduct.id)) {
-        return currentWishlist;
-      }
-      return [...currentWishlist, fullProduct];
-    });
-  };
-
-  const removeFromWishlist = (productId: string) => {
-    setWishlist(currentWishlist => currentWishlist.filter(product => product.id !== productId));
-  };
-
-  // Create the context value object
-  const contextValue: CartContextType = {
-    items,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    getCartTotal,
-    getItemCount,
-    addToWishlist,
-    removeFromWishlist,
-    wishlist,
-    // Aliases for backward compatibility
-    cartItems: items,
-    calculateCartTotal: getCartTotal
-  };
-
+  
+  const cartItems = items.map(item => ({
+    product: {
+      id: item.id,
+      title: item.name,
+      price: item.price,
+      imageUrl: item.image,
+      size: item.size,
+      color: item.color,
+      condition: '',
+      category: ''
+    },
+    quantity: item.quantity,
+    reservedUntil: item.reservedUntil || new Date(Date.now() + 15 * 60000)
+  }));
+  
   return (
-    <CartContext.Provider value={contextValue}>
+    <CartContext.Provider value={{ 
+      items, 
+      addItem, 
+      removeItem, 
+      updateQuantity, 
+      clearCart, 
+      getSubtotal,
+      getTotalItems,
+      isInCart,
+      isInWishlist,
+      addToCart,
+      addToWishlist,
+      removeFromCart,
+      removeFromWishlist,
+      moveToCart,
+      cartItems,
+      wishlistItems: wishlist,
+      calculateCartTotal
+    }}>
       {children}
     </CartContext.Provider>
   );
 };
 
-export const useCart = (): CartContextType => {
-  const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-};
+export const useCart = () => useContext(CartContext);

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -17,19 +18,15 @@ import { useCart } from "@/context/CartContext";
 import { ShippingForm } from "@/components/checkout/ShippingForm";
 import { PaymentMethod } from "@/components/checkout/PaymentMethod";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
-import { OrderReview } from "@/components/checkout/OrderReview";
-import { PaymentConfirmation } from "@/components/checkout/PaymentConfirmation";
-import { PaymentStatusTracker } from "@/components/checkout/PaymentStatusTracker";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { createOrder } from "@/services/orderService";
+import { processPayment } from "@/services/paymentService";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaymentMethod as PaymentMethodType, PaymentStatus, ShippingInfo } from "@/types/order";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const steps = [
   { id: "shipping", title: "Shipping" },
   { id: "payment", title: "Payment" },
-  { id: "review", title: "Review" },
   { id: "confirmation", title: "Confirmation" }
 ];
 
@@ -67,30 +64,21 @@ const Checkout = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<CheckoutData>(defaultData);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [createdOrder, setCreatedOrder] = useState<{
-    id: string;
-    orderNumber: string;
-  } | null>(null);
-  const [paymentResult, setPaymentResult] = useState<{
-    success: boolean;
-    transactionId?: string;
-    status?: PaymentStatus;
-    errorMessage?: string;
-  } | null>(null);
   
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { cartItems, calculateCartTotal, clearCart } = useCart();
   
+  // Calculate costs
   const subtotal = calculateCartTotal();
   const shippingCost = formData.shipping.shippingMethod === "express" ? 500 : 200;
+  // VAT (16% in Kenya)
   const vatRate = 0.16;
   const vatAmount = subtotal * vatRate;
   const total = subtotal + shippingCost + vatAmount;
   
+  // Ensure cart is not empty
   if (cartItems.length === 0) {
     navigate("/cart");
     return null;
@@ -107,6 +95,7 @@ const Checkout = () => {
   };
   
   const handleNext = () => {
+    // Validate shipping info
     if (currentStep === 0) {
       const { fullName, email, phone, address, city, state, postalCode } = formData.shipping;
       if (!fullName || !email || !phone || !address || !city || !state || !postalCode) {
@@ -117,6 +106,7 @@ const Checkout = () => {
         return;
       }
       
+      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         toast({
@@ -126,6 +116,7 @@ const Checkout = () => {
         return;
       }
       
+      // Validate phone number (Kenyan format)
       const phoneRegex = /^(?:\+254|0)[1-9][0-9]{8}$/;
       if (!phoneRegex.test(phone)) {
         toast({
@@ -137,6 +128,7 @@ const Checkout = () => {
       }
     }
     
+    // Validate payment info
     if (currentStep === 1) {
       const { method, cardName, cardNumber, expiryDate, cvv, mpesaPhone } = formData.payment;
       
@@ -149,6 +141,7 @@ const Checkout = () => {
           return;
         }
         
+        // Validate card number
         if (!/^[0-9]{16}$/.test(cardNumber.replace(/\s/g, ""))) {
           toast({
             title: "Invalid card number",
@@ -158,6 +151,7 @@ const Checkout = () => {
           return;
         }
         
+        // Validate expiry date
         if (!/^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(expiryDate)) {
           toast({
             title: "Invalid expiry date",
@@ -167,6 +161,7 @@ const Checkout = () => {
           return;
         }
         
+        // Validate CVV
         if (!/^[0-9]{3,4}$/.test(cvv)) {
           toast({
             title: "Invalid CVV",
@@ -184,6 +179,7 @@ const Checkout = () => {
           return;
         }
         
+        // Validate Mpesa phone number (Kenyan format)
         const phoneRegex = /^(?:\+254|0)[1-9][0-9]{8}$/;
         if (!phoneRegex.test(mpesaPhone)) {
           toast({
@@ -196,16 +192,6 @@ const Checkout = () => {
       }
     }
     
-    if (currentStep === 2) {
-      if (!termsAccepted) {
-        toast({
-          title: "Please accept the terms and conditions",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-    
     setCurrentStep((prev) => prev + 1);
     window.scrollTo(0, 0);
   };
@@ -215,22 +201,37 @@ const Checkout = () => {
     window.scrollTo(0, 0);
   };
   
-  const handlePlaceOrder = async () => {
+  const handleComplete = async () => {
     setIsProcessing(true);
     
     try {
+      // Process payment first
+      const paymentResult = await processPayment(
+        formData.payment.method,
+        total,
+        "TMP-" + Date.now(), // Temporary order number
+        formData.payment
+      );
+      
+      if (!paymentResult.success && formData.payment.method !== 'cash') {
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Prepare order items
       const orderItems = cartItems.map(item => ({
         productId: item.product.id,
         product: {
           id: item.product.id,
-          title: item.product.title || item.product.name || '',
+          title: item.product.title,
           price: item.product.price,
-          imageUrl: item.product.imageUrl || ''
+          imageUrl: item.product.imageUrl
         },
         quantity: item.quantity,
         price: item.product.price
       }));
       
+      // Create order
       const order = await createOrder({
         customer: {
           id: user?.id || 'guest',
@@ -241,7 +242,8 @@ const Checkout = () => {
         totalAmount: total,
         paymentInfo: {
           method: formData.payment.method,
-          status: 'pending',
+          status: paymentResult.status || 'pending',
+          transactionId: paymentResult.transactionId,
           amount: total
         },
         shippingInfo: formData.shipping,
@@ -250,42 +252,20 @@ const Checkout = () => {
         }
       });
       
-      setCreatedOrder({
-        id: order.id,
-        orderNumber: order.orderNumber
-      });
+      // Clear the cart after successful order
+      clearCart();
       
-      setPaymentDialogOpen(true);
+      // Navigate to order confirmation page
+      navigate("/order-confirmation", { state: { orderId: order.id } });
     } catch (error) {
-      console.error("Error creating order:", error);
+      console.error("Error processing order:", error);
       toast({
-        title: "Error creating your order",
+        title: "Error processing your order",
         description: "Please try again or contact customer support.",
         variant: "destructive"
       });
       setIsProcessing(false);
     }
-  };
-  
-  const handlePaymentComplete = (success: boolean, transactionId?: string, status?: PaymentStatus) => {
-    setPaymentResult({
-      success,
-      transactionId,
-      status: status || 'failed',
-      errorMessage: success ? undefined : "There was an issue processing your payment."
-    });
-    
-    setTimeout(() => {
-      setPaymentDialogOpen(false);
-      
-      setCurrentStep(3);
-      
-      if (success) {
-        clearCart();
-      }
-      
-      setIsProcessing(false);
-    }, 1500);
   };
   
   return (
@@ -294,6 +274,7 @@ const Checkout = () => {
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-6">Checkout</h1>
         
+        {/* Checkout steps */}
         <div className="flex justify-between mb-8">
           {steps.map((step, index) => (
             <div 
@@ -331,127 +312,157 @@ const Checkout = () => {
           ))}
         </div>
         
-        {currentStep < 3 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{steps[currentStep].title}</CardTitle>
-                  <CardDescription>
-                    {currentStep === 0 && "Enter your shipping details"}
-                    {currentStep === 1 && "Choose your payment method"}
-                    {currentStep === 2 && "Review and confirm your order"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {currentStep === 0 && (
-                    <ShippingForm 
-                      data={formData.shipping} 
-                      updateData={(data) => updateFormData("shipping", data)} 
-                    />
-                  )}
-                  
-                  {currentStep === 1 && (
-                    <PaymentMethod 
-                      data={formData.payment} 
-                      updateData={(data) => updateFormData("payment", data)} 
-                    />
-                  )}
-                  
-                  {currentStep === 2 && (
-                    <OrderReview 
-                      shippingInfo={formData.shipping}
-                      paymentInfo={{
-                        method: formData.payment.method,
-                        details: formData.payment
-                      }}
-                      cartItems={cartItems}
-                      subtotal={subtotal}
-                      vatAmount={vatAmount}
-                      shippingCost={shippingCost}
-                      total={total}
-                      termsAccepted={termsAccepted}
-                      onTermsChange={setTermsAccepted}
-                    />
-                  )}
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  {currentStep > 0 ? (
-                    <Button variant="outline" onClick={handleBack} disabled={isProcessing}>
-                      Back
-                    </Button>
-                  ) : (
-                    <div></div>
-                  )}
-                  
-                  {currentStep < 2 ? (
-                    <Button onClick={handleNext}>
-                      Continue
-                    </Button>
-                  ) : (
-                    <Button onClick={handlePlaceOrder} disabled={isProcessing || !termsAccepted}>
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        "Place Order"
-                      )}
-                    </Button>
-                  )}
-                </CardFooter>
-              </Card>
-            </div>
-            
-            <div>
-              <OrderSummary 
-                subtotal={subtotal} 
-                shippingCost={shippingCost}
-                vatAmount={vatAmount} 
-                total={total} 
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
             <Card>
-              <CardContent className="pt-6">
-                <PaymentConfirmation 
-                  status={paymentResult?.status || 'pending'}
-                  orderNumber={createdOrder?.orderNumber}
-                  orderId={createdOrder?.id}
-                  transactionId={paymentResult?.transactionId}
-                  errorMessage={paymentResult?.errorMessage}
-                  isProcessing={isProcessing}
-                />
+              <CardHeader>
+                <CardTitle>{steps[currentStep].title}</CardTitle>
+                <CardDescription>
+                  {currentStep === 0 && "Enter your shipping details"}
+                  {currentStep === 1 && "Choose your payment method"}
+                  {currentStep === 2 && "Review and confirm your order"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {currentStep === 0 && (
+                  <ShippingForm 
+                    data={formData.shipping} 
+                    updateData={(data) => updateFormData("shipping", data)} 
+                  />
+                )}
+                
+                {currentStep === 1 && (
+                  <PaymentMethod 
+                    data={formData.payment} 
+                    updateData={(data) => updateFormData("payment", data)} 
+                  />
+                )}
+                
+                {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="font-medium mb-2">Shipping Address</h3>
+                      <div className="text-sm text-muted-foreground">
+                        <p>{formData.shipping.fullName}</p>
+                        <p>{formData.shipping.address}</p>
+                        <p>{formData.shipping.city}, {formData.shipping.state} {formData.shipping.postalCode}</p>
+                        <p>{formData.shipping.country}</p>
+                        <p>Phone: {formData.shipping.phone}</p>
+                        <p>Email: {formData.shipping.email}</p>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h3 className="font-medium mb-2">Shipping Method</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {formData.shipping.shippingMethod === "standard" 
+                          ? "Standard Shipping (3-7 business days)" 
+                          : "Express Shipping (1-3 business days)"}
+                      </p>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h3 className="font-medium mb-2">Payment Method</h3>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        {formData.payment.method}
+                        {formData.payment.method === "mpesa" && ` (${formData.payment.mpesaPhone})`}
+                      </p>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h3 className="font-medium mb-2">Order Items</h3>
+                      <div className="space-y-3">
+                        {cartItems.map((item) => (
+                          <div key={item.product.id} className="flex justify-between">
+                            <div className="flex gap-3">
+                              <div className="w-12 h-12 rounded overflow-hidden border border-border flex-shrink-0">
+                                <img 
+                                  src={item.product.imageUrl} 
+                                  alt={item.product.title} 
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">{item.product.title}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Qty: {item.quantity} × KSh {item.product.price.toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-sm">
+                              KSh {(item.product.price * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 ml-auto w-full max-w-[240px]">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Subtotal:</span>
+                        <span>KSh {subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>VAT (16%):</span>
+                        <span>KSh {vatAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Shipping:</span>
+                        <span>KSh {shippingCost.toFixed(2)}</span>
+                      </div>
+                      <Separator className="my-2" />
+                      <div className="flex justify-between font-bold">
+                        <span>Total:</span>
+                        <span>KSh {total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
+              <CardFooter className="flex justify-between">
+                {currentStep > 0 ? (
+                  <Button variant="outline" onClick={handleBack} disabled={isProcessing}>
+                    Back
+                  </Button>
+                ) : (
+                  <div></div>
+                )}
+                
+                {currentStep < steps.length - 1 ? (
+                  <Button onClick={handleNext}>
+                    Continue
+                  </Button>
+                ) : (
+                  <Button onClick={handleComplete} disabled={isProcessing}>
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Place Order"
+                    )}
+                  </Button>
+                )}
+              </CardFooter>
             </Card>
           </div>
-        )}
-
-        <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-          <DialogContent className="sm:max-w-md" hideCloseButton>
-            <div className="py-6">
-              <h2 className="text-xl font-semibold text-center mb-4">Processing Payment</h2>
-              
-              {createdOrder && (
-                <PaymentStatusTracker 
-                  orderId={createdOrder.id}
-                  orderNumber={createdOrder.orderNumber}
-                  paymentMethod={formData.payment.method}
-                  paymentDetails={formData.payment}
-                  amount={total}
-                  onPaymentComplete={handlePaymentComplete}
-                />
-              )}
-              
-              <p className="text-sm text-muted-foreground text-center mt-4">
-                Please do not close this window while your payment is being processed.
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
+          
+          <div>
+            <OrderSummary 
+              subtotal={subtotal} 
+              shippingCost={shippingCost}
+              vatAmount={vatAmount} 
+              total={total} 
+            />
+          </div>
+        </div>
       </main>
       <Footer />
     </div>

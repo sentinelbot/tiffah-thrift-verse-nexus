@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,14 +23,29 @@ import {
   ChevronRight 
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
+import { toast } from 'sonner';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
   
-  const { data: products, isLoading } = useQuery({
+  const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -39,14 +55,34 @@ const Products = () => {
       
       if (error) throw error;
       
-      return data.map(item => ({
-        ...item,
-        dateAdded: new Date(item.date_added),
-        lastUpdated: new Date(item.last_updated),
-        subCategory: item.sub_category,
-        originalPrice: item.original_price,
-        addedBy: item.added_by
+      // Convert database fields to match our Product interface
+      return data.map(product => ({
+        ...product,
+        name: product.name,
+        imageUrl: product.images?.[0]?.url || '',
+        dateAdded: new Date(product.date_added),
+        images: product.images || [],
       })) as Product[];
+    }
+  });
+  
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      toast.success('Product deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setProductToDelete(null);
+    },
+    onError: (error) => {
+      toast.error(`Error deleting product: ${error.message}`);
     }
   });
   
@@ -80,6 +116,16 @@ const Products = () => {
         return <Badge variant="secondary">Fair</Badge>;
       default:
         return <Badge variant="secondary">{condition}</Badge>;
+    }
+  };
+  
+  const handleDeleteClick = (id: string) => {
+    setProductToDelete(id);
+  };
+  
+  const confirmDelete = () => {
+    if (productToDelete) {
+      deleteProductMutation.mutate(productToDelete);
     }
   };
   
@@ -161,7 +207,12 @@ const Products = () => {
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button size="icon" variant="ghost" className="text-destructive">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="text-destructive"
+                          onClick={() => handleDeleteClick(product.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -189,6 +240,26 @@ const Products = () => {
           )}
         </div>
       </div>
+      
+      <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product from your inventory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={confirmDelete}
+            >
+              {deleteProductMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
