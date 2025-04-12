@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Instagram, Facebook, Twitter, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const Footer = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [clickCount, setClickCount] = useState(0);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,7 +56,7 @@ const Footer = () => {
             }
             
             // Navigate to admin auth
-            window.location.href = "/admin/auth";
+            navigate("/admin/auth");
           }, 500);
         }
         
