@@ -1,10 +1,77 @@
 
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Twitter, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 
 const Footer = () => {
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [clickCount, setClickCount] = useState(0);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyrightRef = useRef<HTMLParagraphElement>(null);
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email.trim()) {
+      toast({
+        title: "Please enter your email",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Here you would typically handle the subscription process
+    toast({
+      title: "Thank you for subscribing!",
+      description: "You've been added to our mailing list."
+    });
+    
+    setEmail("");
+  };
+
+  const handleCopyrightClick = () => {
+    // Clear existing timer if it exists
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+    }
+
+    // Increment click count
+    setClickCount(prevCount => {
+      const newCount = prevCount + 1;
+      
+      // Check if this is the 5th click
+      if (newCount === 5) {
+        // Animate the element
+        if (copyrightRef.current) {
+          copyrightRef.current.style.color = "#ec4899";
+          
+          setTimeout(() => {
+            if (copyrightRef.current) {
+              copyrightRef.current.style.color = "";
+            }
+            
+            // Navigate to admin auth
+            window.location.href = "/admin/auth";
+          }, 500);
+        }
+        
+        // Reset count
+        return 0;
+      }
+      
+      // Set timer to reset click count after 3 seconds
+      clickTimerRef.current = setTimeout(() => {
+        setClickCount(0);
+      }, 3000);
+      
+      return newCount;
+    });
+  };
+
   return (
     <footer className="bg-muted mt-8 pt-12 pb-6 text-muted-foreground">
       <div className="container mx-auto px-4">
@@ -111,21 +178,29 @@ const Footer = () => {
             <p className="text-sm mb-4">
               Subscribe to our newsletter for exclusive deals and updates.
             </p>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2">
               <Input
                 type="email"
                 placeholder="Your email"
                 className="h-10 min-w-0 flex-grow"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
               />
-              <Button variant="default" className="h-10 bg-primary hover:bg-primary/90 whitespace-nowrap">
+              <Button type="submit" variant="default" className="h-10 bg-primary hover:bg-primary/90 whitespace-nowrap">
                 Subscribe
               </Button>
-            </div>
+            </form>
           </div>
         </div>
         
         <div className="border-t border-border mt-8 pt-8 text-center text-xs">
-          <p>© {new Date().getFullYear()} TiffahThrift. All rights reserved.</p>
+          <p 
+            ref={copyrightRef}
+            onClick={handleCopyrightClick}
+            className="transition-colors duration-300 cursor-default select-none"
+          >
+            © {new Date().getFullYear()} TiffahThrift. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
