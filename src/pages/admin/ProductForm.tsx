@@ -1,7 +1,4 @@
 
-// This is a mock file that represents the functionality of a product form
-// It would typically contain form handling for creating/editing products
-
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -9,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { generateBarcode } from '@/utils/scannerUtils';
+import { getOrGenerateBarcode } from '@/utils/barcodeUtils';
 
 interface FormValues {
   name: string;
@@ -40,7 +37,7 @@ const ProductForm = () => {
   
   // Mock function to generate a unique barcode
   const generateUniqueBarcode = async (): Promise<string> => {
-    return generateBarcode();
+    return await getOrGenerateBarcode();
   };
 
   const onSubmit = async (values: FormValues) => {

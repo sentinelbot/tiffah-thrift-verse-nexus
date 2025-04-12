@@ -1,215 +1,400 @@
 
-import { Product, ProductStatus } from "@/types/product";
-import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
+import Quagga from '@ericblade/quagga2';
 
-// Define the interface for scan results
 export interface ScanResult {
   id: string;
-  timestamp: Date;
-  type: "product" | "order" | "delivery";
   code: string;
-  status: "success" | "error" | "pending";
+  status: 'success' | 'error' | 'pending' | 'pending-sync';
+  timestamp: number;
+  type: string;
+  userId?: string;
   result?: any;
-  error?: string;
-  processedBy?: string;
 }
 
-// Mock function to get scan history from local storage
-export const getScanHistory = async (userId?: string): Promise<ScanResult[]> => {
-  try {
-    const scanHistoryString = localStorage.getItem('scanHistory');
-    if (!scanHistoryString) return [];
-    
-    const scanHistory = JSON.parse(scanHistoryString) as ScanResult[];
-    
-    // Filter by user if provided
-    if (userId) {
-      return scanHistory.filter(scan => scan.processedBy === userId);
-    }
-    
-    return scanHistory;
-  } catch (error) {
-    console.error('Error getting scan history:', error);
-    return [];
+// Check if the device is online
+export const isOnline = (): boolean => {
+  return navigator.onLine;
+};
+
+// Initialize the barcode scanner
+export const initScanner = (
+  containerId: string,
+  callbacks: {
+    onDetected: (result: any) => void;
+    onError: (error: any) => void;
   }
-};
-
-// Initialize barcode scanner
-export const initScanner = (videoElement: HTMLVideoElement, onDetected: (code: string) => void): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    try {
-      // This would be implemented using Quagga or a similar library
-      // For now, we'll just resolve the promise
-      setTimeout(() => {
-        console.log('Scanner initialized');
-        resolve();
-      }, 1000);
-    } catch (error) {
-      console.error('Error initializing scanner:', error);
-      reject(error);
-    }
-  });
-};
-
-// Sync scans with the server or local storage
-export const syncScans = async (scans: ScanResult[]): Promise<boolean> => {
+): (() => void) => {
   try {
-    // Get existing scan history
-    const existingScansString = localStorage.getItem('scanHistory');
-    const existingScans = existingScansString ? JSON.parse(existingScansString) : [];
-    
-    // Merge with new scans
-    const allScans = [...existingScans, ...scans];
-    
-    // Store back in local storage
-    localStorage.setItem('scanHistory', JSON.stringify(allScans));
-    
-    // In a real app, we would also sync with the server
-    return true;
+    Quagga.init(
+      {
+        inputStream: {
+          name: 'Live',
+          type: 'LiveStream',
+          target: document.getElementById(containerId) as HTMLElement,
+          constraints: {
+            facingMode: 'environment',
+            width: { min: 450 },
+            height: { min: 300 },
+            aspectRatio: { min: 1, max: 2 },
+          },
+        },
+        locator: {
+          patchSize: 'medium',
+          halfSample: true,
+        },
+        numOfWorkers: 2,
+        frequency: 10,
+        decoder: {
+          readers: ['code_128_reader', 'ean_reader', 'ean_8_reader', 'code_39_reader'],
+        },
+        locate: true,
+      },
+      (err: any) => {
+        if (err) {
+          console.error('Error initializing Quagga:', err);
+          callbacks.onError(err);
+          return;
+        }
+        
+        Quagga.start();
+      }
+    );
+
+    Quagga.onDetected((result) => {
+      if (result && result.codeResult) {
+        // Play a success sound
+        const audio = new Audio('/beep.mp3');
+        audio.play().catch(e => console.log('Audio play failed:', e));
+        
+        callbacks.onDetected(result);
+      }
+    });
+
+    Quagga.onProcessed((result) => {
+      const drawingCanvas = document.getElementById(`${containerId}_canvas`);
+      if (drawingCanvas) {
+        const ctx = drawingCanvas.getContext('2d');
+        if (ctx && result) {
+          // Draw detection result if available
+          if (result.boxes) {
+            ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            result.boxes.filter((box: any) => box !== result.box).forEach((box: any) => {
+              ctx.strokeStyle = 'green';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(box.x, box.y, box.width, box.height);
+            });
+          }
+
+          // Draw the detected barcode box
+          if (result.box) {
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(
+              result.box.x,
+              result.box.y,
+              result.box.width,
+              result.box.height
+            );
+          }
+        }
+      }
+    });
+
+    // Return a cleanup function
+    return () => {
+      Quagga.stop();
+    };
   } catch (error) {
-    console.error('Error syncing scans:', error);
-    return false;
+    console.error('Failed to initialize scanner:', error);
+    callbacks.onError(error);
+    return () => {}; // Return empty cleanup function in case of error
   }
 };
 
 // Process a product scan
-export const processProductScan = async (code: string, userId?: string): Promise<ScanResult> => {
-  const scanResult: ScanResult = {
-    id: `scan-${Date.now()}`,
-    timestamp: new Date(),
-    type: "product",
-    code,
-    status: "pending",
-    processedBy: userId
-  };
+export const processProductScan = async (
+  code: string,
+  userId: string,
+  userRole: string,
+  online: boolean = true
+): Promise<{ status: string; result?: any }> => {
+  const scanId = uuidv4();
   
   try {
-    // Lookup product in database
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('barcode', code)
-      .single();
-    
-    if (error) {
-      scanResult.status = "error";
-      scanResult.error = error.message;
-    } else if (data) {
-      scanResult.status = "success";
-      scanResult.result = data;
-    } else {
-      scanResult.status = "error";
-      scanResult.error = "Product not found";
+    if (!online) {
+      // Store scan for later sync
+      const offlineScan = {
+        id: scanId,
+        code,
+        type: 'product',
+        userId,
+        userRole,
+        timestamp: Date.now(),
+        status: 'pending-sync'
+      };
+      
+      const storedScans = JSON.parse(localStorage.getItem('offlineScans') || '[]');
+      storedScans.push(offlineScan);
+      localStorage.setItem('offlineScans', JSON.stringify(storedScans));
+      
+      return { status: 'pending-sync' };
     }
     
-    // Save scan result to history
-    const history = await getScanHistory();
-    await syncScans([...history, scanResult]);
+    // Mock API call - in a real app this would call your backend
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Store in scan history
+        const scanResult: ScanResult = {
+          id: scanId,
+          code,
+          type: 'product',
+          status: 'success',
+          timestamp: Date.now(),
+          userId,
+          result: {
+            id: 'prod_' + Math.floor(Math.random() * 1000),
+            name: 'Sample Product ' + code.substring(0, 4),
+            price: Math.floor(Math.random() * 2000) + 500,
+            status: 'available'
+          }
+        };
+        
+        const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+        history.unshift(scanResult);
+        localStorage.setItem('scanHistory', JSON.stringify(history.slice(0, 100)));
+        
+        resolve({
+          status: 'success',
+          result: scanResult.result
+        });
+      }, 1000);
+    });
+  } catch (error) {
+    console.error('Error processing product scan:', error);
     
-    return scanResult;
-  } catch (error: any) {
-    scanResult.status = "error";
-    scanResult.error = error.message;
+    // Store failed scan in history
+    const scanResult: ScanResult = {
+      id: scanId,
+      code,
+      type: 'product',
+      status: 'error',
+      timestamp: Date.now(),
+      userId
+    };
     
-    // Save scan result to history
-    const history = await getScanHistory();
-    await syncScans([...history, scanResult]);
+    const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+    history.unshift(scanResult);
+    localStorage.setItem('scanHistory', JSON.stringify(history.slice(0, 100)));
     
-    return scanResult;
+    return { status: 'error' };
   }
 };
 
 // Process an order scan
-export const processOrderScan = async (code: string, userId?: string): Promise<ScanResult> => {
-  const scanResult: ScanResult = {
-    id: `scan-${Date.now()}`,
-    timestamp: new Date(),
-    type: "order",
-    code,
-    status: "pending",
-    processedBy: userId
-  };
+export const processOrderScan = async (
+  code: string,
+  userId: string,
+  userRole: string,
+  online: boolean = true
+): Promise<{ status: string; result?: any }> => {
+  const scanId = uuidv4();
   
   try {
-    // Mock order data lookup
-    // In a real app, this would query the database
-    const mockOrder = {
-      id: code,
-      orderNumber: `TTS-${new Date().getFullYear()}${new Date().getMonth() + 1}${new Date().getDate()}-${Math.floor(Math.random() * 10000)}`,
-      status: "processing",
-      customerId: "cust-123",
-      items: [
-        { id: "prod-001", name: "Vintage Denim Jacket", quantity: 1 },
-        { id: "prod-002", name: "Floral Summer Dress", quantity: 1 }
-      ]
+    if (!online) {
+      // Store scan for later sync
+      const offlineScan = {
+        id: scanId,
+        code,
+        type: 'order',
+        userId,
+        userRole,
+        timestamp: Date.now(),
+        status: 'pending-sync'
+      };
+      
+      const storedScans = JSON.parse(localStorage.getItem('offlineScans') || '[]');
+      storedScans.push(offlineScan);
+      localStorage.setItem('offlineScans', JSON.stringify(storedScans));
+      
+      return { status: 'pending-sync' };
+    }
+    
+    // Mock API call - in a real app this would call your backend
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Store in scan history
+        const scanResult: ScanResult = {
+          id: scanId,
+          code,
+          type: 'order',
+          status: 'success',
+          timestamp: Date.now(),
+          userId,
+          result: {
+            id: 'order_' + Math.floor(Math.random() * 1000),
+            orderNumber: 'TTS-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(Math.random() * 1000),
+            status: 'processing',
+            items: [
+              {
+                id: 'item_' + Math.floor(Math.random() * 100),
+                name: 'Product A',
+                quantity: 1
+              },
+              {
+                id: 'item_' + Math.floor(Math.random() * 100),
+                name: 'Product B',
+                quantity: 2
+              }
+            ]
+          }
+        };
+        
+        const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+        history.unshift(scanResult);
+        localStorage.setItem('scanHistory', JSON.stringify(history.slice(0, 100)));
+        
+        resolve({
+          status: 'success',
+          result: scanResult.result
+        });
+      }, 1000);
+    });
+  } catch (error) {
+    console.error('Error processing order scan:', error);
+    
+    // Store failed scan in history
+    const scanResult: ScanResult = {
+      id: scanId,
+      code,
+      type: 'order',
+      status: 'error',
+      timestamp: Date.now(),
+      userId
     };
     
-    scanResult.status = "success";
-    scanResult.result = mockOrder;
+    const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+    history.unshift(scanResult);
+    localStorage.setItem('scanHistory', JSON.stringify(history.slice(0, 100)));
     
-    // Save scan result to history
-    const history = await getScanHistory();
-    await syncScans([...history, scanResult]);
-    
-    return scanResult;
-  } catch (error: any) {
-    scanResult.status = "error";
-    scanResult.error = error.message;
-    
-    // Save scan result to history
-    const history = await getScanHistory();
-    await syncScans([...history, scanResult]);
-    
-    return scanResult;
+    return { status: 'error' };
   }
 };
 
 // Process a delivery scan
-export const processDeliveryScan = async (code: string, userId?: string): Promise<ScanResult> => {
-  const scanResult: ScanResult = {
-    id: `scan-${Date.now()}`,
-    timestamp: new Date(),
-    type: "delivery",
-    code,
-    status: "pending",
-    processedBy: userId
-  };
+export const processDeliveryScan = async (
+  code: string,
+  userId: string,
+  userRole: string,
+  online: boolean = true
+): Promise<{ status: string; result?: any }> => {
+  const scanId = uuidv4();
   
   try {
-    // Mock delivery data lookup
-    // In a real app, this would query the database
-    const mockDelivery = {
-      id: code,
-      orderNumber: `TTS-${new Date().getFullYear()}${new Date().getMonth() + 1}${new Date().getDate()}-${Math.floor(Math.random() * 10000)}`,
-      status: "out_for_delivery",
-      address: "123 Main St, Nairobi, Kenya",
-      customerName: "John Doe",
-      customerPhone: "+254712345678"
+    if (!online) {
+      // Store scan for later sync
+      const offlineScan = {
+        id: scanId,
+        code,
+        type: 'delivery',
+        userId,
+        userRole,
+        timestamp: Date.now(),
+        status: 'pending-sync'
+      };
+      
+      const storedScans = JSON.parse(localStorage.getItem('offlineScans') || '[]');
+      storedScans.push(offlineScan);
+      localStorage.setItem('offlineScans', JSON.stringify(storedScans));
+      
+      return { status: 'pending-sync' };
+    }
+    
+    // Mock API call - in a real app this would call your backend
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Store in scan history
+        const scanResult: ScanResult = {
+          id: scanId,
+          code,
+          type: 'delivery',
+          status: 'success',
+          timestamp: Date.now(),
+          userId,
+          result: {
+            id: 'delivery_' + Math.floor(Math.random() * 1000),
+            orderNumber: 'TTS-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(Math.random() * 1000),
+            status: 'outForDelivery',
+            deliveryTime: new Date().toISOString()
+          }
+        };
+        
+        const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+        history.unshift(scanResult);
+        localStorage.setItem('scanHistory', JSON.stringify(history.slice(0, 100)));
+        
+        resolve({
+          status: 'success',
+          result: scanResult.result
+        });
+      }, 1000);
+    });
+  } catch (error) {
+    console.error('Error processing delivery scan:', error);
+    
+    // Store failed scan in history
+    const scanResult: ScanResult = {
+      id: scanId,
+      code,
+      type: 'delivery',
+      status: 'error',
+      timestamp: Date.now(),
+      userId
     };
     
-    scanResult.status = "success";
-    scanResult.result = mockDelivery;
+    const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+    history.unshift(scanResult);
+    localStorage.setItem('scanHistory', JSON.stringify(history.slice(0, 100)));
     
-    // Save scan result to history
-    const history = await getScanHistory();
-    await syncScans([...history, scanResult]);
-    
-    return scanResult;
-  } catch (error: any) {
-    scanResult.status = "error";
-    scanResult.error = error.message;
-    
-    // Save scan result to history
-    const history = await getScanHistory();
-    await syncScans([...history, scanResult]);
-    
-    return scanResult;
+    return { status: 'error' };
   }
 };
 
-// Generate a unique barcode
+// Sync offline scans
+export const syncScans = async (): Promise<{ synced: number }> => {
+  const offlineScans = JSON.parse(localStorage.getItem('offlineScans') || '[]');
+  
+  if (offlineScans.length === 0) {
+    return { synced: 0 };
+  }
+  
+  // In a real app, this would send the scans to your backend
+  // For this demo, we'll just move them to the scan history
+  const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+  
+  for (const scan of offlineScans) {
+    // Update the status to success
+    scan.status = 'success';
+    history.unshift(scan);
+  }
+  
+  localStorage.setItem('scanHistory', JSON.stringify(history.slice(0, 100)));
+  localStorage.setItem('offlineScans', '[]');
+  
+  return { synced: offlineScans.length };
+};
+
+// Get scan history
+export const getScanHistory = (limit: number = 100): Promise<ScanResult[]> => {
+  return new Promise((resolve) => {
+    const history = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+    resolve(history.slice(0, limit));
+  });
+};
+
+// Generate a barcode for products
 export const generateBarcode = (): string => {
-  const prefix = 'TTS';
-  const numericPart = Math.floor(Math.random() * 10000000000).toString().padStart(10, '0');
-  return `${prefix}${numericPart}`;
+  // Generate a random 12-digit number for CODE128 format
+  const randomDigits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
+  return 'TTS' + randomDigits;
 };
