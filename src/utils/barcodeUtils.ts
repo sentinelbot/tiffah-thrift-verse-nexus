@@ -52,20 +52,51 @@ export const validateBarcode = (barcode: string): boolean => {
  * Generates a Data URL for a barcode
  */
 export const generateBarcodeDataURL = (barcode: string): string => {
-  // Create a canvas element to render the barcode
-  const canvas = document.createElement('canvas');
+  try {
+    // Create a canvas element to render the barcode
+    const canvas = document.createElement('canvas');
+    
+    // Use JSBarcode to render the barcode to the canvas
+    JsBarcode(canvas, barcode, {
+      format: 'CODE128',
+      lineColor: '#000',
+      width: 2,
+      height: 100,
+      displayValue: true,
+      fontSize: 20,
+      margin: 10
+    });
+    
+    // Return the Data URL of the barcode image
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.error('Error generating barcode data URL:', error);
+    return '';
+  }
+};
+
+/**
+ * Synchronous version that returns an empty string if there's an error
+ * This helps with resolving Promise<string> vs string type issues
+ */
+export const getBarcodeDataURL = (barcode: string): string => {
+  if (!barcode) return '';
   
-  // Use JSBarcode to render the barcode to the canvas
-  JsBarcode(canvas, barcode, {
-    format: 'CODE128',
-    lineColor: '#000',
-    width: 2,
-    height: 100,
-    displayValue: true,
-    fontSize: 20,
-    margin: 10
-  });
+  try {
+    return generateBarcodeDataURL(barcode);
+  } catch (error) {
+    console.error('Error getting barcode data URL:', error);
+    return '';
+  }
+};
+
+/**
+ * Asynchronously gets or generates a barcode
+ */
+export const getOrGenerateBarcode = async (existingBarcode?: string): Promise<string> => {
+  if (existingBarcode && validateBarcode(existingBarcode)) {
+    return existingBarcode;
+  }
   
-  // Return the Data URL of the barcode image
-  return canvas.toDataURL('image/png');
+  return generateBarcode();
 };

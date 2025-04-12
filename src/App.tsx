@@ -8,6 +8,7 @@ import Orders from '@/pages/admin/Orders';
 import Scanning from '@/pages/admin/Scanning';
 import Analytics from '@/pages/admin/Analytics';
 import Staff from '@/pages/admin/Staff';
+import Users from '@/pages/admin/Users';
 import Settings from '@/pages/admin/Settings';
 import AdminAuth from '@/pages/admin/Auth';
 import Unauthorized from '@/pages/Unauthorized';
@@ -47,6 +48,7 @@ function App() {
             <Route path="orders" element={<Orders />} />
             <Route path="scanning" element={<Scanning />} />
             <Route path="staff" element={<Staff />} />
+            <Route path="users" element={<Users />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 
